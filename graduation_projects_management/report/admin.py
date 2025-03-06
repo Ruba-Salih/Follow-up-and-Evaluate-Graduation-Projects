@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import WeeklyReport, MonthlyReport
 
-# Register your models here.
+admin.site.register(WeeklyReport)
+admin.site.register(MonthlyReport)
