@@ -1,0 +1,144 @@
+{
+    "dashboard": {
+      // Dashboard interface containing main sections
+      "total_project": "number of the project the he manages",
+      "supervisor_name": "name of the supervisor for the welcoming message",
+      "announcement": "Announcement that will be shown as an array",
+      
+    },
+
+    // add project interface
+    "add project": {
+      "projct_name": "the name of the project",
+      "description": "Description for the project",
+      "field": "Field of the project",
+      "department": "department the project",
+      "number_of_students": "Number of students in the project",
+      "attach_file": "Attached file if he wants",
+      "comments": "Comments will be added by the supervisor"
+    },
+
+    "view proposals": {
+      // interface for showing the proposals
+      "proposals": [
+        {
+          "proposal": "Proposal1",
+          "student": "Students names as an array"
+        },
+        {
+          "proposal": "Proposal2",
+          "student": "Students names as an array"
+        }
+      ]
+    },
+    "proposal": {
+      // the content of the recieved proposal
+      "proposal_name": "name of the proposal",
+      "description": "Description for the project",
+      "team_members": "Team members as an array",
+      "field": "Field of the project",
+      "department": "department the project",
+      "file": "the file of the proposal"
+    },
+
+    // the data of the edit proposal interface
+    "edit proposal interface": {
+        "suggusted_edits": "the edits that the supervisor will enter",
+        "comments": "any additional comments",
+        "file": "the file of the suggusted edits if the supervisor wants to"
+
+    },
+
+    // set available times for the supervisor interface 
+    "set available times": {
+        "times": "array of times",
+        "date": "array of days" 
+    },
+
+
+    // imterface for showing the managed grouped by the supervisor
+    "managed_groups": {
+        "groups": [
+        {
+          "project_name": "name of the project"
+        },
+        {
+          "project_name": "name of the project"
+        }
+      ]
+    },
+    "group information": {
+      // interface for showing the group details
+      "project_name": "Project name",
+      // if click on view meeting history 
+      "meetings_history": {
+        "meetings": [
+            {
+                "meeting date": "date and time of the meeting",
+                "meeting file": "files related to the meeting",
+                "reommendations": "recommendations for the meeting"
+            }
+        ]
+      },
+
+      // if click on see_exchanged_files
+      "exchanged_files": {
+        "files": "the file exchnged with the selected group in an array",
+        "add feedback": {
+            "feedback": "feedback data"
+        }
+      },
+
+      // if click on set a meet:  interface for setting a meet
+        "set meet": {
+          "project_name": "Project name",
+          "group members": "members of the group as an array",
+          "available_dates": "Available dates",
+          "meeting_date": "Set meeting date",
+          "meeting_time": "Set meeting time",
+          "add_message": "if the supervisor wants to add a mesage"
+        },
+      
+        // if click on fill weekly report: fill weekly report interface
+        "fill_weekly_report": {
+          "report": "the data on the report"
+        },
+
+        // if click on fill assessment_form: assessment_form interface
+        "assessment_form": {
+          "form": "data on the form"
+        },
+
+        // if click on project_plan_form: project_plan_form interface
+        "project_plan_form": {
+          "form": "data in the form"
+        },
+
+        // if click on  initial project form: initial project_form interface
+        "initial project form": {
+            "form": "data in the form"
+          },
+
+        // if click on add_annual_grade: add_annual_grade interface
+        "add_annual_grade": {
+          "team members": [
+            {
+                "member1": "member name",
+                "grade": "member grade"
+            },
+            {
+                "member2": "member name",
+                "grade": "member grade"
+            }
+          ]
+        }
+      
+    },
+   
+
+    "notifications": {
+      // Notifications section interface 
+      "notifications" : "notifications as an array"
+    }
+  }
+  
