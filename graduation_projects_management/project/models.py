@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from users.models import Role
 from django.utils import timezone
 
 # Project Proposal model – used to submit proposals.
@@ -132,31 +133,13 @@ class ProjectPlan(models.Model):
     def __str__(self):
         return f"Plan for {self.project.name}"
 
-
-# Project Membership model – links users to a project with a specific role.
 class ProjectMembership(models.Model):
-    ROLE_CHOICES = [
-        (1, 'Reader'),
-        (2, 'Committee Member'),
-        (3, 'Supervisor'),
-    ]
-    project = models.ForeignKey(
-        Project,
-        on_delete=models.CASCADE,
-        related_name='memberships'
-    )
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='project_memberships'
-    )
-    role = models.IntegerField(
-        choices=ROLE_CHOICES, 
-        help_text="User role in the project"
-    )
-    
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE)
+
     class Meta:
-        unique_together = ('project', 'user', 'role')
-    
+        unique_together = ['user', 'project', 'role']  # Prevent duplicate role assignments
+
     def __str__(self):
-        return f"{self.user.username} as {self.get_role_display()} in {self.project.name}"
+        return f"{self.user.username} - {self.role.name} in {self.project.title}"

@@ -30,6 +30,12 @@ class Coordinator(User):
     def __str__(self):
         return f"Coordinator: {self.username}"
 
+class Role(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
 class Admin(User):
     #use is_superuser and is_staff flags provided by AbstractUser.
     def __str__(self):
