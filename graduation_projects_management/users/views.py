@@ -5,9 +5,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import login, logout
-from serializers import UserSerializer
-from services import create_user_account
-from models import Coordinator
+from users.serializers import UserSerializer
+from users.services import create_user_account
+from users.models import Coordinator
 
 
 class UserLoginAPIView(APIView):
