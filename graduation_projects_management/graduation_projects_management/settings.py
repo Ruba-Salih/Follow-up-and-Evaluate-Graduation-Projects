@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'meeting',
     'report',
     'notifications',
+    'form',
     'rest_framework',
     'rest_framework_simplejwt',
     'django.contrib.admin',
