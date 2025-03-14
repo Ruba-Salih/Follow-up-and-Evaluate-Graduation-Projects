@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'report',
     'notifications',
     'form',
+    'grades',
     'rest_framework',
     'rest_framework_simplejwt',
     'django.contrib.admin',
