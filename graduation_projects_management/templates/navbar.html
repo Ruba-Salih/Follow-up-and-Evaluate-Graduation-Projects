@@ -1,0 +1,20 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+<div class="sidebar">
+    <nav>
+        <h2 class="logo">Sudan <strontg style="color: #333;">HealthMap</strontg></h2>
+        {% if user.is_authenticated %}
+            {% if user.is_staff %}
+                <!-- Sidebar for Supervisor -->
+                <ul>
+                    <li><a href="">Dashboard</a></li>
+                    <li><a href="">Logout</a></li>
+                </ul>
+            {% else %}
+                <!-- Sidebar for Hospital User -->
+                <ul>
+                   
+                </ul>
+            {% endif %}
+    </nav>
+</div>
