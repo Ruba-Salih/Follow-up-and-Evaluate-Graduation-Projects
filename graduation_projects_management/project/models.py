@@ -57,7 +57,7 @@ class ProjectProposal(models.Model):
         related_name='received_proposals',
         help_text="If submitted by a student, specify the recipient (e.g. teacher/coordinator)"
     )
-    # If the submitting user is a student, they can list the team members (their IDs and names) who will work on the project.
+    # For student proposals: list the team members (their IDs and names) who will work on the project.
     team_members = models.ManyToManyField(
         'users.Student',
         blank=True,
@@ -175,18 +175,18 @@ class ProjectPlan(models.Model):
 
 
 # =============================
-# Project Membership Model
+# Project Membership Model (for non-student roles)
 # =============================
 class ProjectMembership(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
-    # Group identifier for students working in the same team on the project.
+    # Group identifier for members working in the same team on the project.
     group_id = models.CharField(
         max_length=50, 
         blank=True, 
         null=True, 
-        help_text="Identifier for the student's group in the project"
+        help_text="Identifier for the group in the project"
     )
 
     class Meta:
@@ -197,6 +197,32 @@ class ProjectMembership(models.Model):
 
 
 # =============================
+# Student Project Membership Model (enforces one project per student)
+# =============================
+class StudentProjectMembership(models.Model):
+    # A OneToOneField ensures that each student can only have one membership record.
+    student = models.OneToOneField(
+        'users.Student', 
+        on_delete=models.CASCADE, 
+        related_name='project_membership'
+    )
+    project = models.ForeignKey(
+        Project, 
+        on_delete=models.CASCADE, 
+        related_name='student_memberships'
+    )
+    group_id = models.CharField(
+        max_length=50, 
+        blank=True, 
+        null=True, 
+        help_text="Identifier for the student's group in the project"
+    )
+
+    def __str__(self):
+        return f"{self.student.username} in {self.project.name} (Group: {self.group_id})"
+
+
+# =============================
 # Annual Grade Model
 # =============================
 # Allows the supervisor to add an annual grade for each student in the project.
@@ -204,12 +230,12 @@ class AnnualGrade(models.Model):
     supervisor = models.ForeignKey(
         'users.Supervisor', 
         on_delete=models.CASCADE, 
-        related_name="supervised_annual_grades"  # Unique reverse relation for supervisors
+        related_name="supervised_annual_grades"
     )
     student = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 
-        related_name="received_annual_grades"  # Unique reverse relation for students
+        related_name="received_annual_grades"
     )
     project = models.ForeignKey(
         Project, 

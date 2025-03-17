@@ -8,11 +8,19 @@ class User(AbstractUser):
         Department, 
         on_delete=models.CASCADE, 
         related_name='users',
+        null=True,  # Allow NULL values (important for superusers)
+        blank=True  # Allow empty values
     )
 
+    def save(self, *args, **kwargs):
+        # Ensure normal users have a department, but allow superusers to be without one
+        if not self.is_superuser and self.department is None:
+            raise ValueError("Non-superusers must have a department.")
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.username
+
 
 
 class Supervisor(User):
