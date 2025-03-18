@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manage Accounts{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/coordinator/manage_accounts.css' %}">
+{% endblock %}
+
+{% block content %}
+
+{% include "navbar.html" %} 
+
+<div class="container">
+    <h2>👤 Manage Accounts</h2>
+
+    <!-- Create User Button -->
+    <button id="create-user-btn" class="btn">➕ Create New Account</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Department</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.phone_number }}</td>
+                <td>{{ user.department.name }}</td>
+                <td>
+                    <button class="edit-btn" 
+                        data-id="{{ user.id }}" 
+                        data-username="{{ user.username }}" 
+                        data-email="{{ user.email }}" 
+                        data-phone="{{ user.phone_number }}" 
+                        data-department="{{ user.department.id }}">
+                        ✏️ Edit
+                    </button>
+                    <button class="delete-btn" data-id="{{ user.id }}" onclick="return confirm('Are you sure?');">
+                        🗑️ Delete
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No users found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ✅ Create User Modal -->
+<div id="create-user-modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3>Create New User</h3>
+
+        <!-- ✅ Step 1: Choose User Type (Defaults to Student) -->
+        <label for="user-role">Select User Type:</label>
+        <select id="user-role">
+            <option value="student">👨‍🎓 Student</option>
+            <option value="user">👤  Teacher</option>
+        </select>
+
+        <!-- ✅ Step 2: Student Form (DEFAULT VISIBLE) -->
+        <form id="student-form">
+            <h4>👨‍🎓 Student Details</h4>
+            <label for="student-name">Name:</label>
+            <input type="text" id="student-name" required>
+
+            <label for="student-id">University Number:</label>
+            <input type="text" id="student-id" required>
+
+            <label for="student-email">Email:</label>
+            <input type="email" id="student-email">
+
+            <label for="student-phone">Phone Number:</label>
+            <input type="text" id="student-phone">
+
+            <label for="sitting-number">Sitting Number:</label>
+            <input type="text" id="sitting-number" required>
+
+            <label for="student-department">Department:</label>
+            <select id="student-department">
+                <option value="">-- Select Department --</option>
+                {% for dept in departments %}
+                    <option value="{{ dept.id }}">{{ dept.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="student-password">Password:</label>
+            <input type="password" id="student-password" required>
+
+            <button type="submit">Create Student</button>
+        </form>
+
+        <!-- ✅ Step 2: Normal User Form (HIDDEN BY DEFAULT) -->
+        <form id="user-form" class="hidden">
+            <h4>👤 Normal User Details</h4>
+            <label for="user-name">Name:</label>
+            <input type="text" id="user-name" required>
+
+            <label for="user-email">Email:</label>
+            <input type="email" id="user-email">
+
+            <label for="user-phone">Phone Number:</label>
+            <input type="text" id="user-phone">
+
+            <label for="user-department">Department:</label>
+            <select id="user-department">
+                <option value="">-- Select Department --</option>
+                {% for dept in departments %}
+                    <option value="{{ dept.id }}">{{ dept.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="user-password">Password:</label>
+            <input type="password" id="user-password" required>
+
+            <button type="submit">Create User</button>
+        </form>
+    </div>
+</div>
+
+<!-- ✅ JavaScript -->
+<script src="{% static 'js/coordinator/manage_accounts.js' %}"></script>
+
+{% endblock %}
