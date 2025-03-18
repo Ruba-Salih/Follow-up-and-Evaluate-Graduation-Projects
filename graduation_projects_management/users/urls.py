@@ -15,5 +15,9 @@ urlpatterns = [
 
     path("coordinator/dashboard/", views.coordinator_dashboard, name="coordinator-dashboard"),
 
+    path("manage-accounts/", views.ManageAccountsView.as_view(), name="manage-accounts"),
+    path("manage-accounts/<int:user_id>/", views.ManageAccountsView.as_view(), name="edit-user"),
+    path("manage-accounts/delete/<int:user_id>/", views.ManageAccountsView.as_view(), name="delete-user"),
+    
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]
