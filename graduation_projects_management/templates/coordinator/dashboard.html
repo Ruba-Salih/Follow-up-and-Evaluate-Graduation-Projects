@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    <h2>Welcome to Your Dashboard</h2>
+    <p id="user-info"></p>
+    <button id="logout">Logout</button>
+
+    <script>
+        async function loadUserData() {
+            const token = localStorage.getItem("access");
+            if (!token) {
+                window.location.href = "/login/";
+                return;
+            }
+
+            const response = await fetch("/api/users/protected/", {
+                method: "GET",
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById("user-info").innerText = "Hello, " + data.message;
+            } else {
+                localStorage.removeItem("access");
+                localStorage.removeItem("refresh");
+                window.location.href = "/login/";
+            }
+        }
+
+        document.getElementById("logout").addEventListener("click", function() {
+            localStorage.removeItem("access");
+            localStorage.removeItem("refresh");
+            window.location.href = "/login/";
+        });
+
+        loadUserData();
+    </script>
+{% endblock %}
