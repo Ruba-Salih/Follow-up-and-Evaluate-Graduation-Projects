@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Student home{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+
+{% include "navbar.html" %}
+
+<div class="container">
+    <!-- Quick Links -->
+    <div class="quick-links">
+        <div class="link-item"><a href="#">📤 Submit Proposal</a></div>
+        <div class="link-item"><a href="#">📋 Available Projects</a></div>
+        <div class="link-item"><a href="#">👥 Create A Group</a></div>
+        <div class="link-item"><a href="#">📅 Schedule Meeting</a></div>
+        <div class="link-item"><a href="#">📄 Upload Report</a></div>
+    </div>
+
+    <!-- Announcements Section -->
+    <div class="announcements">
+        <h3>📢 Recent Announcements</h3>
+        <ul>
+            {% for announcement in announcements %}
+                <li>{{ announcement.title }} - {{ announcement.date_posted }}</li>
+            {% empty %}
+                <li>No announcements available.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

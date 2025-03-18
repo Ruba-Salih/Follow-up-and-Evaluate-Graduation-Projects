@@ -1,20 +1,38 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
-<div class="sidebar">
-    <nav>
-        <h2 class="logo">Sudan <strontg style="color: #333;">HealthMap</strontg></h2>
+<link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+
+<!-- Global Navigation Bar -->
+<nav class="navbar">
+    <h2 class="logo">lo<strong style="color: #f6d;">go</strong></h2>
+
+    <ul class="nav-links">
         {% if user.is_authenticated %}
             {% if user.is_staff %}
-                <!-- Sidebar for Supervisor -->
-                <ul>
-                    <li><a href="">Dashboard</a></li>
-                    <li><a href="">Logout</a></li>
-                </ul>
-            {% else %}
-                <!-- Sidebar for Hospital User -->
-                <ul>
-                   
-                </ul>
+                <!-- Navbar for Coordinator -->
+                <li><a href="#">Profile</a></li>
+                <li><a href="#">Notifications</a></li>
+                <li><a href="{% url 'coordinator-dashboard' %}">Dashboard</a></li>
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+
+            {% elif user.student %}
+                <!-- Navbar for Student -->
+                <li><a href="#">Profile</a></li>
+                <li><a href="#">Notifications</a></li>
+                <li><a href="#">Dashboard</a></li>
+                <li><a href="#">Grades</a></li>
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+
+            {% elif user.teacher %}
+                <!-- Navbar for Teacher -->
+                <li><a href="#">Profile</a></li>
+                <li><a href="#">Notifications</a></li>
+                <li><a href="#">Dashboard</a></li>
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+
             {% endif %}
-    </nav>
-</div>
+        {% else %}
+            <!-- If user is not logged in -->
+            <li><a href="{% url 'login' %}">Login</a></li>
+        {% endif %}
+    </ul>
+</nav>

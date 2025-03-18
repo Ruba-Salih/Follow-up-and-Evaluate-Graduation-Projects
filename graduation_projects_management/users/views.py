@@ -1,6 +1,7 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.http import HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -10,13 +11,54 @@ from django.contrib.auth import login, logout
 from users.serializers import UserLoginSerializer
 from users.services import create_user_account
 from users.models import Coordinator
+from django.urls import reverse
+from project.models import Project
+#from announcement.models import Announcement
 
 
-def home_view(request):
-    return HttpResponse("<h1>Welcome to the Home Page</h1>")
+def land(request): 
+    login_url = reverse("login-page")
+    return HttpResponse(f'<a href="{login_url}">Login</a>')
+
+
+@login_required
+def home_redirect_view(request):
+    """ Redirect users to their specific home page based on role """
+    if request.user.is_staff:
+        return redirect("coordinator-home")
+
+    elif hasattr(request.user, "student"):
+        return redirect("student-home")
+
+    elif hasattr(request.user, "teacher"):
+        return redirect("teacher-home")
+
+@login_required
+def coordinator_home(request):
+    return render(request, "coordinator/home.html")
+
+@login_required
+def student_home(request):
+    return render(request, "student/home.html")
+
+@login_required
+def teacher_home(request):
+    #total_projects = Project.objects.filter(teacher=request.user).count()
+    #announcements = Announcement.objects.all().order_by('-date_posted')[:5]
+
+    #return render(request, "teacher/home.html", {
+        #"total_projects": total_projects,
+        #"announcements": announcements,
+    #})
+
+    return render(request, "teacher/home.html")
 
 def login_view(request):
     return render(request, "login.html")
+
+@login_required
+def coordinator_dashboard(request):
+    return render(request, "coordinator/dashboard.html")
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -29,27 +71,35 @@ class UserLoginAPIView(APIView):
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.validated_data  # Authenticated user object
+            user = serializer.validated_data
 
-            login(request, user)  # Log in user (Django session)
-
-            # Ensure session is saved
+            login(request, user)
             request.session.save()
 
-            # Generate JWT tokens
+            if user.is_staff:
+                home_url = "/coordinator/home/"
+            elif hasattr(user, "student"):
+                home_url = "/student/home/"
+            elif hasattr(user, "teacher"):
+                home_url = "/teacher/home/"
+
             refresh = RefreshToken.for_user(user)
             return Response({
-                "session_id": request.session.session_key,  # Send session ID
-                "refresh": str(refresh),  # Refresh Token
-                "access": str(refresh.access_token),  # Access Token
+                "session_id": request.session.session_key,
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
                 "user": {
                     "id": user.id,
                     "username": user.username,
                     "email": user.email,
+                    "home_url": home_url
                 }
             }, status=200)
         
-        return Response(serializer.errors, status=400)
+        return Response({"error": "Invalid credentials."}, status=400)
+
+    def get(self, request):
+        return JsonResponse({"error": "GET method not allowed."}, status=405)
 
 
 class UserLogoutAPIView(APIView):
@@ -59,7 +109,7 @@ class UserLogoutAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        logout(request)  # Remove session
+        logout(request)
         request.session.flush()
         return Response({"message": "Successfully logged out."}, status=200)
 
