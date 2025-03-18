@@ -76,7 +76,9 @@ class UserLoginAPIView(APIView):
             login(request, user)
             request.session.save()
 
-            if user.is_staff:
+            home_url = "/dashboard/"
+
+            if hasattr(user, "coordinator"):
                 home_url = "/coordinator/home/"
             elif hasattr(user, "student"):
                 home_url = "/student/home/"
@@ -95,7 +97,7 @@ class UserLoginAPIView(APIView):
                     "home_url": home_url
                 }
             }, status=200)
-        
+        print("Login Error:", serializer.errors)
         return Response({"error": "Invalid credentials."}, status=400)
 
     def get(self, request):
