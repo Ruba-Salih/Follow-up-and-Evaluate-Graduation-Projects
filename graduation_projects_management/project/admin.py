@@ -6,6 +6,7 @@ from .models import (
     ProjectMembership,
     StudentProjectMembership,
     AnnualGrade,
+    FeedbackExchange,
 )
 
 @admin.register(ProjectProposal)
@@ -50,3 +51,11 @@ class AnnualGradeAdmin(admin.ModelAdmin):
     list_display = ('student', 'supervisor', 'project', 'grade', 'created_at')
     list_filter = ('project', 'supervisor')
     search_fields = ('student__username', 'project__name', 'supervisor__username')
+
+
+@admin.register(FeedbackExchange)
+class FeedbackExchangeAdmin(admin.ModelAdmin):
+    list_display = ('project', 'sender', 'receiver', 'created_at')
+    list_filter = ('project', 'created_at')
+    search_fields = ('project__name', 'sender__username', 'receiver__username')
+    ordering = ('-created_at',)
