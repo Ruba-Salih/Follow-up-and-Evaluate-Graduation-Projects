@@ -252,3 +252,58 @@ class AnnualGrade(models.Model):
          
     def __str__(self):
         return f"Annual Grade for {self.student.username} in {self.project.name} by {self.supervisor.username}"
+
+
+# =============================
+# Feedback Exchange Model
+# =============================
+# This model allows a user to send feedback related to a project.
+# The sender selects a project and, optionally, a specific receiver.
+# If no receiver is selected, the feedback will be sent to all students in the project.
+# If a receiver is selected:
+#   - If the receiver is a student, the feedback is intended for that student's group.
+#   - If the receiver is not a student, the feedback is sent directly to that user.
+class FeedbackExchange(models.Model):
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='feedback_exchanges',
+        help_text="The project associated with this feedback."
+    )
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='sent_feedbacks',
+        help_text="User who sent the feedback."
+    )
+    receiver = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='feedback_received',
+        help_text="The receiver of the feedback. If left blank, feedback is sent to all students in the project."
+    )
+    feedback_text = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Text of the feedback."
+    )
+    feedback_file = models.FileField(
+        upload_to='feedback_files/',
+        blank=True,
+        null=True,
+        help_text="Optional file attached with the feedback."
+    )
+    comment = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Optional comment."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        if self.receiver:
+            return f"Feedback from {self.sender.username} to {self.receiver.username} on {self.project.name}"
+        else:
+            return f"Feedback from {self.sender.username} to all students in {self.project.name}"
