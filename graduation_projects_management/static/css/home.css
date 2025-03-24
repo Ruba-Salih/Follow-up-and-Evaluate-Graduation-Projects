@@ -1,19 +1,11 @@
-/* === General Styling for All Home Pages === */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 0;
-}
-
 /* === Container Styling === */
 .container {
-    max-width: 1200px;
+    max-width: 1300px;
     margin: 20px auto;
     padding: 20px;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
     text-align: center;
 }
 
@@ -27,7 +19,7 @@ body {
 }
 
 .link-item {
-    background-color: #4CAF50;
+    background-color: #a63026;
     padding: 15px 20px;
     border-radius: 5px;
     text-align: center;
@@ -50,7 +42,7 @@ body {
 .announcements {
     margin-top: 30px;
     padding: 20px;
-    background-color: #e3e3e3;
+    background-color: #eeeeee;
     border-radius: 5px;
     text-align: left;
 }

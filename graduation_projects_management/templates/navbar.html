@@ -3,11 +3,16 @@
 
 <!-- Global Navigation Bar -->
 <nav class="navbar">
-    <h2 class="logo">lo<strong style="color: #f6d;">go</strong></h2>
+    <h2 class="logo">
+        <a href="/">
+            <img src="{% static 'images/lo.png' %}" alt="Site Logo" style="height: 40px;">
+        </a>
+    </h2>
+    
 
     <ul class="nav-links">
         {% if user.is_authenticated %}
-            {% if user.is_staff %}
+            {% if user.coordinator %}
                 <!-- Navbar for Coordinator -->
                 <li><a href="#">Profile</a></li>
                 <li><a href="#">Notifications</a></li>
