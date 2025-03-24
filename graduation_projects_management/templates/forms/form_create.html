@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create Evaluation Form{% endblock title %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+  <h2>Create Evaluation Form</h2>
+  <form method="post">
+    {% csrf_token %}
+    <p>
+      <label for="id_form_name">Form Name:</label>
+      <input type="text" name="form_name" id="id_form_name" required>
+    </p>
+    <p>
+      <label for="id_main_category_number">Main Category Number:</label>
+      <input type="number" name="main_category_number" id="id_main_category_number" required>
+    </p>
+    <p>
+      <label for="id_main_category">Main Category:</label>
+      <input type="text" name="main_category" id="id_main_category" required>
+    </p>
+    <p>
+      <label for="id_weight">Weight:</label>
+      <input type="number" step="0.01" name="weight" id="id_weight" required>
+    </p>
+    <p>
+      <label for="id_type_of_grade">Type of Grade:</label>
+      <select name="type_of_grade" id="id_type_of_grade" required>
+        <option value="individual">Individual Grade</option>
+        <option value="group">Group Grade</option>
+      </select>
+    </p>
+    <h3>Subcategories</h3>
+    <div id="subcategories">
+      <div class="subcategory">
+        <label>Subcategory:</label>
+        <input type="text" name="subcategories[0][sub_category]" required>
+      </div>
+    </div>
+    <button type="button" id="add-subcategory" class="btn">Add Another Subcategory</button>
+    <br><br>
+    <button type="submit" class="btn">Submit</button>
+  </form>
+</div>
+
+<script>
+  document.getElementById('add-subcategory').addEventListener('click', function(){
+    var container = document.getElementById('subcategories');
+    var index = container.children.length;
+    var div = document.createElement('div');
+    div.className = 'subcategory';
+    div.innerHTML = '<label>Subcategory:</label>' +
+                    '<input type="text" name="subcategories['+ index +'][sub_category]" required>';
+    container.appendChild(div);
+  });
+</script>
+{% endblock content %}

@@ -26,4 +26,7 @@ urlpatterns = [
     path("coordinator/home/", views.coordinator_home, name="coordinator-home"),
     path("student/home/", views.student_home, name="student-home"),
     path("teacher/home/", views.teacher_home, name="teacher-home"),
+
+    #the form urls
+    path('api/form/', include('form.urls')),
 ]
