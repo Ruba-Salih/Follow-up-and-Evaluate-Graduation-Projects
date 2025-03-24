@@ -15,7 +15,23 @@
     <h2>👤 Manage Accounts</h2>
 
     <!-- Create User Button -->
-    <button id="create-user-btn" class="btn">➕ Create New Account</button>
+    <button id="create-user-btn" class="btn btn-primary">➕ Create New Account</button>
+
+    <!-- 🔍 Search and Filter Controls -->
+<div class="search-filter-bar">
+    <input type="text" id="search-input" placeholder="🔍 Search by username..." />
+    
+    <select id="role-filter">
+        <option value="">🔽 All Roles</option>
+        <option value="student">👨‍🎓 Students</option>
+        <option value="user">👤 Teachers</option>
+        {% if is_super %}
+        <option value="coordinator">🧑‍💼 Coordinators</option>
+        {% endif %}
+    </select>
+
+    <button id="download-btn" class="btn-download">⬇️ Download List</button>
+</div>
 
     <table>
         <thead>
@@ -35,15 +51,20 @@
                 <td>{{ user.phone_number }}</td>
                 <td>{{ user.department.name }}</td>
                 <td>
-                    <button class="edit-btn" 
-                        data-id="{{ user.id }}" 
+                    <button class="edit-btn btn-edit" 
+                        data-id="{{ user.id }}"
+                        data-role="{% if user.student %}student{% elif user.coordinator %}{% if user.coordinator.is_super %}coordinator{% else %}coordinator{% endif %}{% else %}user{% endif %}"
                         data-username="{{ user.username }}" 
                         data-email="{{ user.email }}" 
                         data-phone="{{ user.phone_number }}" 
-                        data-department="{{ user.department.id }}">
+                        data-department="{{ user.department.id }}"
+                        {% if user.student %}
+                            data-student_id="{{ user.student.student_id }}"
+                            data-sitting_number="{{ user.student.sitting_number }}"
+                        {% endif %}>
                         ✏️ Edit
                     </button>
-                    <button class="delete-btn" data-id="{{ user.id }}" onclick="return confirm('Are you sure?');">
+                    <button class="delete-btn btn-delete" data-id="{{ user.id }}" >
                         🗑️ Delete
                     </button>
                 </td>
@@ -67,8 +88,12 @@
         <label for="user-role">Select User Type:</label>
         <select id="user-role">
             <option value="student">👨‍🎓 Student</option>
-            <option value="user">👤  Teacher</option>
+            <option value="user">👤 Teacher</option>
+            {% if is_super %}
+            <option value="coordinator">👥 Coordinator</option>
+            {% endif %}
         </select>
+        
 
         <!-- ✅ Step 2: Student Form (DEFAULT VISIBLE) -->
         <form id="student-form">
@@ -89,22 +114,26 @@
             <input type="text" id="sitting-number" required>
 
             <label for="student-department">Department:</label>
-            <select id="student-department">
-                <option value="">-- Select Department --</option>
-                {% for dept in departments %}
-                    <option value="{{ dept.id }}">{{ dept.name }}</option>
-                {% endfor %}
+            <select id="student-department" name="student-department" {% if not request.user.coordinator.is_super %}disabled{% endif %}>
+                {% if request.user.coordinator.is_super %}
+                    <option value="">-- Select Department --</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                     {% endfor %}
+                {% else %}
+                    <option value="{{ request.user.department.id }}">{{ request.user.department.name }}</option>
+                {% endif %}
             </select>
 
             <label for="student-password">Password:</label>
             <input type="password" id="student-password" required>
 
-            <button type="submit">Create Student</button>
+            <button type="submit" class="btn-primary">Create Student</button>
         </form>
 
         <!-- ✅ Step 2: Normal User Form (HIDDEN BY DEFAULT) -->
         <form id="user-form" class="hidden">
-            <h4>👤 Normal User Details</h4>
+            <h4>👤  Teacher Details</h4>
             <label for="user-name">Name:</label>
             <input type="text" id="user-name" required>
 
@@ -115,18 +144,58 @@
             <input type="text" id="user-phone">
 
             <label for="user-department">Department:</label>
-            <select id="user-department">
-                <option value="">-- Select Department --</option>
-                {% for dept in departments %}
-                    <option value="{{ dept.id }}">{{ dept.name }}</option>
-                {% endfor %}
+            <select id="user-department" name="user-department" {% if not request.user.coordinator.is_super %}disabled{% endif %}>
+                {% if request.user.coordinator.is_super %}
+                    <option value="">-- Select Department --</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="{{ request.user.department.id }}">{{ request.user.department.name }}</option>
+                {% endif %}
             </select>
+            
 
             <label for="user-password">Password:</label>
             <input type="password" id="user-password" required>
 
-            <button type="submit">Create User</button>
+            <button type="submit" class="btn-primary">Create Teacher</button>
         </form>
+
+
+        <!-- 👥 Coordinator Form (Hidden by default) -->
+<form id="coordinator-form" class="hidden">
+    <h4>👥 Coordinator Details</h4>
+    <label for="coord-name">Name:</label>
+    <input type="text" id="coord-name" required>
+
+    <label for="coord-email">Email:</label>
+    <input type="email" id="coord-email">
+
+    <label for="coord-phone">Phone Number:</label>
+    <input type="text" id="coord-phone">
+
+    <label for="coord-id">Coordinator ID:</label>
+    <input type="text" id="coord-id" required>
+
+    <label for="coord-department">Department:</label>
+    <select id="coord-department" {% if not request.user.coordinator.is_super %}disabled{% endif %}>
+        {% if request.user.is_super %}
+            <option value="">-- Select Department --</option>
+            {% for dept in departments %}
+                <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+        {% else %}
+            <option value="{{ request.user.department.id }}">{{ request.user.department.name }}</option>
+        {% endif %}
+    </select>
+
+    <label for="coord-password">Password:</label>
+    <input type="password" id="coord-password" required>
+
+    <button type="submit" class="btn-primary">Update Coordinator</button>
+</form>
+
     </div>
 </div>
 

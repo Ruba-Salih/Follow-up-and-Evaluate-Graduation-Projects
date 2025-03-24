@@ -122,23 +122,48 @@ class ManageAccountsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """
-         Retrieve all users (both Students & Normal Users)
-        """
-        users = User.objects.filter(is_staff=False, is_superuser=False)  # ✅ Exclude admin users
+        user = request.user
 
-        if request.headers.get('Accept') == 'application/json':
+        if hasattr(user, "coordinator"):
+            if user.coordinator.is_super:
+                college_departments = Department.objects.filter(college=user.department.college)
+                users = User.objects.filter(
+                    is_staff=False,
+                    is_superuser=False,
+                    department__in=college_departments
+                ).exclude(coordinator__is_super=True)
+                departments = college_departments
+            else:
+
+                users = User.objects.filter(
+                    is_staff=False,
+                    is_superuser=False,
+                    department=user.department
+                ).exclude(coordinator__is_super=True)
+                departments = [user.department]
+        else:
+            return Response({"error": "Only coordinators can view users."}, status=403)
+
+        if request.headers.get("Accept") == "application/json":
             serialized_users = UserSerializer(users, many=True).data
-            return Response({"users": serialized_users}, status=200)
+            return Response({
+                "users": serialized_users,
+                "departments": [{"id": dept.id, "name": dept.name} for dept in departments],
+                "is_super": hasattr(user, "coordinator") and user.coordinator.is_super
+            })
 
-        return render(request, "coordinator/manage_accounts.html", {"users": users})
+        return render(request, "coordinator/manage_accounts.html", {
+            "users": users,
+            "departments": departments,
+            "is_super": hasattr(user, "coordinator") and user.coordinator.is_super
+        })
 
     def post(self, request):
         """
          Create a new user (Student or Normal User)
         """
         user = request.user
-        if not isinstance(user, Coordinator):
+        if not hasattr(user, "coordinator"):
             return Response({"error": "Only Coordinators can create user accounts."}, status=403)
 
         data = request.data
@@ -150,9 +175,15 @@ class ManageAccountsView(APIView):
 
         if not username or not password or not role:
             return Response({"error": "Username, password, and role are required."}, status=400)
+        
+        if User.objects.filter(username=username).exists():
+            return Response({"error": "Username already exists."}, status=400)
 
         department_id = data.get("department_id")
-        department = Department.objects.filter(id=department_id).first() if department_id else None
+        if hasattr(user, "coordinator") and not user.coordinator.is_super:
+            department = user.department
+        else:
+            department = Department.objects.filter(id=department_id).first() if department_id else None
 
         if role == "student":
             student_id = data.get("student_id")
@@ -160,6 +191,12 @@ class ManageAccountsView(APIView):
 
             if not student_id or not sitting_number:
                 return Response({"error": "Student ID and Sitting Number are required for students."}, status=400)
+            
+            if Student.objects.filter(student_id=student_id).exists():
+                return Response({"error": "University number (Student ID) already exists."}, status=400)
+
+            if Student.objects.filter(sitting_number=sitting_number).exists():
+                return Response({"error": "Sitting number already exists."}, status=400)
 
             new_user = Student.objects.create_user(
                 username=username, email=email, password=password, phone_number=phone_number, department=department
@@ -183,7 +220,7 @@ class ManageAccountsView(APIView):
          Update a user (Only Coordinators can update users)
         """
         user = request.user
-        if not isinstance(user, Coordinator):
+        if not hasattr(user, "coordinator"):
             return Response({"error": "Only Coordinators can update user accounts."}, status=403)
 
         data = request.data
@@ -208,7 +245,7 @@ class ManageAccountsView(APIView):
          Delete a user (Only Coordinators can delete users)
         """
         user = request.user
-        if not isinstance(user, Coordinator):
+        if not hasattr(user, "coordinator"):
             return Response({"error": "Only Coordinators can delete user accounts."}, status=403)
 
         user_obj = get_object_or_404(User, id=user_id)

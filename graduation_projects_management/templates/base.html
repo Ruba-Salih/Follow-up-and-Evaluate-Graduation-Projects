@@ -6,9 +6,26 @@
     <title>{% block title %}My App{% endblock %}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="{% static 'js/utils/base.js' %}"></script>
     {% block head %}
     {% endblock %}
 </head>
+<!-- Put just before </body> in base.html -->
+<div id="custom-alert" class="custom-alert hidden">
+    <span id="alert-message"></span>
+    <button id="alert-close">×</button>
+</div>
+
+<div id="global-confirm" class="global-confirm hidden">
+    <div class="confirm-box">
+        <p id="confirm-message">Are you sure?</p>
+        <div class="confirm-buttons">
+            <button id="confirm-yes" class="btn yes">Yes</button>
+            <button id="confirm-no" class="btn no">No</button>
+        </div>
+    </div>
+</div>
+
 <body>
 
     <main>

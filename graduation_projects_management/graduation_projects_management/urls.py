@@ -22,6 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("", views.land, name="land"),
     path("api/users/", include("users.urls")),
+    path("api/university/", include("university.urls")),
 
     path("coordinator/home/", views.coordinator_home, name="coordinator-home"),
     path("student/home/", views.student_home, name="student-home"),
