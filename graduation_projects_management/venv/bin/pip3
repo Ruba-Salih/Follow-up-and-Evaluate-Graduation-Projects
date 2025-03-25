@@ -1,4 +1,4 @@
-#!/mnt/c/MemanFiles/Graduation-project-management-system/graduation_projects_management/venv/bin/python3
+#!/mnt/c/MemanFiles/Graduation-project-management-system/graduation_projects_management/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
