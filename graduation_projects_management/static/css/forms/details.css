@@ -1,0 +1,83 @@
+/* Centered Form Container */
+.container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Headings */
+h2, h3 {
+    text-align: center;
+    color: #333;
+}
+
+/* Labels */
+label {
+    display: block;
+    font-weight: bold;
+    margin-top: 15px;
+    text-align: left;
+}
+
+/* Input Fields */
+input, select {
+    width: 90%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Placeholder Styling */
+input::placeholder {
+    font-size: 14px;
+    text-align: left;
+    color: #888;
+}
+
+/* Subcategories */
+.subcategory {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Buttons */
+.btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 15px;
+    margin: 10px auto;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    display: block;
+    width: 50%;
+    text-align: center;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+/* Align Add Another Subcategory and Submit Buttons */
+#add-subcategory, button[type="submit"] {
+    margin: 15px auto;
+    display: block;
+}
+
+/* Align select dropdown */
+select {
+    appearance: none;
+    background: white;
+    cursor: pointer;
+}

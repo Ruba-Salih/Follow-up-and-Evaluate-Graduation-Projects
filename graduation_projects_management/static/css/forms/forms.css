@@ -1,0 +1,173 @@
+/* ===== General Styling ===== */
+body {
+    font-family: Arial, sans-serif;
+    background: #f8f9fa;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== Container Styling ===== */
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* ===== Headings ===== */
+h2, h3 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+/* ===== Form Styling ===== */
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: left;
+    padding: 20px;
+}
+
+form p {
+    width: 100%;
+    max-width: 500px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+/* ===== Space Above Table ===== */
+.create-form-container {
+    margin-bottom: 30px;
+}
+
+/* ===== Table Styling (Centered & Compact) ===== */
+.table-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 30px;
+}
+
+/* Center the table and make it a bit narrower */
+table {
+    width: 80%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    margin: 0 auto;
+}
+
+th, td {
+    padding: 12px 18px;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background: #a63026;
+    color: white;
+    font-size: 16px;
+    text-align: center;
+}
+
+/* Adjust column sizes */
+th:nth-child(1), td:nth-child(1) {
+    width: 35%;
+}
+
+th:nth-child(2), td:nth-child(2) {
+    width: 25%;
+}
+
+/* ===== Buttons ===== */
+/* General button styling */
+.btn {
+    display: inline-block;
+    padding: 10px 15px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+    border: none;
+    margin: 5px;
+}
+
+/* Create button styling */
+.create-btn {
+    background: #a63026;
+    color: white;
+}
+
+/* Create button hover effect */
+.create-btn:hover {
+    background: #862320;
+}
+
+/* View and Edit buttons: rectangular, with slightly smaller height */
+.view-btn, .edit-btn {
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    transition: 0.3s ease-in-out;
+    display: inline-block;
+    cursor: pointer;
+}
+
+/* Button Colors */
+.view-btn {
+    background: #3498db;
+    color: white;
+}
+
+.edit-btn {
+    background: #f39c12;
+    color: white;
+}
+
+.view-btn:hover, .edit-btn:hover {
+    opacity: 0.8;
+}
+
+/* Adjust button alignment in action column */
+td:nth-child(2) {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* ===== Responsive Design (Mobile) ===== */
+@media (max-width: 768px) {
+    .container {
+        width: 90%;
+    }
+    table {
+        width: 90%;
+    }
+    table, th, td {
+        font-size: 14px;
+        padding: 10px;
+    }
+    td:nth-child(2) {
+        flex-direction: column;
+        align-items: center;
+    }
+    .view-btn, .edit-btn {
+        width: 100%;
+    }
+}
