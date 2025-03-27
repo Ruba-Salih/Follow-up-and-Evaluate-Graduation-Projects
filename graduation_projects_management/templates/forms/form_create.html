@@ -1,107 +1,43 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create Evaluation Form{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/forms/create.css' %}">
+{% endblock %}
 
 {% block content %}
-<h2>Create New Evaluation Form</h2>
 
-<form id="evaluation-form">
-    <label>Form Name:</label>
-    <input type="text" id="form-name" required>
+{% include "navbar.html" %}
+<div class="form-container">
+    <h2>Create New Evaluation Form</h2>
 
-    <label for="target_role">Select Role:</label>
-    <select id="target_role" name="target_role">
-        {% for role in roles %}
-            <option value="{{ role.id }}">{{ role.name }}</option>
-        {% endfor %}
-    </select>
+    <form id="evaluation-form">
+        <label>Form Name:</label>
+        <input type="text" id="form-name" required>
 
-    <div id="main-categories">
-        <h3>Main Categories</h3>
-        <button type="button" onclick="addMainCategory()">Add Main Category</button>
-    </div>
+        <label for="target_role">Select Role:</label>
+        <select id="target_role" name="target_role">
+            {% for role in roles %}
+                <option value="{{ role.id }}">{{ role.name }}</option>
+            {% endfor %}
+        </select>
 
-    <button type="submit">Submit</button>
-</form>
+        <div id="main-categories-container">
+            <h3>Main Categories</h3>
+            <div id="main-categories"></div>
+        </div>
+
+        <button type="button" id="add-main-category" onclick="addMainCategory()">+ Add Main Category</button>
+
+        <button type="submit" class="submit-btn">Submit</button>
+    </form>
+</div>
 
 <script>
-    function addMainCategory() {
-        const container = document.getElementById("main-categories");
-        const count = container.getElementsByClassName("main-category").length + 1;
-
-        let div = document.createElement("div");
-        div.classList.add("main-category");
-        div.innerHTML = `
-            <h4>Main Category ${count}</h4>
-            <label>Text:</label> <input type="text" name="main_category_text" required>
-            <label>Weight:</label> <input type="number" name="main_category_weight" step="0.01" required>
-            <label>Grade Type:</label>
-            <select name="main_category_grade_type">
-                <option value="individual">Individual</option>
-                <option value="group">Group</option>
-            </select>
-            <button type="button" class="delete-main-category" onclick="deleteMainCategory(this)">Delete Main Category</button>
-            <div class="sub-categories">
-                <h5>Subcategories</h5>
-                <button type="button" onclick="addSubCategory(this)">Add Subcategory</button>
-            </div>
-        `;
-        container.appendChild(div);
-    }
-
-    function addSubCategory(button) {
-        const container = button.parentElement;
-        let div = document.createElement("div");
-        div.innerHTML = `
-            <label>Subcategory:</label> 
-            <input type="text" name="sub_category_text" required>
-            <button type="button" class="delete-subcategory" onclick="deleteSubCategory(this)">Delete Subcategory</button> <!-- Added delete button for subcategory -->
-        `;
-        container.appendChild(div);
-    }
-
-    // Function to delete a main category
-    function deleteMainCategory(button) {
-        button.parentElement.remove(); // Removes the main category div
-    }
-
-    // Function to delete a subcategory
-    function deleteSubCategory(button) {
-        button.parentElement.remove(); // Removes the subcategory div
-    }
-
-    document.getElementById("evaluation-form").onsubmit = function (e) {
-        e.preventDefault();
-
-        let formData = {
-            name: document.getElementById("form-name").value,
-            target_role: document.getElementById("target_role").value, 
-            main_categories: []
-        };
-
-        document.querySelectorAll(".main-category").forEach((category, index) => {
-            let mainCategory = {
-                number: index + 1,
-                text: category.querySelector("[name='main_category_text']").value,
-                weight: parseFloat(category.querySelector("[name='main_category_weight']").value),
-                grade_type: category.querySelector("[name='main_category_grade_type']").value,
-                sub_categories: []
-            };
-
-            category.querySelectorAll(".sub-categories input[name='sub_category_text']").forEach(sub => {
-                mainCategory.sub_categories.push({ text: sub.value });
-            });
-
-            formData.main_categories.push(mainCategory);
-        });
-
-        fetch("{% url 'form:create_evaluation_form' %}", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData)
-        }).then(response => response.json())
-          .then(data => {
-              alert(data.message || "Form created successfully!");
-              window.location.href = "{% url 'form:evaluation_form_list' %}";
-          });
-    };
+    var createFormUrl = "{% url 'form:create_evaluation_form' %}";
+    var formListUrl = "{% url 'form:evaluation_form_list' %}";
 </script>
+<script src="{% static 'js/forms/create.js' %}"></script>
+
 {% endblock %}

@@ -1,14 +1,34 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Evaluation Forms{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/forms/forms.css' %}">
+{% endblock %}
 
 {% block content %}
-<h2>Evaluation Forms</h2>
-<ul>
-    {% for form in forms %}
-    <li>
-        <a href="{% url 'form:evaluation_form_detail' form.id %}">{{ form.name }}</a>
-        <a href="{% url 'form:edit_evaluation_form' form.id %}">Edit</a>
-    </li>
-    {% endfor %}
-</ul>
-<a href="{% url 'form:create_evaluation_form' %}">Create New Form</a>
+{% include "navbar.html" %}
+
+<div class="form-container">
+    <h2>Evaluation Forms</h2>
+
+    {% if forms %}
+        <div class="forms-grid">
+            {% for form in forms %}
+                <div class="form-card">
+                    <h3>{{ form.name }}</h3>
+                    <div class="form-actions">
+                        <a href="{% url 'form:evaluation_form_detail' form.id %}" class="btn view-btn">🔍 View</a>
+                        <a href="{% url 'form:edit_evaluation_form' form.id %}" class="btn edit-btn">✏️ Edit</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="no-data">No evaluation forms found.</p>
+    {% endif %}
+
+    <a href="{% url 'form:create_evaluation_form' %}" class="btn create-btn">+ Create New Form</a>
+</div>
 {% endblock %}

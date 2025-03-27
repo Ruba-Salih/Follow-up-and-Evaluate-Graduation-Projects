@@ -1,27 +1,41 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>{{ form.name }}</h2>
-<ul>
-    {% for main_category in form.main_categories.all %}
-    <li>
-        <strong>{{ main_category.number }}. {{ main_category.text }}</strong> ({{ main_category.grade_type }}, Weight: {{ main_category.weight }})
-        <ul>
-            {% for sub_category in main_category.sub_categories.all %}
-            <li>{{ sub_category.text }}</li>
-            {% endfor %}
-        </ul>
-    </li>
-    {% endfor %}
-</ul>
-<button id="delete-btn" data-id="{{ form.id }}" style="background-color: red; color: white;">
-    Delete Form
-</button>
-<a href="{% url 'form:edit_evaluation_form' form.id %}">Edit Form</a>
+{% include "navbar.html" %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/forms/details.css' %}">
+
+<div class="container">
+    <h2 class="form-title">{{ form.name }}</h2>
+
+    <div class="categories-container">
+        {% for main_category in form.main_categories.all %}
+        <div class="category-box">
+            <div class="category-header">
+                <span class="category-number">{{ main_category.number }}.</span>
+                <span class="category-text">{{ main_category.text }}</span>
+                <span class="category-type">({{ main_category.grade_type }})</span>
+                <span class="category-weight">Weight: {{ main_category.weight }}</span>
+            </div>
+            <ul class="subcategory-list">
+                {% for sub_category in main_category.sub_categories.all %}
+                <li class="subcategory-item">{{ sub_category.text }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="buttons-container">
+        <button id="delete-btn" data-id="{{ form.id }}" class="delete-btn">🗑 Delete Form</button>
+        <a href="{% url 'form:edit_evaluation_form' form.id %}" class="edit-btn">✏️ Edit Form</a>
+    </div>
+</div>
+
 <script>
     document.getElementById("delete-btn").addEventListener("click", function() {
         let formId = this.getAttribute("data-id");
-    
+
         if (confirm("Are you sure you want to delete this form?")) {
             fetch(`/api/form/delete/${formId}/`, {
                 method: "DELETE",
@@ -30,11 +44,10 @@
             .then(response => response.json())
             .then(data => {
                 alert(data.message);
-                window.location.href = "{% url 'form:evaluation_form_list' %}"; // Redirect to list
+                window.location.href = "{% url 'form:evaluation_form_list' %}";
             })
             .catch(error => console.error("Error:", error));
         }
     });
 </script>
-    
 {% endblock %}

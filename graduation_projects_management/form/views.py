@@ -46,7 +46,8 @@ def edit_evaluation_form(request, form_id):
             return JsonResponse({'message': 'Evaluation form updated successfully!'}, status=200)
         return JsonResponse(serializer.errors, status=400)
 
-    return render(request, 'forms/edit.html', {'form': form})
+    return render(request, 'forms/edit.html', {'roles': roles, 'form': form})
+
 
 @csrf_exempt
 def delete_evaluation_form(request, form_id):

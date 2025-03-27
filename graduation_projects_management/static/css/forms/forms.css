@@ -1,173 +1,112 @@
-/* ===== General Styling ===== */
-body {
-    font-family: Arial, sans-serif;
-    background: #f8f9fa;
-    margin: 0;
-    padding: 0;
-}
 
-/* ===== Container Styling ===== */
-.container {
-    max-width: 1000px;
-    margin: 40px auto;
-    padding: 30px;
+/* Container Styling */
+.form-container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+    border-radius: 10px;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
-/* ===== Headings ===== */
-h2, h3 {
+/* Page Title */
+h2 {
+    color: #a63026;
+    margin-bottom: 20px;
+}
+
+/* Forms Grid */
+.forms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    justify-content: center;
+}
+
+/* Individual Form Card */
+.form-card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.form-card h3 {
     color: #333;
-    margin-bottom: 15px;
-}
-
-/* ===== Form Styling ===== */
-form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: left;
-    padding: 20px;
-}
-
-form p {
-    width: 100%;
-    max-width: 500px;
-}
-
-input, select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 14px;
     margin-bottom: 10px;
 }
 
-/* ===== Space Above Table ===== */
-.create-form-container {
-    margin-bottom: 30px;
+/* Form Card Hover Effect */
+.form-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
 }
 
-/* ===== Table Styling (Centered & Compact) ===== */
-.table-container {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    margin-top: 30px;
-}
-
-/* Center the table and make it a bit narrower */
-table {
-    width: 80%;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    margin: 0 auto;
-}
-
-th, td {
-    padding: 12px 18px;
-    border-bottom: 1px solid #ddd;
-}
-
-th {
-    background: #a63026;
-    color: white;
-    font-size: 16px;
-    text-align: center;
-}
-
-/* Adjust column sizes */
-th:nth-child(1), td:nth-child(1) {
-    width: 35%;
-}
-
-th:nth-child(2), td:nth-child(2) {
-    width: 25%;
-}
-
-/* ===== Buttons ===== */
-/* General button styling */
+/* Buttons Styling */
 .btn {
     display: inline-block;
-    padding: 10px 15px;
-    border-radius: 6px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: 0.3s ease-in-out;
     text-decoration: none;
-    font-size: 16px;
-    font-weight: bold;
-    transition: 0.3s;
     cursor: pointer;
-    border: none;
     margin: 5px;
 }
 
-/* Create button styling */
-.create-btn {
-    background: #a63026;
-    color: white;
-}
-
-/* Create button hover effect */
-.create-btn:hover {
-    background: #862320;
-}
-
-/* View and Edit buttons: rectangular, with slightly smaller height */
-.view-btn, .edit-btn {
-    padding: 8px 20px;
-    border-radius: 4px;
-    font-size: 14px;
-    font-weight: bold;
-    transition: 0.3s ease-in-out;
-    display: inline-block;
-    cursor: pointer;
-}
-
-/* Button Colors */
 .view-btn {
-    background: #3498db;
+    background-color: #0275d8;
     color: white;
 }
 
 .edit-btn {
-    background: #f39c12;
+    background-color: #f0ad4e;
     color: white;
 }
 
-.view-btn:hover, .edit-btn:hover {
-    opacity: 0.8;
+.create-btn {
+    background-color: #a63026;
+    color: white;
+    padding: 12px 20px;
+    margin-top: 15px;
+    display: inline-block;
+    font-size: 16px;
+    text-align: center;
 }
 
-/* Adjust button alignment in action column */
-td:nth-child(2) {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+/* View Button (Brown) */
+.view-btn {
+    background-color: #d9b38c;
+    color: white;
 }
 
-/* ===== Responsive Design (Mobile) ===== */
+/* Edit Button (Beige) */
+.edit-btn {
+    background-color: #814c2f; 
+    color: white;
+}
+/* Button Hover Effects */
+.btn:hover {
+    opacity: 0.85;
+}
+
+/* No Data Message */
+.no-data {
+    color: #777;
+    font-style: italic;
+}
+
+
+/* Responsive Design */
 @media (max-width: 768px) {
-    .container {
+    .form-container {
         width: 90%;
     }
-    table {
-        width: 90%;
-    }
-    table, th, td {
-        font-size: 14px;
-        padding: 10px;
-    }
-    td:nth-child(2) {
-        flex-direction: column;
-        align-items: center;
-    }
-    .view-btn, .edit-btn {
-        width: 100%;
+
+    .forms-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
 }
