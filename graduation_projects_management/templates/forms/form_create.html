@@ -7,6 +7,13 @@
     <label>Form Name:</label>
     <input type="text" id="form-name" required>
 
+    <label for="target_role">Select Role:</label>
+    <select id="target_role" name="target_role">
+        {% for role in roles %}
+            <option value="{{ role.id }}">{{ role.name }}</option>
+        {% endfor %}
+    </select>
+
     <div id="main-categories">
         <h3>Main Categories</h3>
         <button type="button" onclick="addMainCategory()">Add Main Category</button>
@@ -25,12 +32,13 @@
         div.innerHTML = `
             <h4>Main Category ${count}</h4>
             <label>Text:</label> <input type="text" name="main_category_text" required>
-            <label>Weight:</label> <input type="number" name="main_category_weight" required>
+            <label>Weight:</label> <input type="number" name="main_category_weight" step="0.01" required>
             <label>Grade Type:</label>
             <select name="main_category_grade_type">
                 <option value="individual">Individual</option>
                 <option value="group">Group</option>
             </select>
+            <button type="button" class="delete-main-category" onclick="deleteMainCategory(this)">Delete Main Category</button>
             <div class="sub-categories">
                 <h5>Subcategories</h5>
                 <button type="button" onclick="addSubCategory(this)">Add Subcategory</button>
@@ -42,8 +50,22 @@
     function addSubCategory(button) {
         const container = button.parentElement;
         let div = document.createElement("div");
-        div.innerHTML = `<label>Subcategory:</label> <input type="text" name="sub_category_text" required>`;
+        div.innerHTML = `
+            <label>Subcategory:</label> 
+            <input type="text" name="sub_category_text" required>
+            <button type="button" class="delete-subcategory" onclick="deleteSubCategory(this)">Delete Subcategory</button> <!-- Added delete button for subcategory -->
+        `;
         container.appendChild(div);
+    }
+
+    // Function to delete a main category
+    function deleteMainCategory(button) {
+        button.parentElement.remove(); // Removes the main category div
+    }
+
+    // Function to delete a subcategory
+    function deleteSubCategory(button) {
+        button.parentElement.remove(); // Removes the subcategory div
     }
 
     document.getElementById("evaluation-form").onsubmit = function (e) {
@@ -51,6 +73,7 @@
 
         let formData = {
             name: document.getElementById("form-name").value,
+            target_role: document.getElementById("target_role").value, 
             main_categories: []
         };
 

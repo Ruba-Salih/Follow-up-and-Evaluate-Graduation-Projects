@@ -18,13 +18,16 @@
             <input type="text" name="main_category_text" value="{{ main_category.text }}" required>
             
             <label>Weight:</label> 
-            <input type="number" name="main_category_weight" value="{{ main_category.weight }}" required>
+            <input type="number" name="main_category_weight" value="{{ main_category.weight }}" step="0.01" required>
 
             <label>Grade Type:</label>
             <select name="main_category_grade_type">
                 <option value="individual" {% if main_category.grade_type == 'individual' %}selected{% endif %}>Individual</option>
                 <option value="group" {% if main_category.grade_type == 'group' %}selected{% endif %}>Group</option>
             </select>
+
+            <button type="button" class="delete-main-category" data-id="{{ main_category.id }}">Delete Main Category</button>
+
 
             <div class="sub-categories">
                 <h5>Subcategories</h5>
@@ -34,6 +37,7 @@
                 <div>
                     <label>Subcategory:</label> 
                     <input type="text" name="sub_category_text" value="{{ sub_category.text }}" required>
+                    <button type="button" class="delete-subcategory" data-id="{{ sub_category.id }}">Delete</button>
                 </div>
                 {% endfor %}
             </div>
@@ -54,7 +58,7 @@
         div.innerHTML = `
             <h4>Main Category ${count}</h4>
             <label>Text:</label> <input type="text" name="main_category_text" required>
-            <label>Weight:</label> <input type="number" name="main_category_weight" required>
+            <label>Weight:</label> <input type="number" name="main_category_weight" step="0.01" required>
             <label>Grade Type:</label>
             <select name="main_category_grade_type">
                 <option value="individual">Individual</option>
@@ -109,5 +113,71 @@
               window.location.href = "{% url 'form:evaluation_form_list' %}";
           });
     };
+
+    document.addEventListener("DOMContentLoaded", function () {
+    // DELETE MAIN CATEGORY
+    document.querySelectorAll(".delete-main-category").forEach(button => {
+        button.addEventListener("click", function () {
+            let categoryId = this.getAttribute("data-id");
+            if (!categoryId) {
+                console.error("Main category ID is missing!");
+                return;
+            }
+
+            if (confirm("Are you sure you want to delete this main category and all its subcategories?")) {
+                fetch("{% url 'form:delete_main_category' 0 %}".replace('0', categoryId), {
+                    method: "DELETE",
+                    headers: { "X-CSRFToken": getCSRFToken(), "Content-Type": "application/json" }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        this.closest(".main-category").remove();
+                    } else {
+                        alert("Failed to delete main category.");
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            }
+        });
+    });
+
+    // DELETE SUBCATEGORY
+    document.querySelectorAll(".delete-subcategory").forEach(button => {
+        button.addEventListener("click", function () {
+            let subCategoryId = this.getAttribute("data-id");
+            if (!subCategoryId) {
+                console.error("Subcategory ID is missing!");
+                return;
+            }
+
+            if (confirm("Are you sure you want to delete this subcategory?")) {
+                fetch("{% url 'form:delete_subcategory' 0 %}".replace('0', subCategoryId), {
+                    method: "DELETE",
+                    headers: { "X-CSRFToken": getCSRFToken(), "Content-Type": "application/json" }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        this.closest(".sub-category").remove();
+                    } else {
+                        alert("Failed to delete subcategory.");
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            }
+        });
+    });
+});
+
+// CSRF Token Helper Function
+function getCSRFToken() {
+    return document.cookie.split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+}
+
 </script>
 {% endblock %}

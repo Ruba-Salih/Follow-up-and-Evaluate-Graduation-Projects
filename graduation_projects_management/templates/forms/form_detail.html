@@ -14,5 +14,27 @@
     </li>
     {% endfor %}
 </ul>
+<button id="delete-btn" data-id="{{ form.id }}" style="background-color: red; color: white;">
+    Delete Form
+</button>
 <a href="{% url 'form:edit_evaluation_form' form.id %}">Edit Form</a>
+<script>
+    document.getElementById("delete-btn").addEventListener("click", function() {
+        let formId = this.getAttribute("data-id");
+    
+        if (confirm("Are you sure you want to delete this form?")) {
+            fetch(`/api/form/delete/${formId}/`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                window.location.href = "{% url 'form:evaluation_form_list' %}"; // Redirect to list
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    });
+</script>
+    
 {% endblock %}
