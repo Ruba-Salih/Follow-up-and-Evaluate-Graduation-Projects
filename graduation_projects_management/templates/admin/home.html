@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Home{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+
+{% include "navbar.html" %} 
+
+<div class="container">
+
+    <div class="quick-links">
+        <div class="link-item"><a href="{% url 'manage-colleges' %}">🏫 Mange Colleges</a></div>
+        <div class="link-item"><a href="{% url 'manage-coordinators' %}">🧑‍💼 Mange Super Coordinators</a></div>
+    </div>
+</div>
+
+{% endblock %}

@@ -33,6 +33,7 @@ th, td {
 th {
     background: #a63026;
     color: white;
+    text-align: center;
 }
 
 td {
@@ -50,17 +51,6 @@ td {
     cursor: pointer;
 }
 
-
-.btn {
-    color: white;
-    margin-top: 10px;
-    border: none;
-    padding: 10px 15px;
-}
-
-.btn:hover, .edit-btn:hover, .delete-btn:hover {
-    opacity: 0.8;
-}
 
 /* ✅ Fix modal visibility */
 .modal {

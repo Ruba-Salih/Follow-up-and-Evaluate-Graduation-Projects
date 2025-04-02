@@ -8,13 +8,22 @@ urlpatterns = [
 
     path("logout/", views.UserLogoutAPIView.as_view(), name="logout"),
 
+    # home pages
     path("home/", views.home_redirect_view, name="home"),
+    path("admin-home/home/", views.admin_home, name="admin-home"),
     path("coordinator/home/", views.coordinator_home, name="coordinator-home"),
     path("student/home/", views.student_home, name="student-home"),
     path("teacher/home/", views.teacher_home, name="teacher-home"),
 
+    # dashbord pages
     path("coordinator/dashboard/", views.coordinator_dashboard, name="coordinator-dashboard"),
 
+    # Mangs pages
+    # for admin
+    path("manage-coordinators/", views.SuperCoordinatorView.as_view(), name='manage-coordinators'),
+    path("manage-coordinators/<int:pk>/", views.SuperCoordinatorView.as_view()),
+
+    # for coord
     path("manage-accounts/", views.ManageAccountsView.as_view(), name="manage-accounts"),
     path("manage-accounts/<int:user_id>/", views.ManageAccountsView.as_view(), name="edit-user"),
     path("manage-accounts/delete/<int:user_id>/", views.ManageAccountsView.as_view(), name="delete-user"),

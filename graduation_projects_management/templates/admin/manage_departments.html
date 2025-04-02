@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Manage Departments{% endblock %}
+{% block content %}
+<div class="container">
+    <h2>🏢 Manage Departments</h2>
+    <form method="POST">{% csrf_token %}
+        <input type="text" name="name" placeholder="New Department Name" required>
+        <select name="college_id">
+            {% for college in colleges %}
+                <option value="{{ college.id }}">{{ college.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Add Department</button>
+    </form>
+    <ul>
+        {% for dept in departments %}
+            <li>{{ dept.name }} ({{ dept.college.name }})</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
