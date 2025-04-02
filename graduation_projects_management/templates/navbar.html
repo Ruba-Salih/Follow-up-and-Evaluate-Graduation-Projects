@@ -12,7 +12,14 @@
 
     <ul class="nav-links">
         {% if user.is_authenticated %}
-            {% if user.coordinator %}
+            {% if user.admin %}
+                <!-- Navbar for Admin -->
+                <li><a href="#">Profile</a></li>
+                <li><a href="#">Notifications</a></li>
+                <li><a href="{% url 'coordinator-dashboard' %}">Dashboard</a></li>
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+
+            {% elif user.coordinator %}
                 <!-- Navbar for Coordinator -->
                 <li><a href="#">Profile</a></li>
                 <li><a href="#">Notifications</a></li>

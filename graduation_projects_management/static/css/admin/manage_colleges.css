@@ -1,4 +1,3 @@
-
 .container {
     max-width: 1300px;
     margin: 20px auto;
@@ -41,7 +40,7 @@ td {
 }
 
 /* ===== Buttons ===== */
-.edit-btn, .delete-btn, .btn {
+.edit-btn, .delete-btn, .btn, .btn-secondary, .btn-primary {
     text-decoration: none;
     padding: 8px 12px;
     border-radius: 4px;
@@ -49,12 +48,12 @@ td {
     transition: 0.3s ease-in-out;
     display: inline-block;
     cursor: pointer;
+    border: none;
 }
 
-
-/* ✅ Fix modal visibility */
+/* modal visibility */
 .modal {
-    display: none;  /* Fix: Hide initially */
+    display: none;
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -77,36 +76,28 @@ td {
     text-align: center;
 }
 
-/* ✅ Hide forms initially */
+/* ✅ Hide elements initially */
 .hidden {
     display: none !important;
 }
 
-/* ✅ Improve dropdown appearance */
-#user-role {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-}
-
-/* ===== Searh Styling ===== */
+/* ===== Search & Filter Styling ===== */
 .search-filter-bar {
     display: flex;
     gap: 10px;
     margin: 20px 0;
     align-items: center;
+    justify-content: center;
 }
 
-#search-input,
-#role-filter {
+#college-search {
     padding: 8px;
     font-size: 14px;
     border-radius: 4px;
     border: 1px solid #ccc;
     flex: 1;
+    max-width: 400px;
 }
-
 
 /* ===== Form Styling ===== */
 form {
@@ -139,23 +130,30 @@ button {
     margin-top: 15px;
 }
 
+/* ===== Department Group Styling ===== */
+.department-group {
+    margin-bottom: 10px;
+}
 
 /* === Responsive Design === */
 @media (max-width: 768px) {
     .container {
         width: 90%;
+        padding: 10px;
+        overflow-x: auto;
     }
 
     .modal-content {
-        width: 90%;
+        width: 100%;
+        max-height: 90vh;
     }
 
     table, th, td {
-        font-size: 14px;
+        font-size: 13px;
     }
 
     .btn, .edit-btn, .delete-btn {
         padding: 6px 10px;
-        font-size: 14px;
+        font-size: 13px;
     }
 }
