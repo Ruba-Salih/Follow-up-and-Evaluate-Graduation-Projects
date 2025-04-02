@@ -1,24 +1,37 @@
 from django.contrib import admin
-from .models import EvaluationForm, SubCategory, EditEvaluationForm
+from .models import EvaluationForm, MainCategory, SubCategory
+
+class SubCategoryInline(admin.TabularInline):
+    """Inline admin to allow adding subcategories within MainCategory."""
+    model = SubCategory
+    extra = 1  # Allows adding extra empty fields for subcategories
+
+class MainCategoryInline(admin.TabularInline):
+    """Inline admin to allow adding main categories within EvaluationForm."""
+    model = MainCategory
+    extra = 1  # Allows adding extra empty fields for main categories
+    inlines = [SubCategoryInline]  # Nesting subcategories inside main categories
 
 @admin.register(EvaluationForm)
 class EvaluationFormAdmin(admin.ModelAdmin):
-    list_display = ("form_id", "main_category_number", "main_category", "weight", "type_of_grade")
-    search_fields = ("main_category", "type_of_grade")
-    list_filter = ("type_of_grade",)
-    ordering = ("form_id",)
+    """Admin configuration for EvaluationForm."""
+    list_display = ('id', 'name', 'created_at')
+    search_fields = ('name',)
+    filter_horizontal = ('coordinators',)  # Better UI for selecting multiple coordinators
+    inlines = [MainCategoryInline]  # Allows adding main categories within the form admin
 
+@admin.register(MainCategory)
+class MainCategoryAdmin(admin.ModelAdmin):
+    """Admin configuration for MainCategory."""
+    list_display = ('id', 'number', 'text', 'weight', 'grade_type', 'evaluation_form')
+    list_filter = ('evaluation_form', 'grade_type')
+    search_fields = ('text',)
+    inlines = [SubCategoryInline]  # Allows adding subcategories within main category admin
 
 @admin.register(SubCategory)
 class SubCategoryAdmin(admin.ModelAdmin):
-    list_display = ("sub_category_id", "sub_category", "evaluation_form")
-    search_fields = ("sub_category",)
-    list_filter = ("evaluation_form",)
+    """Admin configuration for SubCategory."""
+    list_display = ('id', 'text', 'main_category')
+    search_fields = ('text',)
+    list_filter = ('main_category',)
 
-
-@admin.register(EditEvaluationForm)
-class EditEvaluationFormAdmin(admin.ModelAdmin):
-    list_display = ("coordinator", "evaluation_form", "updated_at")
-    search_fields = ("coordinator__username", "evaluation_form__form_id")
-    list_filter = ("updated_at",)
-    ordering = ("-updated_at",)

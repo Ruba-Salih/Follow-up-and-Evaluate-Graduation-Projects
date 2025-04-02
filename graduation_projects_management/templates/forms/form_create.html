@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create Evaluation Form{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/forms/create.css' %}">
+{% endblock %}
+
+{% block content %}
+
+{% include "navbar.html" %}
+<div class="form-container">
+    <h2>Create New Evaluation Form</h2>
+
+    <form id="evaluation-form">
+        <label>Form Name:</label>
+        <input type="text" id="form-name" required>
+
+        <label for="target_role">Select Role:</label>
+        <select id="target_role" name="target_role">
+            {% for role in roles %}
+                <option value="{{ role.id }}">{{ role.name }}</option>
+            {% endfor %}
+        </select>
+
+        <div id="main-categories-container">
+            <h3>Main Categories</h3>
+            <div id="main-categories"></div>
+        </div>
+
+        <button type="button" id="add-main-category" onclick="addMainCategory()">+ Add Main Category</button>
+
+        <button type="submit" class="submit-btn">Submit</button>
+    </form>
+</div>
+
+<script>
+    var createFormUrl = "{% url 'form:create_evaluation_form' %}";
+    var formListUrl = "{% url 'form:evaluation_form_list' %}";
+</script>
+<script src="{% static 'js/forms/create.js' %}"></script>
+
+{% endblock %}
