@@ -9,7 +9,7 @@ body {
 
 /* Global button styles */
 :root {
-    --button-color: #609f9f; /* Default blue */
+    --button-color: #a63026; /* Default blue */
     --button-hover-color: #4d8080; /* Hover effect */
     --button-text-color: white; /* Text color */
     --button-disabled-color: #cccccc; /* Disabled button */

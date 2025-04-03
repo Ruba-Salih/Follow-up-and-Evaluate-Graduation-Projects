@@ -128,7 +128,7 @@
             <label for="student-password">Password:</label>
             <input type="password" id="student-password" required>
 
-            <button type="submit" class="btn-primary">Create Student</button>
+            <button type="submit" class="btn-primary">Save Student</button>
         </form>
 
         <!-- ✅ Step 2: Normal User Form (HIDDEN BY DEFAULT) -->
@@ -159,7 +159,7 @@
             <label for="user-password">Password:</label>
             <input type="password" id="user-password" required>
 
-            <button type="submit" class="btn-primary">Create Teacher</button>
+            <button type="submit" class="btn-primary">Save Teacher</button>
         </form>
 
 
@@ -180,7 +180,7 @@
 
     <label for="coord-department">Department:</label>
     <select id="coord-department" {% if not request.user.coordinator.is_super %}disabled{% endif %}>
-        {% if request.user.is_super %}
+        {% if request.user.coordinator.is_super %}
             <option value="">-- Select Department --</option>
             {% for dept in departments %}
                 <option value="{{ dept.id }}">{{ dept.name }}</option>
@@ -193,7 +193,7 @@
     <label for="coord-password">Password:</label>
     <input type="password" id="coord-password" required>
 
-    <button type="submit" class="btn-primary">Update Coordinator</button>
+    <button type="submit" class="btn-primary">Save Coordinator</button>
 </form>
 
     </div>
