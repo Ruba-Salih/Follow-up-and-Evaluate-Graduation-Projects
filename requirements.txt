@@ -8,7 +8,7 @@ cffi==1.16.0
 charset-normalizer==3.3.2
 click==8.1.7
 contourpy==1.1.1
-cryptography==2.8
+cryptography==44.0.2
 cycler==0.12.1
 decorator==5.1.1
 Deprecated==1.2.14
@@ -60,5 +60,6 @@ typing-extensions==4.12.2
 tzdata==2024.2
 virtualenv==20.26.3
 werkzeug==3.0.3
+whitenoise==6.7.0
 wrapt==1.16.0
 zipp==3.19.2
