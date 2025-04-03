@@ -17,7 +17,7 @@ from pathlib import Path
 RENDER = os.environ.get('RENDER', False)
 
 if RENDER:
-    ALLOWED_HOSTS = ['Follow-up-and-Evaluate-Graduation-Projects.onrender.com']
+    ALLOWED_HOSTS = ['follow-up-and-evaluate-graduation.onrender.com']
 else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
