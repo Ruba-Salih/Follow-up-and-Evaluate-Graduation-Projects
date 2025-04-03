@@ -1,0 +1,181 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0px;
+    padding: 0;
+    background-color: #f7f0ed;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Global button styles */
+:root {
+    --button-color: #a63026; /* Default blue */
+    --button-hover-color: #4d8080; /* Hover effect */
+    --button-text-color: white; /* Text color */
+    --button-disabled-color: #cccccc; /* Disabled button */
+}
+
+button {
+    background-color: var(--button-color);
+    color: var(--button-text-color);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin: 5px 0;
+}
+
+button:hover {
+    background-color: var(--button-hover-color);
+}
+
+button:disabled {
+    background-color: var(--button-disabled-color);
+    cursor: not-allowed;
+}
+
+/* Optional: Additional styles for specific types of buttons */
+.btn-primary {
+    background-color: #a63026;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #681e18;
+}
+
+.btn-edit {
+    background-color: #d2b48c;
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #936c39;
+}
+
+.btn-delete {
+    background-color: #8b4513;
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #5a2d0c;
+}
+
+.btn-download {
+    background-color: #a3aeba;
+    color: white;
+}
+
+.btn-download:hover {
+    background-color: #7c8b9c;
+}
+
+/* Global alert styles */
+
+.custom-alert {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+    min-width: 300px;
+    max-width: 80%;
+    padding: 20px 30px;
+    
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    z-index: 9999;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease;
+}
+
+.custom-alert.success { background-color: #28a745; }
+.custom-alert.error { background-color: #dc3545; }
+.custom-alert.warning { background-color: #ddd; color: #333; }
+
+.custom-alert.hidden { display: none; }
+
+#alert-message {
+    flex-grow: 1;
+}
+
+#alert-close {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 15px;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translate(-50%, -60%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+/* Global confirm styles */
+
+.global-confirm {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.global-confirm.hidden {
+    display: none;
+}
+
+.confirm-box {
+    background: #fff;
+    padding: 25px 35px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+}
+
+.confirm-box p {
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.confirm-buttons {
+    display: flex;
+    justify-content: space-around;
+}
+
+.confirm-buttons .btn {
+    padding: 8px 18px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.confirm-buttons .yes {
+    background-color: #28a745;
+    color: white;
+}
+
+.confirm-buttons .no {
+    background-color: #dc3545;
+    color: white;
+}

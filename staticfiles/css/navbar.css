@@ -1,0 +1,55 @@
+/* === Navbar Styling === */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #800000; /* Consistent Dark Theme */
+
+    padding: 5px 30px;
+    color: white;
+    border-radius: 0px; /* Matches Home Page Style */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.navbar .logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 15px;
+    margin: 0;
+    padding: 0;
+}
+
+
+.nav-links li {
+    margin: 0;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 20px;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover {
+    color: #4CAF50; /* Matches Quick Links Hover */
+}
+
+/* === Responsive Navbar === */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        gap: 10px;
+    }
+}

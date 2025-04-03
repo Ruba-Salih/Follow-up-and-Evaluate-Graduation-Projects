@@ -1,0 +1,112 @@
+
+/* Container Styling */
+.form-container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Page Title */
+h2 {
+    color: #a63026;
+    margin-bottom: 20px;
+}
+
+/* Forms Grid */
+.forms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    justify-content: center;
+}
+
+/* Individual Form Card */
+.form-card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.form-card h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* Form Card Hover Effect */
+.form-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Buttons Styling */
+.btn {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: 0.3s ease-in-out;
+    text-decoration: none;
+    cursor: pointer;
+    margin: 5px;
+}
+
+.view-btn {
+    background-color: #0275d8;
+    color: white;
+}
+
+.edit-btn {
+    background-color: #f0ad4e;
+    color: white;
+}
+
+.create-btn {
+    background-color: #a63026;
+    color: white;
+    padding: 12px 20px;
+    margin-top: 15px;
+    display: inline-block;
+    font-size: 16px;
+    text-align: center;
+}
+
+/* View Button (Brown) */
+.view-btn {
+    background-color: #d9b38c;
+    color: white;
+}
+
+/* Edit Button (Beige) */
+.edit-btn {
+    background-color: #814c2f; 
+    color: white;
+}
+/* Button Hover Effects */
+.btn:hover {
+    opacity: 0.85;
+}
+
+/* No Data Message */
+.no-data {
+    color: #777;
+    font-style: italic;
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form-container {
+        width: 90%;
+    }
+
+    .forms-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
