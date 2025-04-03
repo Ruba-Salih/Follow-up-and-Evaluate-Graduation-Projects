@@ -17,7 +17,7 @@ from pathlib import Path
 RENDER = os.environ.get('RENDER', False)
 
 if RENDER:
-    ALLOWED_HOSTS = ['your-app.onrender.com']
+    ALLOWED_HOSTS = ['Follow-up-and-Evaluate-Graduation-Projects.onrender.com']
 else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
@@ -34,9 +34,6 @@ SECRET_KEY = 'django-insecure-93#uu0knaf4n23ie$&axww#-+b4x@jj5^m%nlc33ray8b3d0#8
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-
-ALLOWED_HOSTS = []
-
 
 # Application definition
 

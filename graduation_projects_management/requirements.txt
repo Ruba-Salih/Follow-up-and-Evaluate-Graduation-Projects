@@ -23,6 +23,7 @@ Flask-Cors==4.0.1
 flask-sqlalchemy==3.1.1
 fonttools==4.54.1
 greenlet==3.0.3
+gunicorn==23.0.0
 importlib-metadata==8.0.0
 importlib-resources==6.4.5
 invoke==2.2.0
