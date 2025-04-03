@@ -1,1 +1,1 @@
-gunicorn graduation_projects_management.graduation_projects_management.wsgi
+gunicorn graduation_projects_management.wsgi
