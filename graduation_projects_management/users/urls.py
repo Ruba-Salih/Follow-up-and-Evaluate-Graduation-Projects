@@ -18,7 +18,7 @@ urlpatterns = [
     # dashbord pages
     path("coordinator/dashboard/", views.coordinator_dashboard, name="coordinator-dashboard"),
 
-    # Mangs pages
+    # home pages
     # for admin
     path("manage-coordinators/", views.SuperCoordinatorView.as_view(), name='manage-coordinators'),
     path("manage-coordinators/<int:pk>/", views.SuperCoordinatorView.as_view()),
@@ -27,6 +27,11 @@ urlpatterns = [
     path("manage-accounts/", views.ManageAccountsView.as_view(), name="manage-accounts"),
     path("manage-accounts/<int:user_id>/", views.ManageAccountsView.as_view(), name="edit-user"),
     path("manage-accounts/delete/<int:user_id>/", views.ManageAccountsView.as_view(), name="delete-user"),
+
+    # profile pages
+    path("profile/", views.profile_page, name="profile-page"),
+    path('profile/api/', views.ProfileView.as_view(), name='profile'),
+    path('profile/change-password/', views.PasswordChangeView.as_view(), name='change-password'),
     
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]

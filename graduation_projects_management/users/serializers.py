@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from university.models import Department
-from users.models import User, Coordinator, Student
+from users.models import User, Coordinator, Student, Supervisor
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -90,3 +90,22 @@ class UserLoginSerializer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError("Invalid credentials.")
         return user
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'phone_number']
+
+class PasswordChangeSerializer(serializers.Serializer):
+    old_password = serializers.CharField()
+    new_password = serializers.CharField()
+
+
+class SupervisorProfileSerializer(ProfileSerializer):
+    qualification = serializers.CharField()
+    work_place = serializers.CharField()
+
+    class Meta(ProfileSerializer.Meta):
+        model = Supervisor
+        fields = ProfileSerializer.Meta.fields + ['qualification', 'work_place']

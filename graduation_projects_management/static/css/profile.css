@@ -1,0 +1,72 @@
+/* Container */
+.container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 25px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Header */
+.container h2 {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+/* Labels and Inputs */
+form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: #555;
+}
+
+form input[type="text"],
+form input[type="email"],
+form input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 18px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+form input:focus {
+    border-color: var(--button-color);
+    outline: none;
+}
+
+button {
+    text-decoration: none;
+    display: inline-block;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    transition: 0.3s ease-in-out;
+    cursor: pointer;
+    margin-top: 15px;
+    margin-left: 210px;
+}
+.save{
+
+    margin-left: 227px;
+}
+
+/* Section Separator */
+hr {
+    margin: 30px 0 20px;
+    border: none;
+    border-top: 1px solid #eee;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .container {
+        margin: 20px 10px;
+        padding: 20px;
+    }
+}

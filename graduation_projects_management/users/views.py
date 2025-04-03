@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import login, logout
-from users.serializers import UserSerializer, UserLoginSerializer
+from users.serializers import UserSerializer, UserLoginSerializer, ProfileSerializer, PasswordChangeSerializer, SupervisorProfileSerializer
 from users.services import create_user_account
 from users.models import User, Student, Supervisor, Coordinator
 from university.models import College, Department
@@ -131,10 +131,15 @@ class UserLogoutAPIView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        logout(request)
+        request.session.flush()
+        return redirect("land")
+
     def post(self, request):
         logout(request)
         request.session.flush()
-        return Response({"message": "Successfully logged out."}, status=200)
+        return redirect("land")
 
 @user_passes_test(is_admin)
 def manage_super_coordinators(request):
@@ -231,7 +236,7 @@ class ManageAccountsView(APIView):
             users = User.objects.filter(
                 is_superuser=False,
                 department=user.department
-            ).exclude(coordinator__is_super=True)
+            ).exclude(id__in=Coordinator.objects.values_list("id", flat=True))
             departments = [user.department]
 
         else:
@@ -371,3 +376,67 @@ class ManageAccountsView(APIView):
         target = get_object_or_404(User, id=user_id)
         target.delete()
         return Response({"message": f"User '{target.username}' deleted."}, status=200)
+
+
+@login_required
+def profile_page(request):
+    user = request.user
+
+    if hasattr(user, 'admin'):
+        return render(request, 'admin/profile.html')
+    elif hasattr(user, 'student'):
+        return render(request, 'student/profile.html')
+    elif hasattr(user, 'coordinator'):
+        return render(request, 'coordinator/profile.html')
+    else:
+        return render(request, 'teacher/profile.html')
+
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self, user):
+        if hasattr(user, 'supervisor'):
+            return SupervisorProfileSerializer
+        return ProfileSerializer
+
+    def get(self, request):
+        user = request.user
+        serializer = ProfileSerializer(user)
+        data = serializer.data
+
+        if Supervisor.objects.filter(pk=user.pk).exists():
+            supervisor = Supervisor.objects.get(pk=user.pk)
+            data['qualification'] = supervisor.qualification
+            data['work_place'] = supervisor.work_place
+
+        return Response(data)
+
+    def put(self, request):
+        user = request.user
+        serializer = ProfileSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+
+            if Supervisor.objects.filter(pk=user.pk).exists():
+                supervisor = Supervisor.objects.get(pk=user.pk)
+                supervisor.qualification = request.data.get('qualification', supervisor.qualification)
+                supervisor.work_place = request.data.get('work_place', supervisor.work_place)
+                supervisor.save()
+
+            return Response({"message": "Profile updated"})
+        return Response(serializer.errors, status=400)
+
+class PasswordChangeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = PasswordChangeSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            if not user.check_password(serializer.validated_data['old_password']):
+                return Response({"error": "Incorrect old password"}, status=400)
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            return Response({"message": "Password updated"})
+        return Response(serializer.errors, status=400)
