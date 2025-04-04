@@ -4,17 +4,36 @@
     justify-content: space-between;
     align-items: center;
     background: #800000; /* Consistent Dark Theme */
-
     padding: 5px 30px;
     color: white;
     border-radius: 0px; /* Matches Home Page Style */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.navbar .logo {
-    font-size: 24px;
+/* Wrap logo and text side by side */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+}
+
+/* Logo image styling */
+.logo .lo {
+    height: 65px;
+    max-width: 90px;
+    object-fit: contain;
+}
+
+/* Site name */
+.logo .site-name {
+    font-size: 20px;
+    color: white;
+    margin: 0;
     font-weight: bold;
 }
+
 
 .nav-links {
     list-style: none;
@@ -38,7 +57,7 @@
 }
 
 .nav-links a:hover {
-    color: #4CAF50; /* Matches Quick Links Hover */
+    color: #681e18; /* Matches Quick Links Hover */
 }
 
 /* === Responsive Navbar === */

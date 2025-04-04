@@ -19,8 +19,8 @@ from django.urls import reverse
 
 
 def land(request): 
-    login_url = reverse("login-page")
-    return HttpResponse(f'<a href="{login_url}">Login</a>')
+    #login_url = reverse("login-page")
+    return render(request, "landing.html")
 
 
 @login_required

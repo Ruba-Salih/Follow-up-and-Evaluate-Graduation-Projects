@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Welcome to the System{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/landing.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="landing-navbar">
+    <div class="nav-left"><img src="{% static 'images/lo.png' %}" alt="Site Logo" style="height: 40px;">Graduation System</div>
+    <div class="nav-right">
+        <a href="#home" id="home-link">Home</a>
+        <a href="#cards">Features</a>
+        <a href="#about">About</a>
+        <a href="#team">Team</a>
+        <a href="#contact">Contact</a>
+    </div>
+</div>
+
+<div class="hero-wrapper">
+    <!-- Left Half: welcome text -->
+    <div class="hero-left-col">
+        <div class="hero-left" id="home">
+            <h4 class="welcome-text">Welcome To</h4>
+            <h1 class="hero-title">Follow Up And Evaluate Graduation Projects</h1>
+            <p class="hero-description">
+                A centralized platform to manage students, coordinators, supervisors, and final year projects.
+            </p>
+            <a href="{% url 'login-page' %}" class="btn btn-primary" id="btn-log">Login Now</a>
+        </div>
+    </div>
+
+    <!-- Right Half: Background image -->
+    <div class="hero-right-col"></div>
+</div>
+
+
+
+<!-- Cards Section -->
+<div class="cards-section" id="cards">
+    <div class="card colored">
+        <h3>🧑‍🤝‍🧑 Collaboration</h3>
+        <p>Empowering students, teachers, and coordinators to work together effortlessly.</p>
+    </div>
+    <div class="card">
+        <h3>🚀 Innovation</h3>
+        <p>Embracing modern tools and tech to enhance educational outcomes.</p>
+    </div>
+    <div class="card">
+        <h3>  👥 Accessibility</h3>
+        <p>Designed with ease-of-use in mind for all roles.</p>
+    </div>
+    <div class="card colored">
+        <h3>📈 Scalability</h3>
+        <p>Built to grow with institutions and adapt to their needs.</p>
+    </div>
+</div>
+
+<!-- About Project Section -->
+<div class="about-section" id="about">
+    <h2>📖 About This Project</h2>
+    <p class="about-intro">
+        This platform manages the full lifecycle of graduation projects from proposals and supervision to final evaluations. Each user role is uniquely integrated to support collaboration and oversight.
+    </p>
+
+    <div class="roles-container">
+        <div class="role-block">
+            <span class="role-icon">🎓</span>
+            <div class="role-text">
+                <h4>Students</h4>
+                <p>Submit proposals, receive supervisor feedback, track project milestones, and upload deliverables.</p>
+            </div>
+        </div>
+
+        <div class="role-block">
+            <span class="role-icon">👨‍🏫</span>
+            <div class="role-text">
+                <h4>Supervisors</h4>
+                <p>Guide students through the project, evaluate progress, and contribute to final grading.</p>
+            </div>
+        </div>
+
+        <div class="role-block">
+            <span class="role-icon">📋</span>
+            <div class="role-text">
+                <h4>Coordinators</h4>
+                <p>Oversee department activities, assign supervisors to students, and ensure smooth project workflow.</p>
+            </div>
+        </div>
+
+        <div class="role-block">
+            <span class="role-icon">🛠️</span>
+            <div class="role-text">
+                <h4>Admins</h4>
+                <p>Manage institutional structures like colleges and departments, and configure user roles and permissions.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Meet the Team -->
+<div class="team-section" id="team">
+    <h2>🤝 Meet the Team</h2>
+    <p class="team-intro">
+        Our dedicated team works together to bring the system to life and support users every step of the way.
+    </p>
+    <div class="team-cards">
+        <div class="team-card">
+            <div class="team-top">
+                <img src="{% static 'images/team1.jpg' %}" alt="Jawahir">
+            </div>
+            <div class="team-info">
+                <h4>Team 1</h4>
+                <p>Backend Developer</p>
+                <p>System Architect System Architect System Architect System Architect System Architect</p>
+            </div>
+        </div>
+        <div class="team-card">
+            <div class="team-top">
+                <img src="{% static 'images/team2.jpg' %}" alt="Cindy">
+            </div>
+            <div class="team-info">
+                <h4>Team 2</h4>
+                <p>Frontend Developer</p>
+            </div>
+        </div>
+        <div class="team-card">
+            <div class="team-top">
+                <img src="{% static 'images/team3.jpg' %}" alt="Biscuit">
+            </div>
+            <div class="team-info">
+                <h4>Team 3</h4>
+                <p>Full Stack Developer</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Contact Section -->
+<div class="contact-section" id="contact">
+    <h2>📬 Contact Us</h2>
+    <p>If you have any questions or suggestions, feel free to reach out!</p>
+
+    <form id="contact-form" method="POST">
+        {% csrf_token %}
+        <div class="contact-row">
+            <input type="text" name="name" placeholder="Your Name" required>
+            <input type="email" name="email" placeholder="Your Email" required>
+        </div>
+        <textarea name="message" placeholder="Your Message" rows="5" required></textarea>
+        <button type="submit" class="btn btn-primary">📨 Send Message</button>
+    </form>
+</div>
+
+{% endblock %}

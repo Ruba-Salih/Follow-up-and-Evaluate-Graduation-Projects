@@ -3,19 +3,35 @@
 
 {% block title %}Login{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
 {% block content %}
-    <h2>Login</h2>
-    <form method="post" id="login-form">
-        {% csrf_token %}
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required>
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <img src="{% static 'images/lo.png' %}" alt="Logo" class="login-logo">
+            <h2 class="system-name">Graduation System</h2>
+        </div>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
+        <form method="post" id="login-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
 
-        <button type="submit">Login</button>
-    </form>
-    <p id="error-message" style="color: red;"></p>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
 
-    <script src="{% static 'js/login.js' %}"></script>
+            <button type="submit">Login</button>
+            <p id="error-message" class="error-msg"></p>
+        </form>
+    </div>
+</div>
+
+<script src="{% static 'js/login.js' %}"></script>
 {% endblock %}
