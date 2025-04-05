@@ -1,1 +1,17 @@
 venv/
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# SQLite database
+*.sqlite3
+*.db
+
+# Django migrations (optional)
+*/migrations/__pycache__/
+*/migrations/*.pyc
+
+# Logs
+*.log
