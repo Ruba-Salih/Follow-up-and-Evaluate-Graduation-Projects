@@ -11,8 +11,8 @@ from .models import (
 
 @admin.register(ProjectProposal)
 class ProjectProposalAdmin(admin.ModelAdmin):
-    list_display = ('title', 'submitted_by', 'status', 'created_at', 'updated_at')
-    list_filter = ('status', 'department')
+    list_display = ('title', 'submitted_by', 'teacher_status', 'coordinator_status', 'created_at', 'updated_at')
+    list_filter = ('teacher_status', 'coordinator_status', 'department')
     search_fields = ('title', 'description', 'submitted_by__username')
     ordering = ('-created_at',)
 

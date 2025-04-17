@@ -7,6 +7,12 @@ body {
     line-height: 1.6;
 }
 
+input:focus, select:focus {
+    border-color: #a63026;
+    outline: none;
+    box-shadow: 0 0 5px rgba(166, 48, 38, 0.5);
+}
+
 /* Global button styles */
 :root {
     --button-color: #a63026; /* Default blue */

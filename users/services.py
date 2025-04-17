@@ -33,3 +33,11 @@ def create_user_account(username, password, role, created_by, **extra_fields):
         return student
 
     return user
+
+def is_teacher(user):
+    return not any([
+        hasattr(user, 'student'),
+        hasattr(user, 'coordinator'),
+        hasattr(user, 'admin'),
+        user.is_superuser,
+    ])

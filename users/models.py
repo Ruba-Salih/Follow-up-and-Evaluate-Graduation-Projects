@@ -8,12 +8,12 @@ class User(AbstractUser):
         Department, 
         on_delete=models.CASCADE, 
         related_name='users',
-        null=True,  # Allow NULL values (important for superusers)
-        blank=True  # Allow empty values
+        null=True,
+        blank=True
     )
 
     def save(self, *args, **kwargs):
-        # Ensure normal users have a department, but allow superusers to be without one
+    
         if not self.is_superuser and self.department is None:
             raise ValueError("Non-superusers must have a department.")
         super().save(*args, **kwargs)
@@ -57,16 +57,15 @@ class Role(models.Model):
 
 
 class Admin(User):
-    # Use is_superuser and is_staff flags provided by AbstractUser.
+
     def __str__(self):
         return f"Admin: {self.username}"
 
 
-# Logging which coordinator added which user
 class UserCreationLog(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="creation_log")
     added_by = models.ForeignKey(Coordinator, on_delete=models.SET_NULL, null=True, related_name="added_users")
-    added_at = models.DateTimeField(auto_now_add=True)  # Timestamp when user was added
+    added_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.username} added by {self.added_by.username if self.added_by else 'Unknown'}"

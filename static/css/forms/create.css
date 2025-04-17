@@ -1,5 +1,5 @@
 .form-container {
-    max-width: 800px;
+    max-width: 1000px;
     margin: 50px auto;
     padding: 30px;
     border-radius: 10px;
@@ -22,7 +22,7 @@ label {
 input, select {
     padding: 12px; /* Increased padding for better spacing */
     margin-top: 5px;
-    width: 100%;
+    width: 99%;
     border: 1px solid #ddd;
     border-radius: 5px;
 }
@@ -114,7 +114,6 @@ input, select {
 
 /* Primary button color */
 .submit-btn {
-    background-color: #a63026;
     color: white;
     padding: 12px;
     border: none;
@@ -135,11 +134,10 @@ input, select {
 }
 
 /* Hover effects */
-.submit-btn:hover,
 #add-main-category:hover,
 .delete-btn:hover,
 .delete-main-btn:hover {
-    opacity: 0.8;
+    background-color: #681e18;
 }
 
 /* Add Subcategory Button */
@@ -162,8 +160,7 @@ input, select {
 
 /* General Button Hover Effect */
 button:hover, 
-.btn:hover, 
-.submit-btn:hover, 
+.btn:hover,  
 .add-subcategory:hover, 
 .delete-main-btn:hover, 
 .delete-btn:hover {

@@ -51,6 +51,9 @@ td {
     border: none;
 }
 
+.btn-primary{
+    padding: 12px 20px;
+}
 
 /* ✅ Modal Visibility */
 .modal {

@@ -1,7 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from users.models import Role  
+from users.models import Role
+from university.models import Department 
 
 # =============================
 # Project Proposal Model
@@ -24,8 +25,11 @@ class ProjectProposal(models.Model):
         max_length=200, 
         help_text="Field or area of the project"
     )
-    department = models.CharField(
-        max_length=200, 
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         help_text="Department responsible for the project"
     )
     description = models.TextField(
@@ -64,17 +68,22 @@ class ProjectProposal(models.Model):
         related_name='team_proposals',
         help_text="For student proposals: list the team members who will work on the project"
     )
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='pending',
-        help_text="Current status of the proposal"
+
+    teacher_status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='pending',
+        help_text="Status set by the assigned teacher"
     )
+
+    coordinator_status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='pending',
+        help_text="Status set by the assigned coordinator"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"Proposal: {self.title} (Status: {self.get_status_display()})"
+        return f"Proposal: {self.title} (Teacher: {self.teacher_status}, Coordinator: {self.coordinator_status})"
 
 
 # =============================
@@ -267,9 +276,21 @@ class FeedbackExchange(models.Model):
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name='feedback_exchanges',
         help_text="The project associated with this feedback."
     )
+
+    proposal = models.ForeignKey(
+        ProjectProposal,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='feedback_exchanges',
+        help_text="The project proposal associated with this feedback."
+    )
+
     sender = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

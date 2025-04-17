@@ -31,12 +31,12 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .then(response => response.json())
         .then(data => {
-            alert(data.message || "Form updated successfully!");
+            showAlert(data.message || "Form updated successfully!");
             window.location.href = formListUrl; // Redirect using the global variable
         })
         .catch(error => {
             console.error("Error:", error);
-            alert("Failed to update form.");
+            showAlert("Failed to update form.");
         });
     };
 });
@@ -97,19 +97,19 @@ function addSubCategory(button) {
 }
 
 function deleteMainCategory(button) {
-    if (confirm("Are you sure you want to delete this category?")) {
+    if (confirmAction("Are you sure you want to delete this category?")) {
         button.closest(".main-category").remove();
     }
 }
 
 function deleteSubCategory(button) {
-    if (confirm("Are you sure you want to delete this subcategory?")) {
+    if (confirmAction("Are you sure you want to delete this subcategory?")) {
         button.closest(".subcategory").remove();
     }
 }
 
 function cancelEdit() {
-    if (confirm("Discard changes and go back?")) {
+    if (confirmAction("Discard changes and go back?")) {
         window.history.back();
     }
 }

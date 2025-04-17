@@ -27,8 +27,8 @@
     </div>
 
     <div class="buttons-container">
-        <button id="delete-btn" data-id="{{ form.id }}" class="delete-btn">🗑 Delete Form</button>
-        <a href="{% url 'form:edit_evaluation_form' form.id %}" class="edit-btn">✏️ Edit Form</a>
+        <a href="{% url 'form:edit_evaluation_form' form.id %}" class="edit-btn btn-edit">✏️ Edit Form</a>
+        <button id="delete-btn" data-id="{{ form.id }}" class="delete-btn btn-delete">🗑️ Delete Form</button>
     </div>
 </div>
 

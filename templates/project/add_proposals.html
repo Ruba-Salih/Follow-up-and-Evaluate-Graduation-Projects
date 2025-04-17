@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manage Proposals{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/project/add_proposals.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+    <h2>📝 Manage Proposals</h2>
+    <button id="create-proposal-btn" class="btn btn-primary">+ New Proposal</button>
+
+    <div id="proposal-list">
+        {% for proposal in proposals %}
+        <div class="proposal-card" data-id="{{ proposal.id }}">
+            <div class="proposal-header">
+                <h4>{{ proposal.title }}</h4>
+                <div class="status-group">
+                    <span class="status {{ proposal.teacher_status|default:"pending" }}">
+                        Teacher: {{ proposal.get_teacher_status_display }}
+                    </span>
+                    <span class="status {{ proposal.coordinator_status|default:"pending" }}">
+                        Coordinator: {{ proposal.get_coordinator_status_display }}
+                    </span>
+                </div>
+            </div>
+            <p><strong>Field:</strong> {{ proposal.field }}</p>
+            <p><strong>Submitted:</strong> {{ proposal.created_at|date:"M d, Y" }}</p>
+            {% if proposal.updated_at and proposal.updated_at != proposal.created_at %}
+                <p><strong>Updated:</strong> {{ proposal.updated_at|date:"M d, Y H:i" }}</p>
+            {% endif %}
+            <div class="card-buttons">
+                <button class="view-btn btn-edit" data-id="{{ proposal.id }}">🔍 View Details</button>
+                <button class="delete-btn btn-delete" data-id="{{ proposal.id }}">🗑️ Delete</button>
+            </div>
+        </div>
+        {% empty %}
+            <p>No proposals submitted yet.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal Form -->
+<div id="proposal-modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3 id="modal-title">Proposal Details</h3>
+
+        <form id="proposal-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" id="proposal-id">
+
+            <label>Title:</label>
+            <input type="text" id="title" required>
+
+            <label>Field:</label>
+            <input type="text" id="field" required>
+
+            <label>Description:</label>
+            <textarea id="description" rows="4"></textarea>
+
+            <label>Team Members Count:</label>
+            <input type="number" id="team_member_count">
+
+            {% if is_teacher %}
+            <label>Department:</label>
+            <select id="department">
+                <option value="">-- Select Department --</option>
+                {% for dept in departments %}
+                    <option value="{{ dept.id }}">{{ dept.name }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+
+            <label>Proposed To (optional):</label>
+            <select id="proposed_to">
+                <option value="">-- Select Recipient --</option>
+            </select>
+
+            <label>Choose Team Members (optional):</label>
+            <div id="team-member-checkboxes" class="team-member-list"></div>
+
+            <label>Upload File (optional):</label>
+            <input type="file" id="attached_file">
+
+            <label>Additional Comment (optional):</label>
+            <textarea id="additional_comment" rows="3"></textarea>
+
+            <!-- Feedback Display Section -->
+            <div id="feedback-section" class="hidden" style="margin-top: 20px;">
+                <label><strong>Teacher Feedback:</strong></label>
+                <p id="feedback-content" style="margin-top: 5px; font-style: italic; color: #a63026;"></p>
+            </div>
+
+            <div class="form-buttons">
+                <button type="submit" class="btn save btn-primary">💾 Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="{% static 'js/project/add_proposals.js' %}"></script>
+{% endblock %}
