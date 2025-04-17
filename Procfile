@@ -1,0 +1,1 @@
+gunicorn graduation_projects_management.wsgi

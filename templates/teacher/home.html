@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Teacher Home{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+
+{% include "navbar.html" %}
+
+<div class="container">
+    <!-- Total Projects Section -->
+    <div class="total-projects">
+        <h3>📊 Total Projects</h3>
+        <p>{{ total_projects }}</p>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="quick-links">
+        <div class="link-item"><a href="{% url 'teacher-manage-proposals' %}">📄 Manage Proposals</a></div>
+        <div class="link-item"><a href="#">📂 Manage Projects</a></div>
+        <div class="link-item"><a href="#">⏳ Set Available Times</a></div>
+        <div class="link-item"><a href="#">📅 Schedule Meeting</a></div>
+    </div>
+
+    <!-- Announcements Section -->
+    <div class="announcements">
+        <h3>📢 Recent Announcements</h3>
+        <ul>
+            {% for announcement in announcements %}
+                <li>{{ announcement.title }} - {{ announcement.date_posted }}</li>
+            {% empty %}
+                <li>No announcements available.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+/* Container Styling */
+.container {
+    max-width: 1300px;
+    margin: 20px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Heading */
+h2 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Buttons Layout */
+.entry-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.entry-buttons a {
+    display: inline-block;
+    background-color: #a63026;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 5px;
+    text-align: center;
+    text-decoration: none;
+    transition: 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+}
+
+.entry-buttons a:hover {
+    background-color: #681e18;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .container {
+        width: 90%;
+        padding: 10px;
+    }
+
+    .entry-buttons a {
+        width: 100%;
+        font-size: 15px;
+    }
+}

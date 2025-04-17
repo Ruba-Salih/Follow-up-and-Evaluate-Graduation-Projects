@@ -1,0 +1,195 @@
+/* General Form Styling */
+.form-container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+}
+
+h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Form Inputs */
+label {
+    font-weight: bold;
+    color: #444;
+    display: block;
+    margin: 10px 0 5px;
+}
+
+input, select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+input:focus, select:focus {
+    border-color: #a63026;
+    outline: none;
+    box-shadow: 0 0 5px rgba(166, 48, 38, 0.5);
+}
+
+/* Main Categories */
+#main-categories-container {
+    margin-top: 20px;
+}
+
+h3 {
+    color: #333;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+/* Category Blocks */
+.main-category {
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border-left: 5px solid #a63026;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+
+h4 {
+    font-size: 18px;
+    color: #444;
+}
+
+/* Input Groups */
+.input-row {
+    display: flex;
+    gap: 15px;
+}
+
+.input-group {
+    flex: 1;
+}
+
+.input-group label {
+    font-size: 14px;
+    margin-bottom: 3px;
+}
+
+/* Subcategories */
+.subcategories-container {
+    background: #f3f3f3;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.subcategory {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.subcategory input {
+    flex: 1;
+}
+
+/* Buttons */
+button {
+    cursor: pointer;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+/* Remove Button */
+.delete-btn,
+.delete-main-btn {
+    background: transparent;
+    color: #d9534f;
+    border: none;
+    font-size: 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+}
+
+.delete-btn span,
+.delete-main-btn span {
+    font-size: 10px;
+    color: #d9534f;
+}
+
+.delete-btn:hover,
+.delete-main-btn:hover {
+    color: #6d1f1a;
+}
+
+/* Add Buttons */
+.add-subcategory,
+#add-main-category {
+    background: #a63026;
+    color: white;
+    font-size: 14px;
+    margin-top: 10px;
+    padding: 10px;
+}
+
+.add-subcategory:hover,
+#add-main-category:hover {
+    background: #89251e;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.cancel-btn {
+    background: #777;
+    color: white;
+}
+
+.cancel-btn:hover {
+    background: #555;
+}
+
+.submit-btn {
+    background: #a63026;
+    color: white;
+}
+
+.submit-btn:hover {
+    background: #89251e;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form-container {
+        width: 90%;
+        padding: 15px;
+    }
+
+    .input-row {
+        flex-direction: column;
+    }
+}

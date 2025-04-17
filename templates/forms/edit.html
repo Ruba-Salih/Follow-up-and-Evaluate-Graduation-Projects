@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Evaluation Form{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/forms/edit.css' %}">
+
+<!-- Pass Django URLs to JavaScript -->
+<script>
+    var editFormUrl = "{% url 'form:edit_evaluation_form' form.id %}";
+    var formListUrl = "{% url 'form:evaluation_form_list' %}";
+</script>
+
+<!-- Include External JavaScript File -->
+<script src="{% static 'js/forms/edit.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+
+{% include "navbar.html" %}
+
+<div class="form-container">
+    <h2>Edit Evaluation Form</h2>
+
+    <form id="edit-evaluation-form">
+        <label>Form Name:</label>
+        <input type="text" id="form-name" value="{{ form.name }}" required>
+
+        <label for="target_role">Select Role:</label>
+        <select id="target_role" name="target_role">
+            {% for role in roles %}
+                <option value="{{ role.id }}" {% if role.id == form.target_role.id %}selected{% endif %}>
+                    {{ role.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <div id="main-categories-container">
+            <h3>Main Categories</h3>
+            <div id="main-categories">
+                {% for category in form.main_categories.all %}
+                    <div class="main-category" data-category-id="{{ category.id }}">
+                        <div class="category-block">
+                            <div class="category-header">
+                                <h4>Main Category {{ forloop.counter }}</h4>
+                                <button type="button" class="delete-main-btn" onclick="deleteMainCategory(this)">❌<br><span>Remove</span></button>
+                            </div>
+
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <label>Text:</label> 
+                                    <input type="text" name="main_category_text" value="{{ category.text }}" required>
+                                </div>
+                            </div>
+
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <label>Weight:</label> 
+                                    <input type="number" name="main_category_weight" step="0.01" value="{{ category.weight }}" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>Grade Type:</label>
+                                    <select name="main_category_grade_type">
+                                        <option value="individual" {% if category.grade_type == 'individual' %}selected{% endif %}>Individual</option>
+                                        <option value="group" {% if category.grade_type == 'group' %}selected{% endif %}>Group</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="sub-categories">
+                                <h5>Subcategories</h5>
+                                <div class="subcategories-container">
+                                    {% for sub in category.sub_categories.all %}
+                                        <div class="subcategory">
+                                            <input type="text" name="sub_category_text" value="{{ sub.text }}" required>
+                                            <button type="button" class="delete-btn" onclick="deleteSubCategory(this)">❌<br><span>Remove</span></button>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button" class="add-subcategory" onclick="addSubCategory(this)">+ Add Subcategory</button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <button class="btn-edit" type="button" id="add-main-category" onclick="addMainCategory()">+ Add Main Category</button>
+
+        <div class="action-buttons">
+            <button type="button" class="cancel-btn" onclick="cancelEdit()">Cancel</button>
+            <button type="submit" class="submit-btn">Save Changes</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

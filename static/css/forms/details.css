@@ -1,0 +1,141 @@
+.container {
+    max-width: 1300px;
+    padding: 20px;
+    margin: 20px auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-title {
+    text-align: center;
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.categories-container {
+    margin-top: 10px;
+}
+
+.category-box {
+    background: #fff7f5;
+    padding: 15px;
+    border-left: 5px solid #a63026;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 16px;
+    color: #a63026;
+}
+
+.category-number {
+    font-weight: bold;
+}
+
+.category-text {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.category-type,
+.category-weight {
+    font-size: 14px;
+    color: #555;
+}
+
+.subcategory-list {
+    margin-top: 10px;
+    padding-left: 20px;
+}
+
+.subcategory-item {
+    background: #f8f8f8;
+    padding: 8px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #333;
+    list-style: none;
+}
+
+.buttons-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.delete-btn {
+    background-color: #a63026;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 48%;
+}
+
+.edit-btn {
+    background-color: #d9b38c;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    border-radius: 5px;
+    display: inline-block;
+    text-decoration: none;
+    width: 48%;
+}
+
+.delete-btn:hover {
+    background-color: #6d1f1a;
+}
+
+.edit-btn:hover {
+    background-color: #b08c6c;
+}
+
+/* Subcategories in one line */
+.subcategory-list {
+    display: flex;
+    flex-wrap: wrap; /* Ensures they wrap to a new line if they exceed width */
+    gap: 10px; /* Adds space between subcategories */
+    margin-top: 10px;
+    padding-left: 0;
+}
+
+.subcategory-item {
+    background: #f8f8f8;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #333;
+    list-style: none;
+    display: inline-block; /* Ensure items are inline */
+    white-space: nowrap; /* Prevents breaking into multiple lines */
+    border: 1px solid #ddd; /* Subtle border for better visibility */
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        width: 90%;
+    }
+
+    .buttons-container {
+        flex-direction: column;
+    }
+
+    .delete-btn,
+    .edit-btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}

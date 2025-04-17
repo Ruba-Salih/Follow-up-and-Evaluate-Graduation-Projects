@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manage Proposals{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/project/teacher_manage_proposals.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container text-center">
+    <h2 class="mt-4">Manage Proposals</h2>
+
+    <div class="entry-buttons">
+        <a href="{% url 'student-proposals' %}">📋 View Student Proposals</a>
+        <a href="{% url 'manage-proposals' %}">📝 Submit Proposal</a>
+    </div>
+</div>
+{% endblock %}

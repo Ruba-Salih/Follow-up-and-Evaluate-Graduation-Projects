@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manage Colleges{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/admin/manage_colleges.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+    <h2>🏫 Manage Colleges</h2>
+
+    <!-- ➕ Create College Button -->
+    <button id="create-college-btn" class="btn btn-primary">+ Add New College</button>
+
+    <!-- 🔍 Search and Download Controls -->
+    <div class="search-filter-bar">
+        <input type="text" id="college-search" placeholder="🔍 Search Colleges..." />
+        <button id="download-colleges" class="btn-download">⬇️ Download List</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>College Name</th>
+                <th>Departments</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for college in colleges %}
+            <tr>
+                <td>{{ college.name }}</td>
+                <td>
+                    {% if college.departments.all %}
+                        <ul>
+                        {% for dept in college.departments.all %}
+                            <li>{{ dept.name }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <em>No departments</em>
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="edit-btn btn-edit"
+                        data-id="{{ college.id }}"
+                        data-name="{{ college.name }}"
+                        data-departments='[
+                            {% for dept in college.departments.all %}
+                                {"id": "{{ dept.id }}", "name": "{{ dept.name }}"}{% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        ]'>
+                        ✏️ Edit
+                    </button>
+                    <button class="delete-btn btn-delete" data-id="{{ college.id }}">
+                        🗑️ Delete
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No colleges available.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ✅ Create/Edit College Modal -->
+<div id="college-modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3 id="college-modal-title">Add New College</h3>
+        
+        <form id="college-form" method="POST">
+            {% csrf_token %}
+            <label for="college-name">College Name:</label>
+            <input type="text" id="college-name" required>
+            <input type="hidden" id="college-id">
+
+            <!-- Department Inputs -->
+            <div id="department-fields">
+                <label>Departments:</label>
+                <div class="department-group">
+                    <input type="text" name="departments" class="department-input" placeholder="Department Name">
+                </div>
+            </div>
+            <button type="button" id="add-department-btn" class="btn-secondary"><span style="color: white;">➕</span> Add Department</button>
+
+            <button type="submit" class="btn btn-primary">Save College</button>
+        </form>
+    </div>
+</div>
+<script src="{% static 'js/admin/manage_colleges.js' %}"></script>
+{% endblock %}
+
