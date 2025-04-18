@@ -51,6 +51,9 @@ td {
     cursor: pointer;
 }
 
+.btn-primary{
+    padding: 12px 20px;
+}
 
 /* ✅ Fix modal visibility */
 .modal {

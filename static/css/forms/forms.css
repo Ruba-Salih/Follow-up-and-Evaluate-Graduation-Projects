@@ -1,19 +1,13 @@
 
 /* Container Styling */
 .form-container {
-    max-width: 900px;
-    margin: auto;
+    max-width: 1300px;
     padding: 20px;
+    margin: 20px auto;
     border-radius: 10px;
     background: white;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
-}
-
-/* Page Title */
-h2 {
-    color: #a63026;
-    margin-bottom: 20px;
 }
 
 /* Forms Grid */
@@ -26,8 +20,10 @@ h2 {
 
 /* Individual Form Card */
 .form-card {
-    background: #fff;
-    padding: 15px;
+    background: #f7f0ed;
+    border-left: 6px solid #a63026;
+    padding: 20px;
+    margin-bottom: 20px;
     border-radius: 8px;
     box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
@@ -48,7 +44,7 @@ h2 {
 /* Buttons Styling */
 .btn {
     display: inline-block;
-    padding: 8px 12px;
+    padding: 8px 16px;
     border-radius: 5px;
     font-size: 14px;
     transition: 0.3s ease-in-out;
@@ -57,41 +53,17 @@ h2 {
     margin: 5px;
 }
 
-.view-btn {
-    background-color: #0275d8;
-    color: white;
-}
-
-.edit-btn {
-    background-color: #f0ad4e;
-    color: white;
-}
 
 .create-btn {
-    background-color: #a63026;
     color: white;
     padding: 12px 20px;
-    margin-top: 15px;
+    margin-top: 10px;
+    margin-bottom: 20px;
     display: inline-block;
     font-size: 16px;
     text-align: center;
 }
 
-/* View Button (Brown) */
-.view-btn {
-    background-color: #d9b38c;
-    color: white;
-}
-
-/* Edit Button (Beige) */
-.edit-btn {
-    background-color: #814c2f; 
-    color: white;
-}
-/* Button Hover Effects */
-.btn:hover {
-    opacity: 0.85;
-}
 
 /* No Data Message */
 .no-data {

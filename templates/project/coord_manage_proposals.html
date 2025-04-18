@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Coordinator Proposal Review{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/project/coordinator_manage_proposals.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+    <h2>📋 Proposals Under Your Review</h2>
+
+    {% if proposals %}
+        <div id="coordinator-proposal-list">
+            {% for proposal in proposals %}
+            <div class="proposal-card" data-id="{{ proposal.id }}">
+                <div class="proposal-header">
+                    <h4>{{ proposal.title }}</h4>
+                    <div class="status-group">
+                        <span class="status {{ proposal.teacher_status }}">
+                            Teacher: {{ proposal.get_teacher_status_display }}
+                        </span>
+                        <span class="status {{ proposal.coordinator_status }}">
+                            Coordinator: {{ proposal.get_coordinator_status_display }}
+                        </span>
+                    </div>
+                </div>
+                <p><strong>Field:</strong> {{ proposal.field }}</p>
+                <p><strong>Submitted by:</strong> {{ proposal.submitted_by.username }}</p>
+                <p><strong>Date:</strong> {{ proposal.created_at|date:"M d, Y" }}</p>
+                <div class="card-buttons">
+                    <button class="view-btn btn-edit" data-id="{{ proposal.id }}">🔍 View Details</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No proposals found for your department.</p>
+    {% endif %}
+</div>
+
+<!-- Modal -->
+<div id="coord-modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3>Proposal Details</h3>
+
+        <div id="modal-body">
+            <p><strong>Title:</strong> <span id="modal-title-text"></span></p>
+            <p><strong>Field:</strong> <span id="modal-field"></span></p>
+            <p><strong>Description:</strong> <span id="modal-description"></span></p>
+            <p><strong>Team Members Count:</strong> <span id="modal-team-count"></span></p>
+            <p><strong>Team Members:</strong> <span id="modal-team-members"></span></p>
+            <p><strong>Attached File:</strong> <span id="modal-file"></span></p>
+            <p><strong>Additional Comment:</strong> <span id="modal-comment"></span></p>
+        </div>
+
+        {% if is_super_coord %}
+        <hr>
+        <div id="feedback-section" style="margin-top: 20px;">
+            <label for="feedback-text">✉️ Feedback (optional):</label>
+            <textarea id="feedback-text" rows="3" style="width: 100%;"></textarea>
+        </div>
+        {% endif %}
+
+        <div class="status-buttons" style="margin-top: 15px;">
+            <button class="btn btn-primary" id="accept-btn">Accept</button>
+            <button class="btn btn-edit" id="edit-btn">Request Edit</button>
+            <button class="btn btn-delete" id="reject-btn">Reject</button>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/project/coordinator_manage_proposals.js' %}"></script>
+{% endblock %}

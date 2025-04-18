@@ -109,3 +109,13 @@ class SupervisorProfileSerializer(ProfileSerializer):
     class Meta(ProfileSerializer.Meta):
         model = Supervisor
         fields = ProfileSerializer.Meta.fields + ['qualification', 'work_place']
+
+class StudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = ['id', 'username']
+
+class SupervisorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Supervisor
+        fields = ['id', 'username']

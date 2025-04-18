@@ -31,12 +31,12 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .then(response => response.json())
         .then(data => {
-            alert(data.message || "Form created successfully!");
+            showAlert(data.message || "Form created successfully!");
             window.location.href = formListUrl; // Redirect using the global variable
         })
         .catch(error => {
             console.error("Error:", error);
-            alert("Failed to create form.");
+            showAlert("Failed to create form.");
         });
     };
 });
