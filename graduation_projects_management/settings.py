@@ -40,7 +40,7 @@ DEBUG = True
 INSTALLED_APPS = [
     'university',
     'users',
-    'project',
+    'project.apps.ProjectConfig',
     'meeting',
     'report',
     'notifications',

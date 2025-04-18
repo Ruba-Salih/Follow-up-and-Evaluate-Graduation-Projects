@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     let currentProposalId = null;
     let isTeacher = false;
 
+    let departmentToCoordinator = {};
+
     async function loadData() {
         const res = await fetch("/api/project/proposals/");
         const data = await res.json();
@@ -32,8 +34,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         coordinatorsList = data.coordinators || [];
         teachersList = data.teachers || [];
 
+        // Map department ID to coordinator
+        coordinatorsList.forEach(c => {
+            if (c.department) {
+                departmentToCoordinator[c.department] = c.id;
+            }
+        });
+
         renderCheckboxes(studentsList);
         isTeacher = coordinatorsList.length > 0 && departmentSelect;
+
+        // Hide proposedToSelect for teachers
+        if (isTeacher && proposedToSelect) {
+            proposedToSelect.closest("label")?.remove();
+            proposedToSelect.remove();
+        }
     }
 
     function renderCheckboxes(list, selectedIds = []) {
@@ -76,26 +91,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    function populateSelect(selectEl, list, isMulti = true, selectedIds = []) {
-        if (!selectEl) return;
-        selectEl.innerHTML = "";
-
-        if (!isMulti) {
-            const placeholder = document.createElement("option");
-            placeholder.value = "";
-            placeholder.textContent = "-- Select Recipient --";
-            selectEl.appendChild(placeholder);
-        }
-
-        list.forEach(item => {
-            const option = document.createElement("option");
-            option.value = item.id;
-            option.textContent = item.username;
-            if (selectedIds.includes(item.id)) option.selected = true;
-            selectEl.appendChild(option);
-        });
-    }
-
     await loadData();
 
     createBtn?.addEventListener("click", () => {
@@ -106,9 +101,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         feedbackSection.classList.add("hidden");
         feedbackContent.textContent = "";
 
-        const recipientList = isTeacher ? coordinatorsList : teachersList;
         renderCheckboxes(studentsList);
-        populateSelect(proposedToSelect, recipientList, false);
 
         modal.classList.add("show");
         modal.classList.remove("hidden");
@@ -131,7 +124,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         formData.append("team_member_count", teamCount.value || 1);
         if (additionalComment?.value) formData.append("additional_comment", additionalComment.value);
         if (departmentSelect?.value) formData.append("department", departmentSelect.value);
-        if (proposedToSelect?.value) formData.append("proposed_to", proposedToSelect.value);
+
+        // Automatically assign coordinator if teacher
+        if (isTeacher) {
+            const deptId = departmentSelect?.value;
+            const coordId = departmentToCoordinator[deptId];
+            if (coordId) {
+                formData.append("proposed_to", coordId);
+            }
+        } else {
+            if (proposedToSelect?.value) {
+                formData.append("proposed_to", proposedToSelect.value);
+            }
+        }
+
         if (fileInput?.files.length > 0) {
             formData.append("attached_file", fileInput.files[0]);
         }
@@ -167,9 +173,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             const res = await fetch(`/api/project/proposals/${id}/`);
             const data = await res.json();
 
-            console.log("📥 Modal Data Received:", data);
-            console.log("👀 Feedback Received:", data.teacher_feedback);
-
             editMode = true;
             currentProposalId = data.id;
 
@@ -192,11 +195,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 departmentSelect.value = data.department;
             }
 
-            const recipientList = isTeacher ? coordinatorsList : teachersList;
             const selectedTeamMemberIds = data.team_members?.map(s => s.id) || [];
-
             renderCheckboxes(studentsList, selectedTeamMemberIds);
-            populateSelect(proposedToSelect, recipientList, false, [data.proposed_to]);
+
+            if (!isTeacher && proposedToSelect) {
+                populateSelect(proposedToSelect, teachersList, false, [data.proposed_to]);
+            }
 
             modal.classList.add("show");
             modal.classList.remove("hidden");

@@ -76,10 +76,12 @@
             </select>
             {% endif %}
 
+            {% if not is_teacher %}
             <label>Proposed To (optional):</label>
             <select id="proposed_to">
                 <option value="">-- Select Recipient --</option>
             </select>
+            {% endif %}
 
             <label>Choose Team Members (optional):</label>
             <div id="team-member-checkboxes" class="team-member-list"></div>

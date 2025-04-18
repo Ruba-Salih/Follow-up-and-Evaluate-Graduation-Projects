@@ -1,3 +1,4 @@
+/* Container styling */
 .container {
     max-width: 1200px;
     margin: 20px auto;
@@ -7,6 +8,14 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* Heading */
+h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+/* Proposal card */
 .proposal-card {
     background-color: #fff7f7;
     border-left: 5px solid #a63026;
@@ -14,52 +23,154 @@
     margin-bottom: 16px;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+    text-align: center;
+    line-height: 1.4;
 }
 
+.proposal-card:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Header of the proposal card */
+.proposal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+.proposal-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+/* Statuses stacked vertically */
 .status-group {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 7px;
+    align-items: flex-end;
 }
 
+/* Individual status badge */
 .status {
-    padding: 4px 10px;
-    border-radius: 15px;
     font-size: 13px;
     font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 12px;
+    width: fit-content;
 }
 
-.status.pending {
-    background-color: #ffeeba;
-    color: #856404;
+.status.accepted { background-color: #d4edda; color: #155724; }
+.status.rejected { background-color: #f8d7da; color: #721c24; }
+.status.pending  { background-color: #ffeeba; color: #856404; }
+
+/* Paragraph lines inside card */
+.proposal-card p {
+    margin: 4px 0;
+    font-size: 14px;
+    color: #444;
 }
 
-.status.accepted {
-    background-color: #d4edda;
-    color: #155724;
-}
-
-.status.rejected {
-    background-color: #f8d7da;
-    color: #721c24;
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
+/* Buttons under each card */
+.card-buttons {
+    margin-top: 12px;
+    display: flex;
     justify-content: center;
+}
+
+.view-btn {
+    background-color: #a63026;
+    color: white;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.view-btn:hover {
+    background-color: #8f2b20;
+}
+
+/* Modal styling */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
     align-items: center;
-    z-index: 9999;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal.hidden {
+    display: none !important;
 }
 
 .modal-content {
-    background: #fff;
-    padding: 20px;
-    width: 600px;
-    max-width: 95%;
-    border-radius: 10px;
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+    text-align: left;
+}
+
+/* Close button */
+.close-btn {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    font-size: 1.4rem;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+/* Feedback section */
+#feedback-section label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #333;
+}
+
+#feedback-text {
+    width: 100%;
+    padding: 3px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    resize: vertical;
+    font-size: 14px;
+}
+
+/* Modal status buttons */
+.status-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.status-buttons button {
+    flex: 1;
+    padding: 12px;
+    font-weight: bold;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
 }

@@ -21,9 +21,9 @@ def manage_proposals_view(request):
 
     if hasattr(user, "coordinator"):
         if user.coordinator.is_super:
-            proposals = ProjectProposal.objects.all()
+            proposals = ProjectProposal.objects.all().order_by("-created_at")
         elif user.coordinator.department:
-            proposals = ProjectProposal.objects.filter(department=user.coordinator.department)
+            proposals = ProjectProposal.objects.filter(department=user.coordinator.department).order_by("-created_at")
         else:
             proposals = ProjectProposal.objects.none()
 
@@ -63,9 +63,9 @@ def coordinator_proposals_view(request):
         return redirect("home")
 
     if user.coordinator.is_super:
-        proposals = ProjectProposal.objects.all()
+        proposals = ProjectProposal.objects.all().order_by("-created_at")
     elif user.coordinator.department:
-        proposals = ProjectProposal.objects.filter(department=user.coordinator.department)
+        proposals = ProjectProposal.objects.filter(department=user.coordinator.department).order_by("-created_at")
     else:
         proposals = ProjectProposal.objects.none()
 
@@ -110,7 +110,18 @@ class ProjectProposalView(APIView):
         if pk:
             try:
                 proposal = ProjectProposal.objects.get(pk=pk)
-                if proposal.submitted_by != user and proposal.proposed_to != user:
+
+                is_owner = proposal.submitted_by == user
+                is_recipient = proposal.proposed_to == user
+                is_coordinator = hasattr(user, "coordinator")
+
+# If coordinator, check if super or matches department
+                if is_coordinator:
+                    if user.coordinator.is_super or (proposal.department == user.coordinator.department):
+                        pass  # Allow
+                    elif not is_owner and not is_recipient:
+                        return Response({'detail': 'Unauthorized access.'}, status=403)
+                elif not is_owner and not is_recipient:
                     return Response({'detail': 'Unauthorized access.'}, status=403)
 
                 serializer = ProjectProposalSerializer(proposal)
@@ -134,9 +145,9 @@ class ProjectProposalView(APIView):
     # ⬇️ List view (all proposals for user)
         if hasattr(user, "coordinator"):
             if user.coordinator.is_super:
-                proposals = ProjectProposal.objects.all()
+                proposals = ProjectProposal.objects.all().order_by("-created_at")
             elif user.coordinator.department:
-                proposals = ProjectProposal.objects.filter(department=user.coordinator.department)
+                proposals = ProjectProposal.objects.filter(department=user.coordinator.department).order_by("-created_at")
             else:
                 proposals = ProjectProposal.objects.none()
         else:
@@ -244,10 +255,19 @@ class ProjectProposalView(APIView):
         user = request.user
         try:
             proposal = ProjectProposal.objects.get(pk=pk)
-            if proposal.submitted_by != user and proposal.proposed_to != user:
-                return Response({'detail': 'Unauthorized.'}, status=403)
         except ProjectProposal.DoesNotExist:
             return Response({'detail': 'Proposal not found.'}, status=404)
+
+        is_owner = proposal.submitted_by == user
+        is_recipient = proposal.proposed_to == user
+        is_coordinator = hasattr(user, "coordinator")
+
+        if is_coordinator:
+            if not user.coordinator.is_super:
+                if proposal.department != user.coordinator.department:
+                    return Response({'detail': 'Unauthorized.'}, status=403)
+        elif not is_owner and not is_recipient:
+            return Response({'detail': 'Unauthorized.'}, status=403)
 
         data = request.data.copy()
         proposed_to_id = data.get('proposed_to')
