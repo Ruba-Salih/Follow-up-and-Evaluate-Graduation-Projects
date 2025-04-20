@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}View Grades{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/forms/gradeview.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="form-container">
+    <header class="form-header">
+        <h1>{{ university_name }}</h1>
+        <h2>{{ college_name }}</h2>
+        <h3>Graduation Projects - {{ form_name }}</h3>
+        <p><strong>Supervisor:</strong> {{ supervisor_name }}</p>
+        <p><strong>Project:</strong> {{ project_name }}</p>
+    </header>
+
+     <!-- Display student grades before main categories -->
+     <div class="student-grades-section">
+        <h3>Student Grades</h3>
+        <div class="student-grades">
+            {% for grade in student_grades %}
+                <div class="student-grade">
+                    <p><strong>{{ grade.student.get_full_name}}</strong>  - Final grade: {{ grade.converted_grade }} </p>
+                </div>
+            {% endfor %} 
+        </div>
+        <hr class="subcategory-line">
+    </div>
+    <div class="form-body">
+        {% for main_category in main_categories %}
+        <section class="main-category">
+            <div class="category-header">
+                <h3>{{ main_category.text }} 
+                    {% if main_category.grade_type == 'individual' %}
+                        (Individual Grading - weight: {{ main_category.weight }})
+                    {% else %}
+                        (Group Grading - weight: {{ main_category.weight }})
+                    {% endif %}
+                </h3>
+                {% if main_category.grade_type == 'group' %}
+                <!-- Group Grade - Display in a rectangle -->
+                <div class="group-grade">
+                    {% for grade in group_grades %}
+                        {% if grade.grade.main_category.id == main_category.id %}
+                            <p>The given grade: {{ grade.grade.grade }} x {{ main_category.weight }} = <strong>{{ grade.grade.final_grade }}</strong></p>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Subcategories list displayed horizontally -->
+            <div class="subcategory-wrapper">
+                {% for subcategory in main_category.sub_categories.all %}
+                <div class="subcategory">
+                    <span>{{ subcategory.text }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Horizontal line separating subcategories -->
+            <div class="subcategory-line"></div>
+
+            {% if main_category.grade_type == 'individual' %}
+            <!-- Individual Grade Display -->
+            <div class="individual-grade">
+                {% for student in students %}
+                    <div class="individual-student-grade">
+                        <p>{{ student.get_full_name }}</p>
+                        <div class="grade-display-box">
+                            {% for grade in individual_grades %}
+                                {% if grade.student.id == student.id and grade.grade.main_category.id == main_category.id %}
+                                    <p>The given grade: {{ grade.grade.grade }} x {{ main_category.weight }} = <strong>{{ grade.final_grade }}</strong></p>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+        {% endfor %}
+    </div>
+
+    <div class="form-footer">
+        <p><strong>Date:</strong> {% now "F j, Y" %}</p>
+    </div>
+</div>
+
+{% endblock %}

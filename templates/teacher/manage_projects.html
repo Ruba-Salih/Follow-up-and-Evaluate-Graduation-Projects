@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manage Projects{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+<style>
+    .project-button {
+        display: block;
+        background-color: #a63026;
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        text-align: left;
+        font-size: 16px;
+        text-decoration: none;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transition: transform 0.3s ease;
+    }
+
+    .project-button:hover {
+        transform: scale(1.03);
+        background-color: #8f271f;
+    }
+
+    .project-role {
+        font-style: italic;
+        font-size: 14px;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .container h2 {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+    <h2>🛠️ Managed Projects</h2>
+
+    {% if project_roles %}
+        <ul class="project-list" style="list-style: none; padding: 0;">
+            {% for project_id, project_name, role_name in project_roles %}
+                <li>
+                    <a href="{% url 'project_role_dashboard' project_id role_name %}" class="project-button">
+                        <strong>{{ project_name }}</strong>
+                        <span class="project-role">Role: {{ role_name }}</span>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No managed projects found.</p>
+    {% endif %}
+</div>
+{% endblock %}

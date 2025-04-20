@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Evaluation Form{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/forms/formstyle.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+<p>Evaluation Form ID: {{ evaluation_form_id }}</p>
+<form method="POST" action="{% url 'submit_grades' project_id=project.id %}" id="evaluationForm">
+    {% csrf_token %}
+    <input type="hidden" name="evaluation_form_id" value="{{ form.id }}">
+    <div class="form-container">
+        <header class="form-header">
+            <h1>{{ university_name }}</h1>
+            <h2>{{ college_name }}</h2>
+            <h3>Graduation Projects - {{ form_name }}</h3>
+            <p><strong>Supervisor:</strong> {{ supervisor_name }}</p>
+            <p><strong>Project:</strong> {{ project_name }}</p>
+        </header>
+
+        <div class="form-body">
+            {% for main_category in main_categories %}
+            <section class="main-category">
+                <div class="category-header">
+                    <h3>{{ main_category.text }} 
+                        {% if main_category.grade_type == 'individual' %}
+                            (Individual Grading)
+                        {% else %}
+                            (Group Grading)
+                        {% endif %}
+                    </h3>
+                </div>
+
+                <!-- Grading Section (Subcategories above Slider) -->
+                <div class="subcategory-slider">
+                    {% for subcategory in main_category.sub_categories.all %}
+                    <div class="subcategory">
+                        <span>{{ subcategory.text }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if main_category.grade_type == 'individual' %}
+                <div class="individual-grade">
+                    {% for student in students %}
+                    <div class="individual-student-grade">
+                        <label for="student_{{ student.id }}">{{ student.get_full_name }}</label>
+                        <div class="slider-container">
+                            <input type="range" name="grade_{{ main_category.id }}_student_{{ student.id }}" min="0" max="10" step="0.1" value="5" class="individual-slider">
+                            <span id="student_{{ student.id }}_grade">5</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="group-grade">
+                    <div class="slider-container">
+                        <input type="range" name="grade_{{ main_category.id }}" min="0" max="10" step="0.1" value="5" class="group-slider">
+                        <span id="group_grade">5</span>
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="submit-btn">Submit Grades</button>
+
+        <div class="form-footer">
+            <p><strong>Date:</strong> {% now "F j, Y" %}</p>
+        </div>
+    </div>
+</form>
+
+<!-- Success Popup (Initially Hidden) -->
+<div id="successPopup" class="popup-overlay" style="display: none;">
+    <div class="popup-box">
+        <h2>Grades Submitted Successfully!</h2>
+        <p>Your grading for the project "<span id="projectName"></span>" has been successfully recorded.</p>
+        <button onclick="closePopup()">Close</button>
+    </div>
+</div>
+
+<script>
+// JavaScript to update the grade displayed next to the slider
+document.querySelectorAll('input[type="range"]').forEach(slider => {
+    slider.addEventListener('input', function () {
+        const gradeDisplay = this.nextElementSibling;
+        gradeDisplay.textContent = this.value;
+    });
+});
+
+// Function to show the success popup after form submission
+function showSuccessPopup(projectName) {
+    document.getElementById('projectName').textContent = projectName;  // Set project name in popup
+    document.getElementById('successPopup').style.display = 'block';
+}
+
+// Function to close the success popup
+function closePopup() {
+    document.getElementById('successPopup').style.display = 'none';
+}
+
+// Handle form submission using AJAX
+document.getElementById('evaluationForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+
+    // Create the FormData object and submit via AJAX
+    const formData = new FormData(this);
+
+    fetch("{% url 'submit_grades' project_id=project.id %}", {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())  // Assuming the server returns a JSON response
+    .then(data => {
+        if (data.success) {
+            showSuccessPopup(data.project_name); // Show the success message on successful submission
+        } else {
+            alert('Something went wrong, please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred, please try again.');
+    });
+});
+</script>
+
+{% endblock %}

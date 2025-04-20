@@ -14,6 +14,7 @@ from users.services import create_user_account
 from users.models import User, Student, Supervisor, Coordinator
 from university.models import College, Department
 from django.urls import reverse
+from grades.models import Grading
 #from project.models import Project
 #from announcement.models import Announcement
 
@@ -60,7 +61,12 @@ def coordinator_home(request):
 
 @login_required
 def student_home(request):
-    return render(request, "student/home.html")
+    student = request.user.student
+    grading = Grading.objects.filter(student=student).first()
+
+    return render(request, 'student/home.html', {
+        'grading': grading,
+    })
 
 @login_required
 def teacher_home(request):

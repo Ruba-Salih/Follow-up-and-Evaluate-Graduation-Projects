@@ -31,4 +31,6 @@ urlpatterns = [
 
     #the form urls
     path('api/form/', include('form.urls')),
+    path('grade/', include('grades.urls')),
+    path('teacher/', include('grades.urls'))
 ]
