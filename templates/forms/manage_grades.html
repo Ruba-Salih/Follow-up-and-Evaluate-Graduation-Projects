@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Manage Grades{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/forms/manage_grades.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<h2>Manage Grades</h2>
+
+<form action="{% url 'send_grades_to_all' %}" method="post">
+    {% csrf_token %}
+
+    {% for project_data in data %}
+        <input type="hidden" name="project_ids" value="{{ project_data.project.id }}">
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">Send Grades to All Students</button>
+</form>
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th rowspan="2">Project No.</th>
+            <th rowspan="2">Project Name</th>
+            <th rowspan="2">Student</th>
+            {% for evaluator_role in data.0.evaluator_headers %}
+                {% if evaluator_role == "Judgement Committee" %}
+                    {% for i in committee_numbers %}
+                        <th colspan="{{ evaluation_forms_with_counts|get_form_by_role:evaluator_role.main_categories_count|add:'1' }}">
+                            Committee {{ i }}
+                        </th>
+                    {% endfor %}
+                {% else %}
+                    {% with form=evaluation_forms|get_form_by_role:evaluator_role %}
+                        {% if form %}
+                            <th colspan="{{ form.main_categories.count|add:'1' }}">{{ evaluator_role }}</th>
+                        {% else %}
+                            <th colspan="1">{{ evaluator_role }}</th>
+                        {% endif %}
+                    {% endwith %}
+                {% endif %}
+            {% endfor %}
+            <th rowspan="2">Committee Avg</th>
+            <th rowspan="2">Final Grade</th>
+        </tr>
+        <tr>
+            {% for evaluator_role in data.0.evaluator_headers %}
+                {% if evaluator_role == "Judgement Committee" %}
+                {% for i in committee_numbers %}
+                        {% with form=evaluation_forms|get_form_by_role:"Judgement Committee" %}
+                            {% if form %}
+                                {% for main in form.main_categories.all %}
+                                    <th>{{ main.weight }}</th>
+                                {% endfor %}
+                                <th>Total</th>
+                            {% else %}
+                                <th>No Form</th>
+                            {% endif %}
+                        {% endwith %}
+                    {% endfor %}
+                {% else %}
+                    {% with form=evaluation_forms|get_form_by_role:evaluator_role %}
+                        {% if form %}
+                            {% for main in form.main_categories.all %}
+                                <th>{{ main.weight }}</th>
+                            {% endfor %}
+                            <th>Total</th>
+                        {% else %}
+                            <th>No Form</th>
+                        {% endif %}
+                    {% endwith %}
+                {% endif %}
+            {% endfor %}
+        </tr>
+    </thead>
+    
+    <tbody>
+        {% for project_data in data %}
+            {% for student_row in project_data.students %}
+                <tr>
+                    {% if forloop.first %}
+                        <td rowspan="{{ project_data.students|length }}"><strong>{{ forloop.parentloop.counter }}</strong></td>
+                        <td rowspan="{{ project_data.students|length }}"><strong>{{ project_data.project.name }}</strong></td>
+                    {% endif %}
+                    <td><bold>{{ student_row.student.get_full_name }}</bold></td>
+
+                    {% for evaluator in project_data.evaluators %}
+                        {% with role_data=student_row.grades_by_role|get_item:evaluator.role %}
+                            {% if role_data %}
+                                {% for grade_info in role_data.evaluators %}
+                                    {% if grade_info.user_id == evaluator.user.id %}
+                                        {% for grade in grade_info.ordered_grades %}
+                                            <td>
+                                                {% if grade.grade %}
+                                                    {{ grade.grade.final_grade }}
+                                                {% elif grade.individual_grade %}
+                                                    {{ grade.individual_grade.final_grade }}
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </td>
+                                        {% endfor %}
+                                        <td><strong>{{ grade_info.total }}</strong></td>
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <td colspan="{{ evaluation_forms|get_form_by_role:evaluator.role.main_categories.count|add:'1' }}">N/A</td>
+                            {% endif %}
+                        {% endwith %}
+                    {% endfor %}
+
+
+                    <td><strong>{{ student_row.committee_avg }}</strong></td>
+                    <td><strong>{{ student_row.full_grade }}</strong></td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+
+
+{% endblock %}

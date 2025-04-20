@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from django.http import JsonResponse
 from form.models import EvaluationForm, MainCategory  # Adjust if the model is named differently
 from project.models import Project, ProjectMembership, StudentProjectMembership  # Assuming the project model is called Project
 from .models import Grade, IndividualGrade, Grading, MemberGrade, MemberIndividualGrade  # Adjust according to your model names
@@ -12,8 +11,7 @@ from django.http import HttpResponse
 from django.db import transaction, IntegrityError
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from collections import defaultdict
-from .models import Grading
+
 
 def grade_form(request, project_id):
     project = Project.objects.get(id=project_id)
@@ -99,9 +97,8 @@ def submit_grades(request, project_id):
                         if grade_value:
                             try:
                                 grade_value = float(grade_value)
-                                grade_value = round(grade_value, 2)  # round raw grade
-                                weighted_grade = round(grade_value * main_category.weight, 2)  # round weighted
-                                
+                                weighted_grade = grade_value * main_category.weight
+
                                 # Check if individual grade exists by this user
                                 existing_mig = MemberIndividualGrade.objects.filter(
                                     member=user,
@@ -153,8 +150,7 @@ def submit_grades(request, project_id):
                     if grade_value:
                         try:
                             grade_value = float(grade_value)
-                            grade_value = round(grade_value, 2)  # round raw grade
-                            weighted_grade = round(grade_value * main_category.weight, 2)  # round weighted
+                            weighted_grade = grade_value * main_category.weight
 
                             # Check if grade exists by this user for this main category
                             existing_mg = MemberGrade.objects.filter(
@@ -192,7 +188,7 @@ def submit_grades(request, project_id):
             for student in students:
                 final_grade = calculate_final_grade(student, project)
 
-        return JsonResponse({'success': True, 'project_name': project.name})
+        return redirect('grade_success', project_id=project.id)
 
     return redirect('grade_form', project_id=project_id)
 
@@ -206,62 +202,77 @@ def grade_success(request, project_id):
     return render(request, 'forms/grade_success.html', {'project': project})
 
 
-#function to give the Role grade as his weight
-def convert_total(raw_total, role_name):
-    # Convert Role object to string and normalize
-    role_name = str(role_name).strip().lower()
+def calculate_form_grade(user, project, role, evaluation_form):
+    # Define roles to track their total grades
+    supervisor_role = Role.objects.get(name='Supervisor')
+    reader_role = Role.objects.get(name='Reader')
+    committee_role = Role.objects.get(name='Judgement Committee')
 
-    if raw_total is None:
-        return 0
+    role_grades = {
+        supervisor_role: 0,
+        reader_role: 0,
+        committee_role: 0,
+    }
 
-    if role_name == "supervisor":
-        return round((raw_total / 50) * 50, 2)
-    elif role_name == "reader":
-        return round((raw_total / 40) * 20, 2)
-    elif role_name == "judgement committee":
-        return round((raw_total / 30) * 30, 2)
-
-    return 0
-
-
-
-def calculate_form_grade(user, project, role, group_grades, individual_grades):
-    print(f" role is: {role}")
-    total_grades_by_student = defaultdict(float)
-
-    for ig in individual_grades:
-        student_name = ig.student.username  # get the username of the student 
-        total_grades_by_student[student_name] += ig.final_grade
-
-    for student, grade in total_grades_by_student.items():
-        print(f"{student}: {grade}")
-
+    # Get the current user's role membership for this project
+    user_membership = ProjectMembership.objects.filter(user=user, project=project).first()
     
-    # 1. Fetch students in the project
+    if not user_membership:
+        print(f"[Error] User {user} does not have a membership in project {project}")
+        return []
+    
+    # Only add grades to the current user's role by using MemberGrade
+    member_grades = MemberGrade.objects.filter(member=user, grade__project=project, grade__evaluation_form=evaluation_form)
+    
+    for member_grade in member_grades:
+        if user_membership.role in role_grades:
+            role_grades[user_membership.role] += member_grade.grade.final_grade
+            print(f"[Group Grade] Added {member_grade.grade.final_grade} to role {user_membership.role}")
+
+    # 2. Fetch students in the project
     student_memberships = StudentProjectMembership.objects.filter(project=project).select_related('student')
     students = [membership.student for membership in student_memberships]
 
     results = []
+    temp_role_grades = role_grades.copy()
 
     for student in students:
-
-        student_name = student.username
-
-        for grade in group_grades:
-            total_grades_by_student[student_name] += grade.grade.final_grade
+        # Aggregate individual grades for the current user’s role
+        member_individual_grades = MemberIndividualGrade.objects.filter(member=user, individual_grade__grade__project=project, individual_grade__evaluation_form=evaluation_form, individual_grade__student=student)
         
-        print (f"total grade is: {total_grades_by_student[student_name]}")
+        for member_individual_grade in member_individual_grades:
+            # Only aggregate if the role matches the current user's role
+            if user_membership.role in role_grades:
+                role_grades[user_membership.role] += member_individual_grade.individual_grade.final_grade
+                print(f"[Individual Grade] Added {member_individual_grade.individual_grade.final_grade} to role {user_membership.role}")
+
+        # For this view, we only want to show the grade for the current user’s role
+        final_grade = 0
+        target_role = role
+
+        # Calculate the grade only for the current user's role
+        if target_role in role_grades:
+            final_grade = role_grades[target_role]
+            print(f"[Final] Student: {student.get_full_name()}, Role: {target_role}, Grade: {final_grade}")
+        else:
+            print(f"[Warning] Role {target_role} not found in role_grades")
+
         # Convert the role grade to the final grade format if needed
-        converted_grade = convert_total(raw_total=total_grades_by_student[student_name], role_name=role)
-        print (f"converted grade is: {converted_grade}")
+        converted_grade = convert_role_grade(role=role, role_grade=final_grade)
+        
         # Append the result for the student
         results.append({
             'student': student,
-            'grade': total_grades_by_student[student_name],
+            'grade': final_grade,
             'converted_grade': converted_grade
         })
+        
+        # Reset role grades to the temp copy for the next iteration
+        role_grades = temp_role_grades.copy()
 
     return results
+
+
 
 
 def view_grades(request, project_id):
@@ -275,7 +286,6 @@ def view_grades(request, project_id):
     try:
         membership = ProjectMembership.objects.get(user=request.user, project=project)
         role = membership.role
-        print(f"role is{role}")
     except ProjectMembership.DoesNotExist:
         return HttpResponse("You are not assigned to this project!", status=403)
 
@@ -308,9 +318,9 @@ def view_grades(request, project_id):
 
         # Extract the related IndividualGrade objects and add to the array
         individual_grades.extend([mg.individual_grade for mg in member_grades])
-        print(f"individual grades are: {individual_grades}")
+    
 
-    student_grades = calculate_form_grade(user=request.user, project=project, role=role, group_grades=group_grades, individual_grades=individual_grades)
+    student_grades = calculate_form_grade(user=request.user, project=project, role=role, evaluation_form=evaluation_form)
 
     supervisor = project.supervisor
     department = supervisor.department
@@ -331,6 +341,52 @@ def view_grades(request, project_id):
         'supervisor_name': supervisor.get_full_name,
         'project_name': project.name,
     })
+
+def convert_role_grade(role, role_grade):
+
+    print(f"Role received: {role}")
+    # Define the maximum possible grade for eacph role
+    max_grades = {
+        'Supervisor': 50,
+        'Reader': 20,
+        'Judgement Committee': 30
+    }
+
+    # Actual maximum values for each role (you can adjust this as needed)
+    actual_max_grades = {
+        'Supervisor': 50,
+        'Reader': 40,
+        'Judgement Committee': 30
+    }
+
+    # Get the grade for the given role
+    role_score = role_grade
+    print(f"Role: {role}, Role Score: {role_score}")
+
+    role_name = role.name
+    # Convert the grade based on max value for the role
+    if role_name == 'Supervisor':
+        actual_max = actual_max_grades.get('Supervisor', 0)
+        print(f"Actual Max for Supervisor: {actual_max}")
+        converted_grade = (role_score / actual_max) * max_grades['Supervisor'] if actual_max else 0
+        print(f"Converted Grade for Supervisor: {converted_grade}")
+
+    elif role_name == 'Reader':
+        actual_max = actual_max_grades.get('Reader', 0)
+        print(f"Actual Max for Reader: {actual_max}")
+        converted_grade = (role_score / actual_max) * max_grades['Reader'] if actual_max else 0
+        print(f"Converted Grade for Reader: {converted_grade}")
+
+    elif role_name == 'Judgement Committee':
+        actual_max = actual_max_grades.get('Judgement Committee', 0)
+        print(f"Actual Max for Committee: {actual_max}")
+        converted_grade = (role_score / actual_max) * max_grades['Judgement Committee'] if actual_max else 0
+        print(f"Converted Grade for Judgement Committee: {converted_grade}")
+    else:
+        converted_grade = 0
+        print(f"Role {role} not found, setting grade to 0")
+
+    return converted_grade
 
 
 def calculate_final_grade(student, project):
@@ -425,6 +481,7 @@ def calculate_final_grade(student, project):
 
     committee_score = role_grades[committee_role]
     avg_score = committee_score / committee_count
+    print(f"average: {avg_score}")
     committee_final = (avg_score / committee_actual_max) * 30 if committee_actual_max else 0
 
     # Combine all roles' converted grades to get the final grade
@@ -432,25 +489,18 @@ def calculate_final_grade(student, project):
 
     # Ensure the final grade does not exceed 100
     final_grade = min(final_grade, 100)
-    final_grade = round(final_grade, 2)
 
     # Save the final grade in the Grading model
-    grading, created = Grading.objects.get_or_create(
-        student=student,
-        project=project,
-        defaults={'final_grade': final_grade}
-    )
-
-    if not created:
-        grading.final_grade = final_grade
-        grading.save()
+    grading, created = Grading.objects.get_or_create(student=student, project=project)
+    grading.final_grade = final_grade
+    grading.save()
 
     print(f"Final grade saved: {final_grade}")
 
     return final_grade
 
 
-""" def teacher_home(request):
+def teacher_home(request):
     print("Hello from teacher_home view!")
     user = request.user
     # Get the projects where the current user is a member
@@ -462,7 +512,7 @@ def calculate_final_grade(student, project):
     }
     return render(request, 'teacher/home.html', context)
 
- """
+
 
 @login_required
 def manage_projects(request):
@@ -478,7 +528,6 @@ def manage_projects(request):
     return render(request, 'teacher/manage_projects.html', context)
 
 from django.urls import reverse
-
 
 @login_required
 def project_role_dashboard(request, project_id, role):
@@ -528,42 +577,26 @@ def project_role_dashboard(request, project_id, role):
 
 
 def manage_grades_view(request):
-    user = request.user
-    is_coordinator = hasattr(user, 'coordinator')  # Check if user is a Coordinator
-    department = user.department
-
-    if not is_coordinator:
-        return HttpResponseForbidden("Access Denied: You are not a Coordinator.")
-
-    coordinator = user.coordinator
-    is_super = coordinator.is_super
-
-    department = coordinator.department
-    if not department:
-        return HttpResponseForbidden("Coordinator does not have an assigned department.")
+    print("hello from manage grades view")
     
-    college = department.college
+    department = request.user.department
+    print(f"Department: {department}")
 
-    if is_super:
-        projects = Project.objects.filter(department__college=college).prefetch_related('grades')
-    else:
-        projects = Project.objects.filter(department=department).prefetch_related('grades')
+    projects = Project.objects.filter(department=department.name).prefetch_related('grades')
+    print(f"Projects: {projects}")
 
     forms = EvaluationForm.objects.all()
     data = []
 
     for project in projects:
+        print(f"Project: {project.name}")
         student_memberships = StudentProjectMembership.objects.filter(project=project).select_related('student')
         students = [membership.student for membership in student_memberships]
+        print(f"Students: {students}")
 
         memberships = ProjectMembership.objects.filter(project=project).select_related('user', 'role')
 
-        #evaluators = [{"user": m.user, "role": m.role.name} for m in memberships]
-        role_order = ['Supervisor', 'Reader', 'Judgement Committee']
-        evaluators = sorted(
-            [{"user": m.user, "role": m.role.name} for m in memberships],
-            key=lambda e: (role_order.index(e['role']) if e['role'] in role_order else 99, e['user'].id)
-        )
+        evaluators = [{"user": m.user, "role": m.role.name} for m in memberships]
         committee_count = memberships.filter(role__name="Judgement Committee").count()
 
         project_data = {
@@ -576,31 +609,27 @@ def manage_grades_view(request):
         for student in students:
             student_row = {
                 'student': student,
-                'grades_by_role': {}
+                'grades_by_evaluator': {}
             }
             evaluator_totals = []
 
             for evaluator in evaluators:
                 user = evaluator["user"]
                 role_name = evaluator["role"]
+                print(f"Evaluator: {user}, Role: {role_name}")
 
                 role = Role.objects.get(name=role_name)
                 eval_form = EvaluationForm.objects.filter(target_role=role).first()
 
                 if not eval_form:
-                    if role_name not in student_row['grades_by_role']:
-                        student_row['grades_by_role'][role_name] = {
-                            'evaluators': []
-                        }
-
-                    student_row['grades_by_role'][role_name]['evaluators'].append({
+                    student_row['grades_by_evaluator'][user.id] = {
                         'evaluator_name': user.get_full_name(),
-                        'user_id': user.id,
-                        'group_grades': group_grades,
-                        'individual_grades': individual_grades,
-                        'ordered_grades': ordered_grades,
-                        'total': round(converted_total, 2),
-                    })
+                        'role': role_name,
+                        'group_grades': [],
+                        'individual_grades': [],
+                        'grades_by_main': {},
+                        'total': 0
+                    }
                     evaluator_totals.append(0)
                     continue
 
@@ -627,62 +656,54 @@ def manage_grades_view(request):
                 all_grades = individual_grades_list + group_grades_list
                 total = sum(g.final_grade for g in all_grades if g.final_grade is not None)
 
-                # Build a list in form order
-                ordered_grades = []
-                raw_total = 0
+                # Prepare grade map by main category ID
+                grades_by_main = {}
 
                 for main in main_categories:
-                    if main.grade_type == 'group':
-                        grade_obj = next(
-                            (g for g in group_grades if g.grade.main_category_id == main.id),
-                            None
-                        )
-                        if grade_obj:
-                            raw_total += grade_obj.grade.final_grade or 0
-                        ordered_grades.append(grade_obj)
+                    grade_value = "N/A"
 
-                    elif main.grade_type == 'individual':
-                        grade_obj = next(
-                            (g for g in individual_grades if g.individual_grade.grade.main_category_id == main.id),
-                            None
-                        )
-                        if grade_obj:
-                            raw_total += grade_obj.individual_grade.final_grade or 0
-                        ordered_grades.append(grade_obj)
+                    if main.grade_type == "group":
+                        match = next((g.grade.final_grade for g in group_grades if g.grade.main_category_id == main.id), None)
+                        if match is not None:
+                            grade_value = round(match, 2)
+                    elif main.grade_type == "individual":
+                        match = next((ig.individual_grade.final_grade for ig in individual_grades
+                                      if ig.individual_grade.grade.main_category_id == main.id and
+                                         ig.individual_grade.student_id == student.id), None)
+                        if match is not None:
+                            grade_value = round(match, 2)
 
-                # Convert the raw total based on role
-                converted_total = convert_total(raw_total, role_name)
+                    grades_by_main[main.id] = grade_value
 
-                evaluator_totals.append(converted_total)
-
-                if role_name not in student_row['grades_by_role']:
-                    student_row['grades_by_role'][role_name] = {
-                        'evaluators': []
-                    }
-
-                student_row['grades_by_role'][role_name]['evaluators'].append({
+                student_row['grades_by_evaluator'][user.id] = {
                     'evaluator_name': user.get_full_name(),
-                    'user_id': user.id,
+                    'role': role_name,
                     'group_grades': group_grades,
                     'individual_grades': individual_grades,
-                    'ordered_grades': ordered_grades,
-                    'total': round(converted_total, 2),
-                })
+                    'grades_by_main': grades_by_main,
+                    'total': round(total, 2)
+                }
 
-            grading = Grading.objects.filter(student=student, project=project).first()
-            full_grade = grading.final_grade if grading else "N/A"
+                evaluator_totals.append(total)
 
-            # Create a mapping from role name to score (this is now done correctly)
-            committee_scores = [
-                total for evaluator, total in zip(evaluators, evaluator_totals)
-                if evaluator["role"].strip().lower() == "judgement committee" and total is not None
-            ]
+                print(f"Student row so far: {student_row}")
 
-            committee_count = len(committee_scores)
-            print(f"committee scores are {sum(committee_scores)}, and their count is {committee_count}")
+            supervisor_score = evaluator_totals[0] if len(evaluator_totals) > 0 else 0
+            reader_score = evaluator_totals[1] if len(evaluator_totals) > 1 else 0
 
-            committee_avg = round(sum(committee_scores) / committee_count, 2) if committee_scores else 0
+            supervisor_max = 50
+            reader_max = 40
+            committee_max = 30
 
+            if len(evaluator_totals) > 2:
+                committee_scores = [(g / committee_max) * 30 for g in evaluator_totals[2:] if g is not None]
+                committee_avg = round(sum(committee_scores) / len(committee_scores), 2) if committee_scores else 0
+            else:
+                committee_avg = 0
+
+            supervisor_final = (supervisor_score / supervisor_max) * 50 if supervisor_max else 0
+            reader_final = (reader_score / reader_max) * 20 if reader_max else 0
+            full_grade = round(supervisor_final + reader_final + committee_avg, 2)
 
             student_row['committee_avg'] = committee_avg
             student_row['full_grade'] = full_grade
@@ -690,64 +711,10 @@ def manage_grades_view(request):
 
         data.append(project_data)
 
+    print(f"Final data: {data}")
     evaluation_forms = EvaluationForm.objects.all()
-    evaluation_forms_with_counts = []
-    for form in evaluation_forms:
-        role = form.target_role
-        main_categories_count = form.main_categories.count()
-        evaluation_forms_with_counts.append({
-            'role': role,
-            'main_categories_count': main_categories_count,
-            'form': form
-        })
-    # Create a list of committee numbers
-    committee_numbers = [i + 1 for i in range(committee_count)]
     
     return render(request, 'forms/manage_grades.html', {
         'data': data,
         'evaluation_forms': evaluation_forms,
-        'committee_numbers': committee_numbers,
-        'evaluation_forms_with_counts': evaluation_forms_with_counts,
     })
-
-
-@login_required
-def view_my_grade(request):
-    student = request.user
-    grading = Grading.objects.filter(student=student, is_sent=True).first()
-
-    return render(request, 'student/view_my_grade.html', {
-        'grading': grading,
-        'grade_available': grading is not None
-    })
-
-
-@login_required
-def send_grades_to_all(request):
-    user = request.user
-    is_coordinator = hasattr(user, 'coordinator')  # Check if user is a Coordinator
-
-    if not is_coordinator:
-        return HttpResponseForbidden("Access Denied: You are not a Coordinator.")
-
-    # Collect all the project IDs correctly
-    project_ids = request.POST.getlist('project_ids')
-    print("DEBUG - Project IDs received:", project_ids)
-    
-    for project_id in project_ids:
-        try:
-            project = Project.objects.get(id=project_id)
-        except Project.DoesNotExist:
-            continue  # skip invalid project ID
-        
-        # Get all grading records for this project where grades are not yet sent
-        gradings = Grading.objects.filter(project=project, is_sent=False)
-        print(f"Found {gradings.count()} gradings for project {project_id}")
-
-        # Mark all gradings as sent for the project
-        for grading in gradings:
-            grading.is_sent = True
-            grading.save(update_fields=['is_sent'])
-
-    # Redirect back to the page with a success message
-    return redirect('manage_grades')  # or any other appropriate view
