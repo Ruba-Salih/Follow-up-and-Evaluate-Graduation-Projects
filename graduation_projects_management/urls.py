@@ -38,3 +38,4 @@ urlpatterns = [
 
     path('grade/', include('grades.urls')),
     path('teacher/', include('grades.urls')),
+]
