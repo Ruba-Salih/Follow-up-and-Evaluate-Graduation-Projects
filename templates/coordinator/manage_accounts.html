@@ -175,8 +175,8 @@
     <label for="coord-phone">Phone Number (optional):</label>
     <input type="text" id="coord-phone">
 
-    <label for="coord-id">Coordinator ID:</label>
-    <input type="text" id="coord-id" required>
+<!--     <label for="coord-id">Coordinator ID:</label>
+    <input type="text" id="coord-id" required> -->
 
     <label for="coord-department">Department:</label>
     <select id="coord-department" {% if not request.user.coordinator.is_super %}disabled{% endif %}>
