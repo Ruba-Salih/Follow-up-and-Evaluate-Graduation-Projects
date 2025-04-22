@@ -14,6 +14,7 @@ from users.services import create_user_account
 from users.models import User, Student, Supervisor, Coordinator
 from university.models import College, Department
 from django.urls import reverse
+from grades.models import Grading
 #from project.models import Project
 #from announcement.models import Announcement
 
@@ -60,7 +61,12 @@ def coordinator_home(request):
 
 @login_required
 def student_home(request):
-    return render(request, "student/home.html")
+    student = request.user.student
+    grading = Grading.objects.filter(student=student).first()
+
+    return render(request, 'student/home.html', {
+        'grading': grading,
+    })
 
 @login_required
 def teacher_home(request):
@@ -291,16 +297,38 @@ class ManageAccountsView(APIView):
         if role == "coordinator":
             coord_id = data.get("coord_id")
             is_super = data.get("is_super", False)
-
+            
+            # Step 1: Create user with temporary coord_id value
             new_user = Coordinator.objects.create_user(
                 username=username,
                 email=email,
                 password=password,
                 phone_number=phone_number,
-                coord_id=coord_id,
+                department=department,
+                coord_id="",  # Placeholder
+                is_super=is_super
+            )
+
+            # Step 2: Generate and set coord_id using the primary key
+            new_user.coord_id = f"C-{new_user.pk}"
+            new_user.save()
+
+            """ # Step 1: Create the Coordinator object
+            new_user = Coordinator(
+                username=username,
+                email=email,
+                password=password,
+                phone_number=phone_number,
                 department=department,
                 is_super=is_super
             )
+
+            # Step 2: Assign coord_id before saving
+            new_user.coord_id = f"C-{new_user.pk if new_user.pk else 0:04d}"
+
+            # Step 3: Save the object
+            new_user.save()
+            is_super = data.get("is_super", False) """
 
         elif role == "student":
             student_id = data.get("student_id")

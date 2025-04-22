@@ -42,7 +42,7 @@ class Student(User):
 
 
 class Coordinator(User):
-    coord_id = models.CharField(max_length=20, unique=True)
+    coord_id = models.CharField(max_length=20, unique=True, blank=True, default="")
     is_super = models.BooleanField(default=False)
 
     def __str__(self):

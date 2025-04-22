@@ -36,4 +36,6 @@ urlpatterns = [
     # The project urls
     path('api/project/', include('project.urls')),
 
+    path('grade/', include('grades.urls')),
+    path('teacher/', include('grades.urls')),
 ]
