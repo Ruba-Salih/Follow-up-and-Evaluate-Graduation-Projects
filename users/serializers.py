@@ -86,11 +86,21 @@ class UserLoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        user = authenticate(username=data["username"], password=data["password"])
+        username = data["username"].lower()  # Normalize to lowercase
+        
+        # Fetch user case-insensitively from the database
+        try:
+            user = User.objects.get(username__iexact=username)  # case-insensitive query
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid credentials.")
+        
+        # Authenticate the user
+        user = authenticate(username=user.username, password=data["password"])
+        
         if not user:
             raise serializers.ValidationError("Invalid credentials.")
+            
         return user
-
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:

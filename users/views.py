@@ -297,16 +297,38 @@ class ManageAccountsView(APIView):
         if role == "coordinator":
             coord_id = data.get("coord_id")
             is_super = data.get("is_super", False)
-
+            
+            # Step 1: Create user with temporary coord_id value
             new_user = Coordinator.objects.create_user(
                 username=username,
                 email=email,
                 password=password,
                 phone_number=phone_number,
-                coord_id=coord_id,
+                department=department,
+                coord_id="",  # Placeholder
+                is_super=is_super
+            )
+
+            # Step 2: Generate and set coord_id using the primary key
+            new_user.coord_id = f"C-{new_user.pk}"
+            new_user.save()
+
+            """ # Step 1: Create the Coordinator object
+            new_user = Coordinator(
+                username=username,
+                email=email,
+                password=password,
+                phone_number=phone_number,
                 department=department,
                 is_super=is_super
             )
+
+            # Step 2: Assign coord_id before saving
+            new_user.coord_id = f"C-{new_user.pk if new_user.pk else 0:04d}"
+
+            # Step 3: Save the object
+            new_user.save()
+            is_super = data.get("is_super", False) """
 
         elif role == "student":
             student_id = data.get("student_id")
