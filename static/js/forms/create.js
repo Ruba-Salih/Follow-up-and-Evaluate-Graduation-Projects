@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let formData = {
             name: document.getElementById("form-name").value,
             target_role: document.getElementById("target_role").value,
+            form_weight: document.getElementById("form_weight").value,
             main_categories: []
         };
 

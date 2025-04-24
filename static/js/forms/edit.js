@@ -1,10 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
+    console.log("Edit form script loaded ✅");
     document.getElementById("edit-evaluation-form").onsubmit = function (e) {
         e.preventDefault();
 
         let formData = {
             name: document.getElementById("form-name").value,
             target_role: document.getElementById("target_role").value,
+            form_weight: document.getElementById("form_weight").value,
             main_categories: []
         };
 
@@ -23,6 +25,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
             formData.main_categories.push(mainCategory);
         });
+
+        console.log(JSON.stringify(formData, null, 2));
 
         fetch(editFormUrl, { // Use global variable from edit.html
             method: "POST",

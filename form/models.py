@@ -20,6 +20,7 @@ class EvaluationForm(models.Model):
         blank=True,
         help_text="The role of users for whom this evaluation form is intended."
     )
+    form_weight = models.FloatField(null=False, help_text="The weight of the entire evaluation form.")
     created_at = models.DateTimeField(default=now)
 
     def __str__(self):
