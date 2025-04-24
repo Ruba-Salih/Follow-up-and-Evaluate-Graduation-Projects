@@ -49,7 +49,7 @@
                     <div class="individual-student-grade">
                         <label for="student_{{ student.id }}">{{ student.get_full_name }}</label>
                         <div class="slider-container">
-                            <input type="range" name="grade_{{ main_category.id }}_student_{{ student.id }}" min="0" max="10" step="0.1" value="5" class="individual-slider">
+                            <input type="range" name="grade_{{ main_category.id }}_student_{{ student.id }}" min="0" max="10" step="0.5" value="5" class="individual-slider">
                             <span id="student_{{ student.id }}_grade">5</span>
                         </div>
                     </div>
@@ -58,7 +58,7 @@
                 {% else %}
                 <div class="group-grade">
                     <div class="slider-container">
-                        <input type="range" name="grade_{{ main_category.id }}" min="0" max="10" step="0.1" value="5" class="group-slider">
+                        <input type="range" name="grade_{{ main_category.id }}" min="0" max="10" step="0.5" value="5" class="group-slider">
                         <span id="group_grade">5</span>
                     </div>
                 </div>
@@ -102,6 +102,7 @@ function showSuccessPopup(projectName) {
 // Function to close the success popup
 function closePopup() {
     document.getElementById('successPopup').style.display = 'none';
+    window.history.back();
 }
 
 // Handle form submission using AJAX

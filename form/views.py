@@ -86,6 +86,7 @@ def duplicate_evaluation_form(request, form_id):
     new_form = EvaluationForm.objects.create(
         name=f"Copy of {original_form.name}",
         target_role=original_form.target_role,
+        form_weight=original_form.form_weight,
         created_at=now(),  # Use now() to set the created_at field
     )
     

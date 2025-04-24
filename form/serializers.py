@@ -42,7 +42,7 @@ class EvaluationFormSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = EvaluationForm
-        fields = ['id', 'name', 'coordinators', 'target_role', 'created_at', 'main_categories']
+        fields = ['id', 'name', 'coordinators', 'target_role', 'form_weight', 'created_at', 'main_categories']
 
     def create(self, validated_data):
         main_categories_data = validated_data.pop('main_categories')
@@ -63,6 +63,7 @@ class EvaluationFormSerializer(serializers.ModelSerializer):
         # Update EvaluationForm fields
         instance.name = validated_data.get('name', instance.name)
         instance.target_role = validated_data.get('target_role', instance.target_role)
+        instance.form_weight = validated_data.get('form_weight', instance.form_weight)
         instance.save()
 
         # Update MainCategories

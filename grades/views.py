@@ -14,6 +14,12 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from collections import defaultdict
 from .models import Grading
+from university.models import Department
+from decimal import Decimal, ROUND_HALF_UP
+from django.db.models import Count, Max
+from django.http import HttpResponseForbidden
+
+
 
 def grade_form(request, project_id):
     project = Project.objects.get(id=project_id)
@@ -26,6 +32,12 @@ def grade_form(request, project_id):
 
     user_role = project_membership.role
     form = EvaluationForm.objects.filter(target_role=user_role).first()
+    supervisor_membership = ProjectMembership.objects.filter(project=project, role__name="Supervisor").first()
+    if supervisor_membership:
+        supervisor = supervisor_membership.user
+    else:
+        supervisor = None
+    print(f"Supervisor is: {supervisor}")
 
     if not form:
         return render(request, 'access_denied.html', {"message": "No form available for your role in this project."})
@@ -33,7 +45,6 @@ def grade_form(request, project_id):
     print(f"evaluation_form_id: {form.id}")
     main_categories = form.main_categories.all()
     students = Student.objects.filter(project_membership__project=project)
-    supervisor = project.supervisor
     department = supervisor.department
     college = department.college
     university = college.university
@@ -205,23 +216,49 @@ def grade_success(request, project_id):
     # Render the success template with the project context
     return render(request, 'forms/grade_success.html', {'project': project})
 
+#funtion to convert to the nearst up 14.5 -> 15
+def round_half_up(n):
+    return int(Decimal(n).quantize(0, rounding=ROUND_HALF_UP))
 
 #function to give the Role grade as his weight
 def convert_total(raw_total, role_name):
-    # Convert Role object to string and normalize
+    """Convert raw total grade using the actual grade of the form and the form's weight."""
     role_name = str(role_name).strip().lower()
 
     if raw_total is None:
         return 0
 
-    if role_name == "supervisor":
-        return round((raw_total / 50) * 50, 2)
-    elif role_name == "reader":
-        return round((raw_total / 40) * 20, 2)
-    elif role_name == "judgement committee":
-        return round((raw_total / 30) * 30, 2)
+    # Try to get the role object
+    try:
+        role = Role.objects.get(name__iexact=role_name)  # Adjust if the role field is different
+    except Role.DoesNotExist:
+        return 0  # If the role doesn't exist, return 0
 
-    return 0
+    # Get the evaluation form associated with this role
+    form = EvaluationForm.objects.filter(target_role=role).first()  # Get the first form with the role
+
+    if not form:
+        return 0  # If no form found, return 0
+
+    # Extract the form's weight
+    form_weight = form.form_weight
+
+    # If form weight is 0 or None, return 0 to avoid division by zero
+    if form_weight <= 0:
+        return 0
+
+    # Calculate the actual grade by summing MainCategory weights multiplied by their respective numbers
+    actual_grade = sum(cat.weight * 10 for cat in form.main_categories.all())
+
+    # If actual_grade is 0, return 0 to avoid division by zero
+    if actual_grade == 0:
+        return 0
+
+    # Normalize the raw_total based on the actual grade and form weight
+    converted_grade = (raw_total / actual_grade) * form_weight
+
+    # Return the converted grade rounded to nearst number
+    return round_half_up(converted_grade)
 
 
 
@@ -312,7 +349,13 @@ def view_grades(request, project_id):
 
     student_grades = calculate_form_grade(user=request.user, project=project, role=role, group_grades=group_grades, individual_grades=individual_grades)
 
-    supervisor = project.supervisor
+    supervisor_membership = ProjectMembership.objects.filter(project=project, role__name="Supervisor").first()
+
+    if supervisor_membership:
+        supervisor = supervisor_membership.user
+    else:
+        supervisor = None  # or handle this case
+
     department = supervisor.department
     college = department.college
     university = college.university
@@ -333,108 +376,86 @@ def view_grades(request, project_id):
     })
 
 
+from collections import defaultdict
+
 def calculate_final_grade(student, project):
-    try:
-        supervisor_role = Role.objects.get(name='Supervisor')
-        reader_role = Role.objects.get(name='Reader')
-        committee_role = Role.objects.get(name='Judgement Committee')
-    except Role.DoesNotExist:
-        print("Roles not found.")
-        return None  # Handle the case where roles are missing
+    memberships = ProjectMembership.objects.filter(project=project).exclude(user=student)
 
-    
-    committee_members = ProjectMembership.objects.filter(project=project, role=committee_role)
-    committee_count = committee_members.count()
-    print(f"number of ommittee members {committee_count}")
+    if not memberships.exists():
+        print("No evaluators found for this project.")
+        return None
 
-    # Define the maximum possible grade for each role
-    max_grades = {
-        supervisor_role: 50,
-        reader_role: 20,
-        committee_role: 30
-    }
-    
-    supervisor_actual_max = 50  # Example actual max for Supervisor
-    reader_actual_max = 40     # Example actual max for Reader
-    committee_actual_max = 30  # Example actual max for each Judgement Committee member
+    # Map roles to users
+    role_user_map = defaultdict(list)
+    for mem in memberships:
+        role_user_map[mem.role].append(mem.user)
 
-    # Weight definitions for each role (this is just for reference)
-    weights = {
-        supervisor_role: 0.5,
-        reader_role: 0.2,
-        committee_role: 0.3
-    }
+    role_grades_sum = {}
+    role_weights = {}
 
-    print("Max grades:", max_grades)
-    print("Weights:", weights)
-
-    # Assign grades to roles (using existing grades from individual and group assignments)
-    role_grades = {
-        supervisor_role: 0,
-        reader_role: 0,
-        committee_role: 0
-    }
-
-    print("Initial role grades:", role_grades)
-    
-    # Fetch individual grades for the student in the given project
-    individual_grades = IndividualGrade.objects.filter(student=student, grade__project=project)
-    print(f"Found {len(individual_grades)} individual grades for student {student}")
-
-    # Assign grades from individual assignments to the appropriate roles
-    for ind_grade in individual_grades:
-        member_link = MemberIndividualGrade.objects.filter(individual_grade=ind_grade).first()
-        if not member_link:
+    for role, users in role_user_map.items():
+        form = EvaluationForm.objects.filter(target_role=role).first()
+        if not form:
+            print(f"No evaluation form found for role: {role}")
             continue
-        member = member_link.member
-        role_obj = ProjectMembership.objects.filter(user=member, project=project).first()
-        if role_obj and role_obj.role in role_grades:
-            role_grades[role_obj.role] += ind_grade.final_grade
-            print(f"Assigned individual grade {ind_grade.final_grade} to role {role_obj.role}")
 
-    # Fetch group grades for the project
-    group_grades = Grade.objects.filter(project=project).exclude(individual_grades__isnull=False)
-    print(f"Found {len(group_grades)} group grades for project {project}")
-
-    # Assign group grades to roles
-    for group_grade in group_grades:
-        member_link = MemberGrade.objects.filter(grade=group_grade).first()
-        if not member_link:
+        main_categories = form.main_categories.all()
+        max_possible = sum(cat.weight * 10 for cat in main_categories)
+        if max_possible == 0:
+            print(f"Max possible grade is 0 for form {form}. Skipping...")
             continue
-        member = member_link.member
-        role_obj = ProjectMembership.objects.filter(user=member, project=project).first()
-        if role_obj and role_obj.role in role_grades:
-            role_grades[role_obj.role] += group_grade.final_grade
-            print(f"Assigned group grade {group_grade.final_grade} to role {role_obj.role}")
 
-    # Now calculate the final grade by summing up the grades of all roles
+        total_combined_grade = 0
+
+        # Get individual grades for this student/project/form
+        individual_grades = IndividualGrade.objects.filter(
+            student=student,
+            grade__project=project,
+            evaluation_form=form
+        )
+
+        graded_evaluators = []
+        for evaluator in users:
+            # Sum individual grades given by this evaluator
+            evaluator_individual_links = MemberIndividualGrade.objects.filter(
+                member=evaluator,
+                individual_grade__in=individual_grades
+            )
+            individual_sum = sum(link.individual_grade.final_grade for link in evaluator_individual_links)
+
+            # Sum group grades given by this evaluator
+            evaluator_group_links = MemberGrade.objects.filter(
+                member=evaluator,
+                grade__project=project,
+                grade__evaluation_form=form
+            )
+            group_sum = sum(link.grade.final_grade for link in evaluator_group_links)
+
+            # Only add to total if they contributed grades
+            if individual_sum > 0 or group_sum > 0:
+                total_combined_grade += individual_sum + group_sum
+                graded_evaluators.append(evaluator)
+
+        # Normalize
+        if len(graded_evaluators) > 1:
+            normalized_avg = (round_half_up((round_half_up(total_combined_grade) / len(graded_evaluators))) / max_possible)
+        else:
+            normalized_avg = total_combined_grade / max_possible
+
+        role_grades_sum[role] = normalized_avg
+
+        # Get weight from form
+        role_weights[role] = getattr(form, "form_weight", 0)
+
+    # Final grade aggregation
     final_grade = 0
+    for role, normalized_score in role_grades_sum.items():
+        weight = role_weights.get(role, 0)
+        final_grade += normalized_score * weight
 
-    # Add up grades for each role, without weighting them again
-    print("Summing up grades for each role:")
-    for role, total_grade in role_grades.items():
-        print(f"Role: {role}, Grade: {total_grade}")
-        final_grade += total_grade
-
-    # Now, convert the grades based on max values for each role
-    supervisor_score = role_grades[supervisor_role]
-    supervisor_final = (supervisor_score / supervisor_actual_max) * 50 if supervisor_actual_max else 0
-
-    reader_score = role_grades[reader_role]
-    reader_final = (reader_score / reader_actual_max) * 20 if reader_actual_max else 0
-
-    committee_score = role_grades[committee_role]
-    avg_score = committee_score / committee_count
-    committee_final = (avg_score / committee_actual_max) * 30 if committee_actual_max else 0
-
-    # Combine all roles' converted grades to get the final grade
-    final_grade = supervisor_final + reader_final + committee_final
-
-    # Ensure the final grade does not exceed 100
+    final_grade = round_half_up(final_grade)
     final_grade = min(final_grade, 100)
-    final_grade = round(final_grade, 2)
 
-    # Save the final grade in the Grading model
     grading, created = Grading.objects.get_or_create(
         student=student,
         project=project,
@@ -446,23 +467,8 @@ def calculate_final_grade(student, project):
         grading.save()
 
     print(f"Final grade saved: {final_grade}")
-
     return final_grade
 
-
-""" def teacher_home(request):
-    print("Hello from teacher_home view!")
-    user = request.user
-    # Get the projects where the current user is a member
-    project_memberships = ProjectMembership.objects.filter(user=user)
-    total_projects = project_memberships.values('project').distinct().count()
-
-    context = {
-        'total_projects': total_projects,
-    }
-    return render(request, 'teacher/home.html', context)
-
- """
 
 @login_required
 def manage_projects(request):
@@ -541,16 +547,19 @@ def manage_grades_view(request):
     department = coordinator.department
     if not department:
         return HttpResponseForbidden("Coordinator does not have an assigned department.")
-    
+
     college = department.college
+    departments = Department.objects.filter(college=college).values_list('name', flat=True)
 
     if is_super:
         projects = Project.objects.filter(department__college=college).prefetch_related('grades')
     else:
-        projects = Project.objects.filter(department=department).prefetch_related('grades')
+        projects = Project.objects.filter(department=department).prefetch_related('grades') 
 
+    print(f"project are: {projects}")
     forms = EvaluationForm.objects.all()
     data = []
+    committee_numbers = 0
 
     for project in projects:
         student_memberships = StudentProjectMembership.objects.filter(project=project).select_related('student')
@@ -565,7 +574,7 @@ def manage_grades_view(request):
             key=lambda e: (role_order.index(e['role']) if e['role'] in role_order else 99, e['user'].id)
         )
         committee_count = memberships.filter(role__name="Judgement Committee").count()
-
+        committee_numbers = committee_count
         project_data = {
             'project': project,
             'students': [],
@@ -599,7 +608,7 @@ def manage_grades_view(request):
                         'group_grades': group_grades,
                         'individual_grades': individual_grades,
                         'ordered_grades': ordered_grades,
-                        'total': round(converted_total, 2),
+                        'total': round_half_up(converted_total),
                     })
                     evaluator_totals.append(0)
                     continue
@@ -666,7 +675,7 @@ def manage_grades_view(request):
                     'group_grades': group_grades,
                     'individual_grades': individual_grades,
                     'ordered_grades': ordered_grades,
-                    'total': round(converted_total, 2),
+                    'total': round(converted_total),
                 })
 
             grading = Grading.objects.filter(student=student, project=project).first()
@@ -675,13 +684,14 @@ def manage_grades_view(request):
             # Create a mapping from role name to score (this is now done correctly)
             committee_scores = [
                 total for evaluator, total in zip(evaluators, evaluator_totals)
-                if evaluator["role"].strip().lower() == "judgement committee" and total is not None
+                if evaluator["role"].strip().lower() == "judgement committee"
+                and total is not None and total > 0
             ]
 
             committee_count = len(committee_scores)
             print(f"committee scores are {sum(committee_scores)}, and their count is {committee_count}")
 
-            committee_avg = round(sum(committee_scores) / committee_count, 2) if committee_scores else 0
+            committee_avg = round_half_up(sum(committee_scores) / committee_count) if committee_scores else 0
 
 
             student_row['committee_avg'] = committee_avg
@@ -700,14 +710,28 @@ def manage_grades_view(request):
             'main_categories_count': main_categories_count,
             'form': form
         })
-    # Create a list of committee numbers
-    committee_numbers = [i + 1 for i in range(committee_count)]
+
+
+    # Count how many committee members each project has
+    projects_with_committee_counts = (
+        ProjectMembership.objects
+        .filter(role__name="Judgement Committee")
+        .values('project')  # Group by project
+        .annotate(committee_count=Count('id'))  # Count committee members per project
+    )
+
+    # Get the maximum count
+    committee_numbers = projects_with_committee_counts.aggregate(Max('committee_count'))['committee_count__max']
+
     
     return render(request, 'forms/manage_grades.html', {
         'data': data,
         'evaluation_forms': evaluation_forms,
         'committee_numbers': committee_numbers,
         'evaluation_forms_with_counts': evaluation_forms_with_counts,
+        'departments': Department.objects.all(),  # Only if user is_superuser
+        'user_department': coordinator.department,
+        'is_superuser': is_super,
     })
 
 
@@ -751,3 +775,52 @@ def send_grades_to_all(request):
 
     # Redirect back to the page with a success message
     return redirect('manage_grades')  # or any other appropriate view
+
+import json
+
+def manage_grades_search(request):
+    query_type = request.GET.get("query_type", "all")
+    query_text = request.GET.get("query_text", "").strip()
+
+    # Retrieve the project data from the request and decode the JSON
+    project_data_json = request.GET.get('project_data', '[]')
+    project_data = json.loads(project_data_json)
+
+    # Handle the search and filtering logic based on query_type and query_text
+    projects = Project.objects.all()
+    
+    if query_type == "department":
+        projects = projects.filter(department__name__icontains=query_text)
+    elif query_type == "project":
+        projects = projects.filter(name__icontains=query_text)
+    elif query_type == "student":
+        projects = projects.filter(students__user__full_name__icontains=query_text).distinct()
+
+    # Now filter the data based on the selected projects (if any)
+    filtered_data = []
+    for project_data_item in project_data:
+        # Convert project_id from string to integer if needed, and compare with filtered project ids
+        if int(project_data_item['id']) in [project.id for project in projects]:
+            filtered_data.append(project_data_item)
+
+    # You can now pass the filtered_data to your template to render the filtered projects.
+    return render(request, "forms/manage_grades.html", {
+        "data": filtered_data,
+        "committee_numbers": range(1, 4),  # or however you calculate this
+        "evaluation_forms": ...,  # pass needed context
+    })
+
+
+def get_search_suggestions(request):
+    query_type = request.GET.get("query_type")
+    term = request.GET.get("term", "").strip().lower()
+    results = []
+
+    if query_type == "department":
+        results = list(Department.objects.filter(name__icontains=term).values_list("name", flat=True))
+    elif query_type == "project":
+        results = list(Project.objects.filter(name__icontains=term).values_list("name", flat=True))
+    elif query_type == "student":
+        results = list(Student.objects.filter(user__full_name__icontains=term).values_list("user__full_name", flat=True))
+
+    return JsonResponse(results, safe=False)

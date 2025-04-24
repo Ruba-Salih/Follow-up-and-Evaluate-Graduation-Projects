@@ -5,23 +5,36 @@
 {% block title %}Manage Grades{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/forms/manage_grades.css' %}">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 {% endblock %}
 
 {% block content %}
 
-<h2>Manage Grades</h2>
+<h2 class="text-center">Manage Grades</h2>
 
-<form action="{% url 'send_grades_to_all' %}" method="post">
+<form action="{% url 'send_grades_to_all' %}" method="post" style="text-align: center;">
     {% csrf_token %}
-
     {% for project_data in data %}
         <input type="hidden" name="project_ids" value="{{ project_data.project.id }}">
     {% endfor %}
-
     <button type="submit" class="btn btn-primary">Send Grades to All Students</button>
 </form>
 
+<div class="search-section">
+    <input type="text" id="searchInput" placeholder="Search by student or project name..." autocomplete="off">
 
+    <label for="departmentSelect">Department:</label>
+    <select id="departmentSelect">
+        {% if is_superuser %}
+            <option value="all">All Departments</option>
+            {% for dept in departments %}
+                <option value="{{ dept.name }}">{{ dept.name }}</option>
+            {% endfor %}
+        {% else %}
+            <option value="{{ user_department }}">{{ user_department }}</option>
+        {% endif %}
+    </select>
+</div>
 
 <table>
     <thead>
@@ -79,17 +92,18 @@
             {% endfor %}
         </tr>
     </thead>
-    
     <tbody>
         {% for project_data in data %}
             {% for student_row in project_data.students %}
-                <tr>
+                <tr data-project="{{ project_data.project.name|lower }}"
+                    data-student="{{ student_row.student.get_full_name|lower }}"
+                    data-department="{{ project_data.project.department.name|lower }}">
                     {% if forloop.first %}
                         <td rowspan="{{ project_data.students|length }}"><strong>{{ forloop.parentloop.counter }}</strong></td>
                         <td rowspan="{{ project_data.students|length }}"><strong>{{ project_data.project.name }}</strong></td>
                     {% endif %}
                     <td><bold>{{ student_row.student.get_full_name }}</bold></td>
-
+                    
                     {% for evaluator in project_data.evaluators %}
                         {% with role_data=student_row.grades_by_role|get_item:evaluator.role %}
                             {% if role_data %}
@@ -115,7 +129,6 @@
                         {% endwith %}
                     {% endfor %}
 
-
                     <td><strong>{{ student_row.committee_avg }}</strong></td>
                     <td><strong>{{ student_row.full_grade }}</strong></td>
                 </tr>
@@ -124,5 +137,51 @@
     </tbody>
 </table>
 
+<script>
+    $(document).ready(function () {
+        function filterTable() {
+            const keyword = $('#searchInput').val().toLowerCase();
+            const selectedDept = $('#departmentSelect').val().toLowerCase();
+
+            // If the user types a keyword for "student" or "project"
+            const isStudentSearch = keyword.includes('student');
+            const isProjectSearch = keyword.includes('project');
+
+            $('tbody tr').each(function () {
+                const $row = $(this);
+                const projectName = $row.data('project');
+                const studentName = $row.data('student');
+                const departmentName = $row.data('department');
+
+                const deptMatch = selectedDept === 'all' || departmentName === selectedDept;
+
+                let match = false;
+                if (isStudentSearch) {
+                    match = studentName.includes(keyword);
+                } else if (isProjectSearch) {
+                    match = projectName.includes(keyword);
+                } else {
+                    match = projectName.includes(keyword) || studentName.includes(keyword); // Default to searching both if no clear keyword
+                }
+
+                if (match && deptMatch) {
+                    $row.show();
+                } else {
+                    $row.hide();
+                }
+            });
+        }
+
+        // Handle input change
+        $('#searchInput').on('keyup', filterTable);
+
+        // Handle department select change
+        $('#departmentSelect').on('change', filterTable);
+
+        // Handle search button click
+        $('#searchBtn').on('click', filterTable);
+    });
+
+</script>
 
 {% endblock %}

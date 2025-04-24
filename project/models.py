@@ -111,12 +111,14 @@ class Project(models.Model):
         null=True,
         help_text="Field or area of the project"
     )
-    department = models.CharField(
-        max_length=200,
-        blank=True,
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         help_text="Department responsible for the project"
     )
+
     # Link back to the proposal that generated this project (if applicable)
     proposal = models.OneToOneField(
         ProjectProposal,
