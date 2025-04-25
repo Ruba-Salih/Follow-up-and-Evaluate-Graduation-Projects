@@ -30,3 +30,17 @@ def get_grade_for_main(grades, main_id):
             return grade
     print("No match found.")
     return None
+
+@register.filter
+def get_by_index(sequence, index):
+    try:
+        return sequence[int(index)]
+    except (IndexError, ValueError, TypeError):
+        return None
+
+@register.filter
+def range_filter(value):
+    try:
+        return range(int(value))
+    except (ValueError, TypeError):
+        return []
