@@ -1,0 +1,71 @@
+<!-- templates/meetings/set_available_time.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Set Your Available Times</h2>
+<form id="available-time-form">
+    <div id="availability-container">
+        <!-- Dynamic fields for days and times will go here -->
+    </div>
+    <button type="submit" class="btn btn-primary">Save Availability</button>
+</form>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    const form = document.getElementById("available-time-form");
+    const availabilityContainer = document.getElementById("availability-container");
+
+    // Fetch current availability if any
+    const response = await fetch("/api/set-available-time/");
+    const data = await response.json();
+
+    // Helper function to create the form fields
+    function createAvailabilityField(day, start_time = '', end_time = '') {
+        const div = document.createElement('div');
+        div.classList.add('availability-slot');
+        
+        div.innerHTML = `
+            <label>${day}</label>
+            <input type="time" name="start_time" value="${start_time}" required>
+            <input type="time" name="end_time" value="${end_time}" required>
+        `;
+        availabilityContainer.appendChild(div);
+    }
+
+    // Populate the form with existing data
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    daysOfWeek.forEach((day, index) => {
+        const existingSlot = data.find(item => item.day.toLowerCase() === day.toLowerCase());
+        createAvailabilityField(day, existingSlot?.start_time || '', existingSlot?.end_time || '');
+    });
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const slots = [];
+        document.querySelectorAll('.availability-slot').forEach(slot => {
+            const day = slot.querySelector('label').textContent;
+            const start_time = slot.querySelector('input[name="start_time"]').value;
+            const end_time = slot.querySelector('input[name="end_time"]').value;
+
+            slots.push({ day: day.toLowerCase(), start_time, end_time });
+        });
+
+        const response = await fetch("/api/set-available-time/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}",
+            },
+            body: JSON.stringify(slots)
+        });
+
+        if (response.ok) {
+            alert("Availability saved successfully!");
+        } else {
+            alert("Error: " + await response.text());
+        }
+    });
+});
+</script>
+{% endblock %}

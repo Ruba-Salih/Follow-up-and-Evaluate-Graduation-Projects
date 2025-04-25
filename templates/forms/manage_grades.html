@@ -28,19 +28,19 @@
         {% if is_superuser %}
             <option value="all">All Departments</option>
             {% for dept in departments %}
-                <option value="{{ dept.name }}">{{ dept.name }}</option>
+                <option value="{{ dept }}">{{ dept }}</option>
             {% endfor %}
         {% else %}
             <option value="{{ user_department }}">{{ user_department }}</option>
         {% endif %}
-    </select>
+    </select>    
 </div>
 
 <table>
     <thead>
         <tr>
             <th rowspan="2">Project No.</th>
-            <th rowspan="2">Project Name</th>
+            <th rowspan="2" colspan="2">Project Name</th>
             <th rowspan="2">Student</th>
             {% for evaluator_role in data.0.evaluator_headers %}
                 {% if evaluator_role == "Judgement Committee" %}
@@ -101,7 +101,11 @@
                     {% if forloop.first %}
                         <td rowspan="{{ project_data.students|length }}"><strong>{{ forloop.parentloop.counter }}</strong></td>
                         <td rowspan="{{ project_data.students|length }}"><strong>{{ project_data.project.name }}</strong></td>
+                        <td rowspan="{{ project_data.students|length }}">
+                            <a href="{% url 'view_project' project_data.project.id %}" class="btn btn-sm btn-secondary">View</a>
+                        </td>
                     {% endif %}
+
                     <td><bold>{{ student_row.student.get_full_name }}</bold></td>
                     
                     {% for evaluator in project_data.evaluators %}

@@ -1,0 +1,39 @@
+<!-- templates/meetings/schedule_meeting_page.html -->
+{% extends "base.html" %}
+{% block content %}
+<h2>Schedule a Meeting</h2>
+<form id="meeting-form">
+    <label>Date & Time:</label>
+    <input type="datetime-local" name="date_time" required><br>
+
+    <label>Participants (User IDs comma separated):</label>
+    <input type="text" name="participants" required><br>
+
+    <button type="submit">Schedule</button>
+</form>
+
+<script>
+document.getElementById("meeting-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const date_time = this.date_time.value;
+    const participants = this.participants.value.split(',').map(p => parseInt(p.trim()));
+
+    const response = await fetch("/api/meetings/schedule/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}",
+        },
+        body: JSON.stringify({ date_time, participants })
+    });
+
+    if (response.ok) {
+        alert("Meeting scheduled successfully!");
+        this.reset();
+    } else {
+        const error = await response.json();
+        alert("Error: " + JSON.stringify(error));
+    }
+});
+</script>
+{% endblock %}
