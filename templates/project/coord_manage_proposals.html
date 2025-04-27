@@ -12,6 +12,16 @@
 
 <div class="container">
     <h2>📋 Proposals Under Your Review</h2>
+    <div class="search-bar" >
+        <input type="text" id="search-input" placeholder="🔍 Search by title, submitter, or date...">
+        <select id="status-filter">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="accepted">Accepted</option>
+            <option value="rejected">Rejected</option>
+        </select>
+    </div>
+    
 
     {% if proposals %}
         <div id="coordinator-proposal-list">
@@ -58,13 +68,13 @@
             <p><strong>Additional Comment:</strong> <span id="modal-comment"></span></p>
         </div>
 
-        {% if is_super_coord %}
+        
         <hr>
         <div id="feedback-section" style="margin-top: 20px;">
             <label for="feedback-text">✉️ Feedback (optional):</label>
             <textarea id="feedback-text" rows="3" style="width: 100%;"></textarea>
         </div>
-        {% endif %}
+        
 
         <div class="status-buttons" style="margin-top: 15px;">
             <button class="btn btn-primary" id="accept-btn">Accept</button>

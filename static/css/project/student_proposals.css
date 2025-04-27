@@ -174,3 +174,50 @@ h2 {
     font-size: 16px;
     transition: all 0.3s ease;
 }
+
+
+/* Search Bar */
+.filter-search-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+#search-input {
+    width: 50%;
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    transition: 0.3s;
+}
+
+#status-filter {
+    width: 30%;
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    background: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+
+.proposal-card {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .filter-search-bar {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    #search-input, #status-filter {
+        width: 90%;
+    }
+}

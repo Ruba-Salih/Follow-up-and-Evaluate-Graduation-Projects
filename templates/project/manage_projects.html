@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Manage Projects" %}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/project/manage_projects.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+    <h2>📁 {% trans "Manage Projects" %}</h2>
+    <div class="search-bar">
+        <input type="text" id="search-input" placeholder="🔍 Search by project name, academic year, or supervisor...">
+        {% if is_super_coord %}
+        <select id="department-filter">
+            <option value=""> All Departments</option>
+            {% for department in departments %}
+            <option value="{{ department.name|lower }}">{{ department.name }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+    </div>    
+    
+    <button id="create-project-btn" class="btn btn-primary">+ {% trans "Add New Project" %}</button>
+
+    <div id="project-list">
+        {% for project in projects %}
+        <div class="project-card" data-id="{{ project.id }}">
+            <h4>{{ project.name }}</h4>
+            <p><strong>{% trans "Field" %}:</strong> {{ project.field }}</p>
+            {% if is_super_coord %}
+            <p><strong>{% trans "Department" %}:</strong> {{ project.department.name }}</p>
+            {% endif %}
+            {% if project.supervisor_user %}
+                <p><strong>{% trans "Supervisor" %}:</strong> {{ project.supervisor_user.username }}</p>
+            {% endif %}
+
+            <p><strong>{% trans "Academic Year" %}:</strong> {{ project.academic_year }}</p>
+
+            {% if project.proposal %}
+            <hr>
+            <p><strong>{% trans "From Proposal" %}:</strong> {{ project.proposal.title }}</p>
+            {% blocktrans with username=project.proposal.submitted_by.username %}
+                <strong>Submitted By:</strong> {{ username }}
+            {% endblocktrans %}
+            {% endif %}
+
+            <div class="card-buttons">
+                <button class="btn btn-edit edit-btn" data-id="{{ project.id }}">✏️ {% trans "Edit" %}</button>
+                <button class="btn btn-delete delete-btn" data-id="{{ project.id }}">🗑️ {% trans "Delete" %}</button>
+            </div>
+        </div>
+        {% empty %}
+        <p>{% trans "No projects found." %}</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="project-modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3 id="modal-title">{% trans "Add Project" %}</h3>       
+
+        <form id="project-form">
+            {% csrf_token %}
+            <input type="hidden" id="project-id">
+
+            <label>{% trans "Name" %}:</label>
+            <input type="text" id="name" required>
+
+            <label>{% trans "Description" %}:</label>
+            <textarea id="description" rows="4"></textarea>
+
+            <label>{% trans "Field" %}:</label>
+            <input type="text" id="field">
+
+            {% if is_super_coord %}
+            <label>{% trans "Department" %}:</label>
+            <input type="text" id="department">
+            {% else %}
+            <input type="hidden" id="department" value="{{ coord_dept_id }}">
+            {% endif %}
+
+            <label>{% trans "Team Member Count" %}:</label>
+            <input type="number" id="team_member_count" min="1" data-limit-enforced="true">
+
+            <label>{% trans "Academic Year" %}:</label>
+            <input type="text" id="academic_year" readonly>
+
+            <hr>
+            <h3>{% trans "Optionally Assign Members" %}</h3>
+
+            <!-- Students -->
+            <div id="student-wrapper"></div>
+
+            <!-- Supervisor -->
+            <div id="supervisor-wrapper"></div>
+
+            <!-- Reader -->
+            <div id="reader-wrapper"></div>
+
+            <!-- Judgment Committee -->
+            <label>{% trans "Judgment Committee" %}:</label>
+            <div id="judge-checkboxes" class="checkbox-list"></div>
+
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-primary">💾 {% trans "Save" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="{% static 'js/project/manage_projects.js' %}"></script>
+{% endblock %}

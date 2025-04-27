@@ -106,7 +106,7 @@ button:disabled {
 
 .custom-alert.success { background-color: #28a745; }
 .custom-alert.error { background-color: #dc3545; }
-.custom-alert.warning { background-color: #ddd; color: #333; }
+.custom-alert.warning { background-color: #fdc51d; color: #212529; }
 
 .custom-alert.hidden { display: none; }
 

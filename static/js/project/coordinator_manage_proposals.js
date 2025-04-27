@@ -3,6 +3,50 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeBtn = document.querySelector(".close-btn");
     const feedbackTextarea = document.getElementById("feedback-text");
 
+    // 🔥 ADD THESE:
+    const searchInput = document.getElementById("search-input");
+    const statusFilter = document.getElementById("status-filter");
+    const proposalList = document.getElementById("coordinator-proposal-list");
+
+    function filterProposals() {
+        const query = searchInput?.value.toLowerCase() || "";
+        const selectedStatus = statusFilter?.value.toLowerCase() || "";
+        const cards = proposalList.querySelectorAll(".proposal-card");
+
+        cards.forEach(card => {
+            const title = card.querySelector("h4")?.textContent.toLowerCase() || "";
+            const field = card.querySelector("p:nth-of-type(1)")?.textContent.toLowerCase() || "";
+            const submittedBy = card.querySelector("p:nth-of-type(2)")?.textContent.toLowerCase() || "";
+            const date = card.querySelector("p:nth-of-type(3)")?.textContent.toLowerCase() || "";
+
+            const statuses = card.querySelectorAll(".status");
+            let teacherStatus = "", coordinatorStatus = "";
+
+            if (statuses.length > 0) teacherStatus = statuses[0].classList[1] || "";
+            if (statuses.length > 1) coordinatorStatus = statuses[1].classList[1] || "";
+
+            const matchesSearch = (
+                title.includes(query) || 
+                field.includes(query) || 
+                submittedBy.includes(query) || 
+                date.includes(query)
+            );
+
+            const matchesStatus = selectedStatus === "" || 
+                teacherStatus.includes(selectedStatus) || 
+                coordinatorStatus.includes(selectedStatus);
+
+            if (matchesSearch && matchesStatus) {
+                card.style.display = "block";
+            } else {
+                card.style.display = "none";
+            }
+        });
+    }
+
+    searchInput?.addEventListener("input", filterProposals);
+    statusFilter?.addEventListener("change", filterProposals);
+
     document.querySelectorAll(".view-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
             const proposalId = btn.dataset.id;

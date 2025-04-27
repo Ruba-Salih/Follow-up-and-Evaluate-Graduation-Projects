@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Track Projects{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/project/track_projects.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+    <h2>🎯 Project Tracker</h2>
+
+    <div class="search-bar">
+        <input type="text" id="search-input" placeholder="🔍 Search by project name, academic year, or supervisor...">
+
+        {% if is_super_coord %}
+        <select id="department-filter" style="display: none;">
+            <option value="">All Departments</option>
+        </select>
+        {% endif %}
+    </div>
+
+    <div id="project-container" data-super-coord="{{ is_super_coord|yesno:'true,false' }}">
+        <div id="project-list">
+            <!-- JS will render projects here -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal for viewing project details -->
+<div id="coord-modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3>📋 Project Details</h3>
+
+        <div id="modal-body">
+            <p><strong>Project Name:</strong> <span id="modal-title-text"></span></p>
+            <p><strong>Field:</strong> <span id="modal-field"></span></p>
+            <p><strong>Description:</strong> <span id="modal-description"></span></p>
+            <p><strong>Team Members Count:</strong> <span id="modal-team-count"></span></p>
+            <p><strong>Team Members:</strong> <span id="modal-team-members"></span></p>
+            <p><strong>Supervisor:</strong> <span id="modal-supervisor"></span></p>
+            <p><strong>Reader:</strong> <span id="modal-reader"></span></p>
+            <p><strong>Judges:</strong> <span id="modal-judges"></span></p>
+            <p><strong>Attached File:</strong> <span id="modal-file"></span></p>
+
+            <hr>
+
+            <!-- 🛠 Project Plan Progress -->
+            <h4>📈 Project Completion</h4>
+            <div id="project-completion">
+                Progress: <span id="completion-status">N/A</span>%
+            </div>
+
+            <hr>
+
+            <!-- 🛠 Tasks Section -->
+            <h4>🗂 Project Tasks</h4>
+            <div id="tasks-list">
+                <!-- JS will render tasks dynamically here -->
+                <p>No tasks available.</p>
+            </div>
+
+
+            <hr>
+
+            <!-- 🛠 Logs Section -->
+            <h4>📜 Project Logs</h4>
+            <div id="logs-list">
+                <!-- JS will render logs dynamically here -->
+                <p>No logs available yet.</p>
+            </div>
+
+            <hr>
+            <!-- 🛠 Coordinator Feedback -->
+<h4>📝 Coordinator Feedback</h4>
+<div id="feedback-section">
+    <textarea id="coord-feedback-input" placeholder="Write your feedback here..." rows="4" style="width: 100%; margin-bottom: 10px;"></textarea>
+    <button id="submit-feedback-btn" class="btn btn-primary" style="margin-top:5px;">Submit Feedback</button>
+    <p id="feedback-message" style="margin-top: 10px; color: green;"></p>
+</div>
+
+
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/project/track_projects.js' %}"></script>
+{% endblock %}

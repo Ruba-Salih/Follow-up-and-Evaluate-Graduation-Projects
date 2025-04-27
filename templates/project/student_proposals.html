@@ -11,9 +11,22 @@
 {% include "navbar.html" %}
 
 <div class="container">
-    <h2>📋 Student Proposals Sent to You</h2>
+    <h2>📋 Student Proposals Sent to You</h2>    
+
+    <div class="filter-search-bar">
+        <input type="text" id="search-input" placeholder="🔍 Search by title, field, student, or date...">
+    
+        <select id="status-filter">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="accepted">Accepted</option>
+            <option value="rejected">Rejected</option>
+        </select>
+    </div>
+    
 
     {% if student_proposals %}
+   
         <div id="student-proposal-list">
             {% for proposal in student_proposals %}
             <div class="proposal-card" data-id="{{ proposal.id }}">
@@ -29,7 +42,7 @@
                     </div>
                 </div>
                 <p><strong>Field:</strong> {{ proposal.field }}</p>
-                <p><strong>Submitted by:</strong> {{ proposal.submitted_by.username }}</p>
+                <p><strong>Submitted by:</strong> {{ proposal.submitted_by.username }}</p> <!-- ✅ Added -->
                 <p><strong>Date:</strong> {{ proposal.created_at|date:"M d, Y" }}</p>
                 <div class="card-buttons">
                     <button class="view-btn btn-edit" data-id="{{ proposal.id }}">🔍 View Details</button>
@@ -48,11 +61,11 @@
         <span class="close-btn">&times;</span>
         <h3>Proposal Details</h3>
 
-        <!-- ✅ Move modal-body inside the modal-content cleanly -->
         <div id="modal-body">
             <p><strong>Title:</strong> <span id="modal-title-text"></span></p>
             <p><strong>Field:</strong> <span id="modal-field"></span></p>
             <p><strong>Description:</strong> <span id="modal-description"></span></p>
+            <p><strong>Duration (months):</strong> <span id="modal-duration"></span></p> <!-- ✅ New -->
             <p><strong>Team Members Count:</strong> <span id="modal-team-count"></span></p>
             <p><strong>Team Members:</strong> <span id="modal-team-members"></span></p>
             <p><strong>Attached File:</strong> <span id="modal-file"></span></p>
@@ -61,7 +74,6 @@
 
         <hr>
 
-        <!-- ✅ Make sure this section stays inside modal-content -->
         <div id="feedback-section" style="margin-top: 20px;">
             <label for="feedback-text">✉️ Feedback (optional):</label>
             <textarea id="feedback-text" rows="3" style="width: 100%;"></textarea>
@@ -74,7 +86,6 @@
         </div>
     </div>
 </div>
-
 
 <script src="{% static 'js/project/student_proposals.js' %}"></script>
 {% endblock %}

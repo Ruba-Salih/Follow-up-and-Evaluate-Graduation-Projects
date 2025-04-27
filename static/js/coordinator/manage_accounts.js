@@ -115,7 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (autoReload) location.reload();
                 });
             } else {
-                showAlert("⚠️ " + (data.error || "Failed to save user."), "error");
+                showAlert("⚠️ " + (data.error || "Failed to save user."), "warning");
             }
         } catch (error) {
             console.error("❌ Error:", error);

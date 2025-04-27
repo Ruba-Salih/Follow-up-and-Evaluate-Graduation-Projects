@@ -10,7 +10,7 @@ window.showAlert = function (message, type = "success", duration = 0, onClose = 
 
     alertMessage.textContent = message;
 
-    alertBox.classList.remove("success", "error", "warning", "hidden");
+    alertBox.className = "custom-alert";
     alertBox.classList.add(type);
     alertBox.classList.remove("hidden");
 
@@ -31,7 +31,6 @@ window.showAlert = function (message, type = "success", duration = 0, onClose = 
         closeBtn.onclick = hideAlert;
     }
 };
-
 
 window.confirmAction = function (message) {
     return new Promise((resolve) => {
