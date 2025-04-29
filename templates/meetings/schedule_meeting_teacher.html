@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+{% endblock %}
+
+{% block content %}
+<h2>Schedule Meeting</h2>
+
+<div class="meeting-options" style="margin-bottom: 20px;">
+  <a href="{% url 'meeting-requests-page' %}" class="btn btn-warning" style="margin-right: 10px;">
+      📥 Meeting Requests
+  </a>
+  <a href="{% url 'meeting-history-page' %}" class="btn btn-info">
+      📜 Meeting History
+  </a>
+</div>
+
+<h2>Upcoming Meetings</h2>
+
+<!-- Section to display upcoming meetings -->
+<div id="upcoming-meetings" class="upcoming-meetings">
+    <p>Loading upcoming meetings...</p>  <!-- Loading message -->
+</div>
+
+<form method="POST" action="{% url 'schedule-meeting' %}" id="schedule-meeting-form">
+    {% csrf_token %}
+
+    <!-- Hidden input to pass teacher_id -->
+    <input type="hidden" name="teacher_id" id="teacher_id" value="{{ request.user.id }}">
+
+    <div class="form-group">
+        <label for="project">Select Project</label>
+        <select name="project_id" id="project" class="form-control" required>
+            <option value="">Choose a Project</option>
+            {% for project in projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <input type="text" id="meeting-date" placeholder="Select a date" />
+        <label for="day">Day (mon, tue, wed...)</label>
+        <input type="text" name="day" id="day" class="form-control" placeholder="ex: mon, tue, wed" required>
+    </div>
+
+    <div class="form-group">
+        <label for="slot_start_time">Meeting Start Time</label>
+        <input type="time" name="slot_start_time" id="slot_start_time" class="form-control" required>
+    </div>
+
+    <div class="form-group">
+        <label for="slot_end_time">Meeting End Time</label>
+        <input type="time" name="slot_end_time" id="slot_end_time" class="form-control" required>
+    </div>
+
+    <div class="form-group">
+        <label for="comment">Comment/Message</label>
+        <textarea name="comment" id="comment" class="form-control" rows="4" placeholder="Add a comment about the meeting (optional)"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Schedule Meeting</button>
+</form>
+
+<div id="error-message" style="color: red; margin-top: 20px; display: none;"></div>
+
+<script>
+    document.getElementById('schedule-meeting-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+  
+      // Get the form values
+      const teacherId = document.getElementById('teacher_id').value;
+      const projectId = document.getElementById('project').value;
+      const day = document.getElementById('day').value.toLowerCase();
+      const slotStartTime = document.getElementById('slot_start_time').value;
+      const slotEndTime = document.getElementById('slot_end_time').value;
+      const comment = document.getElementById('comment').value;
+      const meetingDate = document.getElementById('meeting-date').value;  // Get the selected meeting date
+  
+      // Validate required fields
+      if (!teacherId || !projectId || !day || !slotStartTime || !slotEndTime || !meetingDate) {
+          document.getElementById('error-message').style.display = 'block';
+          document.getElementById('error-message').innerText = 'Please fill all required fields.';
+          return;
+      }
+  
+      const payload = {
+          teacher_id: teacherId,
+          project_id: projectId,
+          day: day,
+          slot_start_time: slotStartTime,
+          slot_end_time: slotEndTime,
+          comment: comment,
+          meeting_date: meetingDate  // Add meeting_date to the payload
+      };
+      console.log("Payload to send (JSON):", JSON.stringify(payload, null, 2));
+      fetch('{% url "schedule-meeting" %}', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          },
+          body: JSON.stringify(payload)
+      })
+      .then(response => {
+          if (!response.ok) {
+              return response.json().then(errData => {
+                  throw new Error(errData.error || "Unknown error");
+              });
+          }
+          return response.json();
+      })
+      .then(data => {
+          alert('Meeting scheduled successfully!');
+          window.location.reload();
+      })
+      .catch(error => {
+          alert('There was an error: ' + error.message);
+      });
+    });
+  
+    // Fetch upcoming meetings when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      loadUpcomingMeetings();
+    });
+  
+    // Function to fetch upcoming meetings
+    function loadUpcomingMeetings() {
+      fetch('/api/upcoming-meetings/')
+          .then(response => response.json())
+          .then(data => {
+              const upcomingMeetingsDiv = document.getElementById('upcoming-meetings');
+              upcomingMeetingsDiv.innerHTML = '';  // Clear loading message
+  
+              if (data.length === 0) {
+                  upcomingMeetingsDiv.innerHTML = '<p>No upcoming meetings scheduled.</p>';
+              } else {
+                  const list = document.createElement('ul');
+                  data.forEach(meeting => {
+                      const listItem = document.createElement('li');
+                      listItem.textContent = `${meeting.project} - ${meeting.date_time} with ${meeting.teacher}`
+                      list.appendChild(listItem);
+                  });
+                  upcomingMeetingsDiv.appendChild(list);
+              }
+          })
+          .catch(error => {
+              console.error('Error loading upcoming meetings:', error);
+              const upcomingMeetingsDiv = document.getElementById('upcoming-meetings');
+              upcomingMeetingsDiv.innerHTML = '<p>Error loading meetings.</p>';
+          });
+    }
+  
+    document.addEventListener('DOMContentLoaded', function () {
+      flatpickr("#meeting-date", {
+        // Show only available days (e.g., Monday, Wednesday, Friday)
+        disable: [
+          // Disable days outside of the available days (e.g., disable weekends)
+          function(date) {
+            // Example: Disable weekends (Sunday and Saturday)
+            return (date.getDay() === 0 || date.getDay() === 6); // 0 = Sunday, 6 = Saturday
+          },
+          // Optionally, add more disable functions for specific days, for example:
+          function(date) {
+            // Disable Tuesdays
+            return (date.getDay() === 2); // 2 = Tuesday
+          }
+        ],
+        // Optionally, set a minDate to prevent selecting dates in the past
+        minDate: "today"
+      });
+    });
+  </script>
+  
+{% endblock %}

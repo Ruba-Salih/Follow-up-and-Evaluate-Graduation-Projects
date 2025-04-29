@@ -1,71 +1,253 @@
-<!-- templates/meetings/set_available_time.html -->
-{% extends "base.html" %}
+<!-- set available time -->
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Set Available Times{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/meeting/set_availabilty.css' %}">
+{% endblock %}
 
 {% block content %}
-<h2>Set Your Available Times</h2>
-<form id="available-time-form">
-    <div id="availability-container">
-        <!-- Dynamic fields for days and times will go here -->
+
+{% include "navbar.html" %}
+
+<div id="availability-container">
+  <div id="alert-success">✅ Successfully saved!</div>
+
+  <h2 style="text-align: center; margin-bottom: 30px;">⏳ Set Your Available Times</h2>
+
+  {% for short, full in day_choices %}
+    <div class="day-block" data-day="{{ short }}">
+      <h3>{{ full }}</h3>
+      <div class="time-slots" id="slots-{{ short }}">
+        <p class="no-slots">Not available</p>
+      </div>
+      <button type="button" onclick="addTimeSlot('{{ short }}')">+ Add Time Slot</button>
     </div>
-    <button type="submit" class="btn btn-primary">Save Availability</button>
-</form>
+  {% endfor %}
+
+  <button type="button" class="save-button" onclick="saveAvailability()">💾 Save All</button>
+</div>
 
 <script>
-document.addEventListener("DOMContentLoaded", async () => {
-    const form = document.getElementById("available-time-form");
-    const availabilityContainer = document.getElementById("availability-container");
+  // CSRF Token Helper
+  function getCSRFToken() {
+    let cookieValue = null;
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.startsWith('csrftoken=')) {
+        cookieValue = decodeURIComponent(cookie.substring('csrftoken='.length));
+        break;
+      }
+    }
+    return cookieValue;
+  }
 
-    // Fetch current availability if any
-    const response = await fetch("/api/set-available-time/");
-    const data = await response.json();
+  const dayMap = {
+    mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday',
+    thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday'
+  };
 
-    // Helper function to create the form fields
-    function createAvailabilityField(day, start_time = '', end_time = '') {
-        const div = document.createElement('div');
-        div.classList.add('availability-slot');
-        
-        div.innerHTML = `
-            <label>${day}</label>
-            <input type="time" name="start_time" value="${start_time}" required>
-            <input type="time" name="end_time" value="${end_time}" required>
-        `;
-        availabilityContainer.appendChild(div);
+  function showSuccess(message, color = '#198754') {
+    const alert = document.getElementById('alert-success');
+    alert.textContent = message;
+    alert.style.backgroundColor = color;
+    alert.style.display = 'block';
+    setTimeout(() => {
+      alert.style.display = 'none';
+    }, 2500);
+  }
+
+  function fetchAvailability() {
+    fetch('/api/set-available-time/')
+      .then(res => res.json())
+      .then(data => {
+        const grouped = {};
+        data.forEach(entry => {
+          if (!grouped[entry.day]) grouped[entry.day] = [];
+          grouped[entry.day].push(entry);
+        });
+
+        Object.entries(dayMap).forEach(([dayCode]) => {
+          const container = document.getElementById('slots-' + dayCode);
+          container.innerHTML = '';
+          if (grouped[dayCode]) {
+            grouped[dayCode].forEach(slot => {
+              container.appendChild(createTimeSlotRow(slot.start_time, slot.end_time, dayCode));
+            });
+          } else {
+            container.innerHTML = '<p class="no-slots">Not available</p>';
+          }
+        });
+      });
+  }
+
+  function createTimeSlotRow(start = '', end = '', dayCode = '') {
+    const row = document.createElement('div');
+    row.classList.add('slot-row');
+    row.dataset.day = dayCode;
+
+    row.innerHTML = `
+      ${createTimeDropdown('start', start)}
+      <span>to</span>
+      ${createTimeDropdown('end', end)}
+      <button type="button" class="delete-slot-btn">❌</button>
+    `;
+
+    row.querySelector('.delete-slot-btn').addEventListener('click', function() {
+      const confirmed = window.confirm("Are you sure you want to delete this time slot?");
+      if (!confirmed) return;
+
+      const startHour = row.querySelector('.start-hour').value;
+      const startMinute = row.querySelector('.start-minute').value;
+      const startAmPm = row.querySelector('.start-ampm').value;
+
+      const endHour = row.querySelector('.end-hour').value;
+      const endMinute = row.querySelector('.end-minute').value;
+      const endAmPm = row.querySelector('.end-ampm').value;
+
+      const start = convertTo24Hour(startHour, startMinute, startAmPm);
+      const end = convertTo24Hour(endHour, endMinute, endAmPm);
+
+      const day = row.dataset.day;
+
+      fetch('/api/delete-available-time/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+          day: day,
+          start_time: start,
+          end_time: end
+        })
+      })
+      .then(res => {
+        if (res.ok) {
+          row.remove();
+          showSuccess('✅ Time slot deleted!');
+        } else {
+          alert('❌ Error deleting time slot.');
+        }
+      })
+      .catch(error => console.error("Error deleting time slot:", error));
+    });
+
+    return row;
+  }
+
+  function createTimeDropdown(type, time) {
+    let hour = '';
+    let minute = '00';
+    let ampm = 'AM';
+
+    if (time) {
+      const [h, m] = time.split(':');
+      let hourInt = parseInt(h);
+      minute = m;
+      if (hourInt >= 12) {
+        ampm = 'PM';
+        if (hourInt > 12) hourInt -= 12;
+      }
+      if (hourInt == 0) hourInt = 12;
+      hour = hourInt.toString().padStart(2, '0');
     }
 
-    // Populate the form with existing data
-    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    daysOfWeek.forEach((day, index) => {
-        const existingSlot = data.find(item => item.day.toLowerCase() === day.toLowerCase());
-        createAvailabilityField(day, existingSlot?.start_time || '', existingSlot?.end_time || '');
-    });
+    const hours = [...Array(12).keys()].map(i => {
+      const val = (i + 1).toString().padStart(2, '0');
+      return `<option value="${val}" ${val == hour ? 'selected' : ''}>${val}</option>`;
+    }).join('');
 
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+    return `
+      <select class="${type}-hour">${hours}</select>
+      <input type="number" min="0" max="59" value="${minute}" class="${type}-minute" style="width:50px;" />
+      <select class="${type}-ampm">
+        <option value="AM" ${ampm == 'AM' ? 'selected' : ''}>AM</option>
+        <option value="PM" ${ampm == 'PM' ? 'selected' : ''}>PM</option>
+      </select>
+    `;
+  }
 
-        const slots = [];
-        document.querySelectorAll('.availability-slot').forEach(slot => {
-            const day = slot.querySelector('label').textContent;
-            const start_time = slot.querySelector('input[name="start_time"]').value;
-            const end_time = slot.querySelector('input[name="end_time"]').value;
+  function addTimeSlot(dayCode) {
+    const container = document.getElementById('slots-' + dayCode);
+    const noSlot = container.querySelector('.no-slots');
+    if (noSlot) noSlot.remove();
+    container.appendChild(createTimeSlotRow('', '', dayCode));
+  }
 
-            slots.push({ day: day.toLowerCase(), start_time, end_time });
-        });
+  function convertTo24Hour(hour, minute, ampm) {
+    hour = parseInt(hour);
+    minute = minute.toString().padStart(2, '0');
+    if (ampm === 'PM' && hour !== 12) {
+      hour += 12;
+    }
+    if (ampm === 'AM' && hour === 12) {
+      hour = 0;
+    }
+    return `${hour.toString().padStart(2, '0')}:${minute}`;
+  }
 
-        const response = await fetch("/api/set-available-time/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": "{{ csrf_token }}",
-            },
-            body: JSON.stringify(slots)
-        });
+  function saveAvailability() {
+    const payload = [];
+    const slotSet = new Set();
+    let duplicateFound = false;
 
-        if (response.ok) {
-            alert("Availability saved successfully!");
+    document.querySelectorAll('.day-block').forEach(dayBlock => {
+      const day = dayBlock.dataset.day;
+      dayBlock.querySelectorAll('.slot-row').forEach(row => {
+        const startHour = row.querySelector('.start-hour').value;
+        const startMinute = row.querySelector('.start-minute').value;
+        const startAmPm = row.querySelector('.start-ampm').value;
+
+        const endHour = row.querySelector('.end-hour').value;
+        const endMinute = row.querySelector('.end-minute').value;
+        const endAmPm = row.querySelector('.end-ampm').value;
+
+        const start = convertTo24Hour(startHour, startMinute, startAmPm);
+        const end = convertTo24Hour(endHour, endMinute, endAmPm);
+
+        const slotKey = `${day}-${start}-${end}`;
+
+        if (slotSet.has(slotKey)) {
+          duplicateFound = true;
         } else {
-            alert("Error: " + await response.text());
+          slotSet.add(slotKey);
+          if (start && end) {
+            payload.push({ day, start_time: start, end_time: end });
+          }
         }
+      });
     });
-});
+
+    if (duplicateFound) {
+      showSuccess('⚠️ Duplicate time slot!', '#fd7e14'); // Orange warning
+      return;
+    }
+
+    if (payload.length === 0) {
+      return; // Nothing to save
+    }
+
+    fetch('/api/set-available-time/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken()
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(res => {
+      if (res.ok) {
+        fetchAvailability();
+        showSuccess('✅ Times saved!');
+      } else {
+        alert('❌ Error saving!');
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', fetchAvailability);
 </script>
+
 {% endblock %}

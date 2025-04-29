@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>📜 Meeting History</h1>
+
+{% if meetings %}
+    <ul>
+        {% for meeting in meetings %}
+            <p>Meeting ID: {{ meeting.meeting_id }}</p>
+            <li>
+                <strong>Requested by:</strong> {{ meeting.requested_by.username }}<br>
+                <strong>Meeting Time:</strong> {{ meeting.date_time }}<br>
+                <strong>Project:</strong> {% if meeting.project %}{{ meeting.project.name }}{% else %}No Project{% endif %}<br>
+                <strong>Status:</strong> {{ meeting.status }}<br>
+
+                {% if user.is_staff %}
+                    <!-- Teacher: Update status and attendance -->
+                    {% if meeting.meeting_id %}
+                        <form method="POST" action="{% url 'update-meeting-status' meeting.meeting_id %}">
+                            {% csrf_token %}
+                            <label for="status">Update Status:</label>
+                            <select name="status" id="status">
+                                <option value="pending" {% if meeting.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="accepted" {% if meeting.status == 'accepted' %}selected{% endif %}>Accepted</option>
+                                <option value="scheduled" {% if meeting.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                                <option value="completed" {% if meeting.status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="cancelled" {% if meeting.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select><br>
+
+                            <label for="attendance">Mark Attendance:</label><br>
+                            {% for participant in meeting.participants.all %}
+                                <input type="checkbox" name="attendance_{{ participant.id }}" {% if participant.attendance_status == 'attended' %}checked{% endif %}>
+                                {{ participant.user.username }}<br>
+                            {% endfor %}
+
+                            <button type="submit">Update Meeting</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <!-- Student: Show attendance status for all participants -->
+                    <ul>
+                        {% for participant in meeting.participants.all %}
+                            {% if participant.user == user %}
+                                <li><strong style="font-weight: bold;">Your Attendance Status:</strong> {{ participant.attendance_status }}</li>
+                            {% else %}
+                                <li><strong>{{ participant.user.username }}:</strong> {{ participant.attendance_status }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No meeting requests at the moment.</p>
+{% endif %}
+{% endblock %}

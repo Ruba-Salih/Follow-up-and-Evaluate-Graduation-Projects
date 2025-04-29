@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>📥 Meeting Requests</h1>
+<p>This page shows students requesting meetings with you.</p>
+
+{% if meetings %}
+    <ul>
+        {% for meeting in meetings %}
+            <li>
+                <strong>Student:</strong> {{ meeting.requested_by.username }}<br>
+                <strong>Meeting Time:</strong> {{ meeting.date_time }}<br>
+                <strong>Project:</strong> {% if meeting.project %}{{ meeting.project.name }}{% else %}No Project{% endif %}<br>
+                
+                <!-- Accept and Decline buttons -->
+                <a href="{% url 'accept-meeting' meeting.meeting_id %}" class="btn btn-success">Accept</a>
+                <a href="{% url 'decline-meeting' meeting.meeting_id %}" class="btn btn-danger">Decline</a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No meeting requests at the moment.</p>
+{% endif %}
+{% endblock %}
