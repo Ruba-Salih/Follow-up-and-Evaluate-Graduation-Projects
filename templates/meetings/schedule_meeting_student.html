@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Schedule Meeting{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/meeting/schedule_meeting_student.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="outer-wrapper">
+    <h2>Schedule a Meeting</h2>
+
+    <div class="meeting-options" style="margin-bottom: 20px;">
+    <a href="{% url 'meeting-requests-page' %}" class="btn btn-warning" style="margin-right: 10px;">📥 Meeting Requests</a>
+    <a href="{% url 'meeting-history-page' %}" class="btn btn-info">📜 Meeting History</a>
+    </div>
+
+    <h2>Upcoming Meetings</h2>
+    <div id="upcoming-meetings" class="upcoming-meetings">
+        <p>Loading upcoming meetings...</p>
+    </div>
+
+    <form id="schedule-meeting-form">
+    {% csrf_token %}
+
+    <label for="teacher">Select a Teacher:</label>
+    <select id="teacher" name="teacher">
+        <option value="">-- Select a Teacher --</option>
+    </select>
+    <br><br>
+
+    <label for="meeting-date">Choose Meeting Date:</label>
+    <input type="date" id="meeting-date" name="meeting_date" disabled>
+    <br><br>
+
+    <label for="available-block">Available Time Blocks:</label>
+    <select id="available-block" name="available_block">
+        <option value="">-- Select a Time Block --</option>
+    </select>
+    <br><br>
+
+    <label for="specific-start-time">Enter Meeting Start Time (HH:MM AM/PM):</label>
+    <input type="text" id="specific-start-time" name="specific_start_time" placeholder="e.g., 4:00 PM" >
+    <br><br>
+
+    <label for="specific-end-time">Enter Meeting End Time (HH:MM AM/PM):</label>
+    <input type="text" id="specific-end-time" name="specific_end_time" placeholder="e.g., 5:00 PM" >
+    <br><br>
+
+    <label for="comment">Special Requests (optional):</label>
+    <textarea name="comment" id="comment"></textarea>
+    <br><br>
+
+    <button type="submit">Request Meeting</button>
+    </form>
+</div>
+
+<script>
+    let selectedTeacherId = null;
+    let selectedSlotStartTime = null;
+    let selectedSlotEndTime = null;
+
+    function convertTo24HourFormat(time) {
+        time = time.trim().toUpperCase();
+        const timePattern = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/;
+        const match = time.match(timePattern);
+        if (!match) {
+            return time;
+        }
+        let hours = parseInt(match[1], 10);
+        const minutes = match[2];
+        const period = match[3];
+        if (period === 'PM' && hours !== 12) {
+            hours += 12;
+        }
+        if (period === 'AM' && hours === 12) {
+            hours = 0;
+        }
+        return `${hours.toString().padStart(2, '0')}:${minutes}`;
+    }
+
+    function loadUpcomingMeetings() {
+        fetch('/api/upcoming-meetings/')
+            .then(response => response.json())
+            .then(data => {
+                const upcomingDiv = document.getElementById('upcoming-meetings');
+                upcomingDiv.innerHTML = '';
+
+                if (data.length === 0) {
+                    upcomingDiv.innerHTML = '<p>No upcoming meetings scheduled.</p>';
+                } else {
+                    const ul = document.createElement('ul');
+                    data.forEach(meeting => {
+                        const li = document.createElement('li');
+                        li.textContent = `${meeting.project} - ${meeting.start_datetime} with ${meeting.teacher}`;
+                        ul.appendChild(li);
+                    });
+                    upcomingDiv.appendChild(ul);
+                }
+            })
+            .catch(() => {
+                document.getElementById('upcoming-meetings').innerHTML = '<p>Error loading meetings.</p>';
+            });
+    }
+
+    document.getElementById('teacher').addEventListener('change', function () {
+        selectedTeacherId = this.value;
+        const dateInput = document.getElementById('meeting-date');
+        dateInput.disabled = !selectedTeacherId;
+        document.getElementById('available-block').innerHTML = '<option value="">-- Select a Time Block --</option>';
+    });
+
+    document.getElementById('meeting-date').addEventListener('change', function () {
+        const date = this.value;
+        if (!selectedTeacherId || !date) return;
+
+        fetch(`/api/teacher-available-times/?teacher_id=${selectedTeacherId}&date=${date}`)
+            .then(response => response.json())
+            .then(data => {
+                const blockSelect = document.getElementById('available-block');
+                blockSelect.innerHTML = '<option value="">-- Select a Time Block --</option>';
+
+                if (data.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.textContent = 'No available time on this date';
+                    opt.disabled = true;
+                    blockSelect.appendChild(opt);
+                } else {
+                    data.forEach(slot => {
+                        const opt = document.createElement('option');
+                        opt.value = `${slot.start_time},${slot.end_time}`;
+                        opt.textContent = `${slot.start_time} – ${slot.end_time}`;
+                        blockSelect.appendChild(opt);
+                    });
+                }
+            });
+    });
+
+    document.getElementById('available-block').addEventListener('change', function () {
+        const [start, end] = this.value.split(',');
+        selectedSlotStartTime = start;
+        selectedSlotEndTime = end;
+        document.getElementById('specific-start-time').value = start;
+        document.getElementById('specific-end-time').value = end;
+    });
+
+    document.getElementById('schedule-meeting-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const teacherId = document.getElementById('teacher').value;
+        const meetingDate = document.getElementById('meeting-date').value;
+        const startTimeRaw = document.getElementById('specific-start-time').value;
+        const endTimeRaw = document.getElementById('specific-end-time').value;
+        const comment = document.getElementById('comment').value;
+
+        if (!teacherId || !meetingDate || !startTimeRaw || !endTimeRaw) {
+            alert('Please fill in all required fields.');
+            return;
+        }
+        const payload = {
+            teacher_id: teacherId,
+            meeting_date: meetingDate,
+            slot_start_time: convertTo24HourFormat(selectedSlotStartTime),
+            slot_end_time: convertTo24HourFormat(selectedSlotEndTime),
+            meeting_start_time: convertTo24HourFormat(startTimeRaw),
+            meeting_end_time: convertTo24HourFormat(endTimeRaw),
+            comment: comment
+        };
+        console.log("Payload to be sent:", payload);
+        fetch('/api/schedule-meeting/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.error || 'Unknown error') });
+            }
+            return response.json();
+        })
+        .then(() => {
+            alert('Meeting successfully requested!');
+            location.reload();   
+            loadUpcomingMeetings();
+        })
+        .catch(err => alert('Error: ' + err.message));
+    });
+
+    // Load teacher list
+    fetch('/api/teachers/')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('teacher');
+            data.results.forEach(teacher => {
+                const opt = document.createElement('option');
+                opt.value = teacher.id;
+                opt.textContent = teacher.name;
+                select.appendChild(opt);
+            });
+        });
+
+    loadUpcomingMeetings();
+</script>
+{% endblock %}

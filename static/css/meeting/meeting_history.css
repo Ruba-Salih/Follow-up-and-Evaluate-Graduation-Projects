@@ -1,0 +1,75 @@
+/* Style for Meeting History Page */
+.page-title {
+    color: #a63026;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 2em;
+}
+
+.meeting-history {
+    display: grid;
+    gap: 20px;
+}
+
+.meeting-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 5px solid #a63026;
+}
+
+.meeting-card p {
+    margin: 6px 0;
+}
+
+.meeting-actions, .attendance-status {
+    margin-top: 20px;
+}
+
+.meeting-actions h4, .attendance-status h4 {
+    color: #a63026;
+    margin-bottom: 10px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button[type="submit"] {
+    background-color: #a63026;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button[type="submit"]:hover {
+    background-color: #861e1a;
+}
+
+.attendance-status ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.attendance-status li {
+    margin: 6px 0;
+}
+.recommendation-box {
+    background-color: #f9f9f9;
+    border-left: 5px solid #a63026;
+    padding: 10px;
+    margin-top: 15px;
+    border-radius: 5px;
+}

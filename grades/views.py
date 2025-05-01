@@ -723,13 +723,13 @@ def manage_grades_view(request):
     # Get the maximum count
     committee_numbers = projects_with_committee_counts.aggregate(Max('committee_count'))['committee_count__max']
 
-    
+    print(f"department are: {departments}")
     return render(request, 'forms/manage_grades.html', {
         'data': data,
         'evaluation_forms': evaluation_forms,
         'committee_numbers': committee_numbers,
         'evaluation_forms_with_counts': evaluation_forms_with_counts,
-        'departments': Department.objects.all(),  # Only if user is_superuser
+        'departments': departments,
         'user_department': coordinator.department,
         'is_superuser': is_super,
     })
@@ -776,51 +776,126 @@ def send_grades_to_all(request):
     # Redirect back to the page with a success message
     return redirect('manage_grades')  # or any other appropriate view
 
-import json
+def view_project(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    student_memberships = StudentProjectMembership.objects.filter(project=project).select_related('student')
+    students = [membership.student for membership in student_memberships]
+    memberships = ProjectMembership.objects.filter(project=project).select_related('user', 'role')
 
-def manage_grades_search(request):
-    query_type = request.GET.get("query_type", "all")
-    query_text = request.GET.get("query_text", "").strip()
+    supervisor_data = []
+    reader_data = []
+    committee_data = []
+    student_committee_averages = {}
+    student_grades = {}  # Store grades for each student by role
 
-    # Retrieve the project data from the request and decode the JSON
-    project_data_json = request.GET.get('project_data', '[]')
-    project_data = json.loads(project_data_json)
+    for membership in memberships:
+        user = membership.user
+        role = membership.role
+        role_name = role.name.lower()
 
-    # Handle the search and filtering logic based on query_type and query_text
-    projects = Project.objects.all()
-    
-    if query_type == "department":
-        projects = projects.filter(department__name__icontains=query_text)
-    elif query_type == "project":
-        projects = projects.filter(name__icontains=query_text)
-    elif query_type == "student":
-        projects = projects.filter(students__user__full_name__icontains=query_text).distinct()
+        try:
+            eval_form = EvaluationForm.objects.get(target_role=role)
+        except EvaluationForm.DoesNotExist:
+            continue
 
-    # Now filter the data based on the selected projects (if any)
-    filtered_data = []
-    for project_data_item in project_data:
-        # Convert project_id from string to integer if needed, and compare with filtered project ids
-        if int(project_data_item['id']) in [project.id for project in projects]:
-            filtered_data.append(project_data_item)
+        main_categories = MainCategory.objects.filter(evaluation_form=eval_form).order_by('number')
 
-    # You can now pass the filtered_data to your template to render the filtered projects.
-    return render(request, "forms/manage_grades.html", {
-        "data": filtered_data,
-        "committee_numbers": range(1, 4),  # or however you calculate this
-        "evaluation_forms": ...,  # pass needed context
-    })
+        evaluator_info = {
+            "name": user.get_full_name(),
+            "grades": []
+        }
 
+        for student in students:
+            ordered_grades = []
+            total_grade = 0
 
-def get_search_suggestions(request):
-    query_type = request.GET.get("query_type")
-    term = request.GET.get("term", "").strip().lower()
-    results = []
+            for main in main_categories:
+                grade_value = None
 
-    if query_type == "department":
-        results = list(Department.objects.filter(name__icontains=term).values_list("name", flat=True))
-    elif query_type == "project":
-        results = list(Project.objects.filter(name__icontains=term).values_list("name", flat=True))
-    elif query_type == "student":
-        results = list(Student.objects.filter(user__full_name__icontains=term).values_list("user__full_name", flat=True))
+                if main.grade_type == 'group':
+                    member_grade = MemberGrade.objects.filter(
+                        member=user,
+                        grade__project=project,
+                        grade__main_category=main
+                    ).select_related('grade').first()
 
-    return JsonResponse(results, safe=False)
+                    if member_grade and member_grade.grade.final_grade is not None:
+                        grade_value = member_grade.grade.final_grade
+                        total_grade += grade_value
+
+                elif main.grade_type == 'individual':
+                    member_individual_grade = MemberIndividualGrade.objects.filter(
+                        member=user,
+                        individual_grade__grade__project=project,
+                        individual_grade__student=student,
+                        individual_grade__grade__main_category=main
+                    ).select_related('individual_grade').first()
+
+                    if member_individual_grade and member_individual_grade.individual_grade.final_grade is not None:
+                        grade_value = member_individual_grade.individual_grade.final_grade
+                        total_grade += grade_value
+
+                ordered_grades.append({
+                    "main_category": main.text,
+                    "weight": main.weight,
+                    "grade": grade_value
+                })
+
+            final_grade = convert_total(total_grade, role_name)
+
+            evaluator_info["grades"].append({
+                "student_id": student.id,
+                "student_name": student.get_full_name(),
+                "ordered_grades": ordered_grades,
+                "total": total_grade,
+                "final_grade": final_grade
+            })
+
+            # Store grades for the summary table
+            if student.id not in student_grades:
+                student_grades[student.id] = {
+                    "student_name": student.get_full_name(),
+                    "supervisor_final_grade": None,
+                    "reader_final_grade": None,
+                    "committee_final_grade": None,
+                    "final_grade": None
+                }
+
+            # Assign final grade based on the role
+            if "supervisor" in role_name:
+                student_grades[student.id]["supervisor_final_grade"] = final_grade
+            elif "reader" in role_name:
+                student_grades[student.id]["reader_final_grade"] = final_grade
+            elif "committee" in role_name:
+                student_grades[student.id]["committee_final_grade"] = final_grade
+
+        if "supervisor" in role_name:
+            supervisor_data.append(evaluator_info)
+        elif "reader" in role_name:
+            reader_data.append(evaluator_info)
+        elif "committee" in role_name:
+            committee_data.append(evaluator_info)
+
+    # Calculate average final grade for Judging Committee per student
+    for student in students:
+        committee_final_grades = []
+        for evaluator in committee_data:
+            for grade_info in evaluator["grades"]:
+                if grade_info["student_id"] == student.id:
+                    committee_final_grades.append(grade_info["final_grade"])
+                    break
+        average = round_half_up(sum(committee_final_grades) / len(committee_final_grades)) if committee_final_grades else 0
+        student_committee_averages[student.id] = average
+        student_grades[student.id]["final_grade"] = student_grades[student.id]["supervisor_final_grade"] + student_grades[student.id]["reader_final_grade"] + average
+
+    context = {
+        "project": project,
+        "supervisors": supervisor_data,
+        "readers": reader_data,
+        "committees": committee_data,
+        "students": students,
+        "student_committee_averages": student_committee_averages,
+        "student_grades": student_grades,
+    }
+
+    return render(request, "forms/view_project.html", context)

@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Meetings History{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/meeting/schedule_meeting_student.css' %}">
+<link rel="stylesheet" href="{% static 'css/meeting/meeting_history.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="outer-wrapper">
+    <div class="container">
+        <h1 class="page-title">📜 Meeting History</h1>
+
+        {% if meetings %}
+            <div class="meeting-history">
+                {% for meeting in meetings %}
+                    <div class="meeting-card">
+                        <p><strong>Meeting ID:</strong> {{ meeting.meeting_id }}</p>
+                        <p><strong>Requested By:</strong> {{ meeting.requested_by.username }}</p>
+                        <p><strong>Teacher:</strong> {{ meeting.teacher.username }}</p>
+                        <p><strong>Meeting Time:</strong> {{ meeting.start_datetime }}</p>
+                        <p><strong>Project:</strong> {% if meeting.project %}{{ meeting.project.name }}{% else %}No Project{% endif %}</p>
+                        <p><strong>Status:</strong> {{ meeting.status }}</p>
+
+                        {% if user.is_staff %}
+                            <!-- Teacher: Update status and attendance -->
+                            <div class="meeting-actions">
+                                <h4>Update Meeting</h4>
+                                <form method="POST" action="{% url 'update-meeting-status' meeting.meeting_id %}">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <label for="status">Update Status:</label>
+                                        <select name="status" id="status" class="form-control">
+                                            <option value="accepted" {% if meeting.status == 'accepted' %}selected{% endif %}>Accepted</option>
+                                            <option value="scheduled" {% if meeting.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                                            <option value="completed" {% if meeting.status == 'completed' %}selected{% endif %}>Completed</option>
+                                            <option value="cancelled" {% if meeting.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Mark Attendance:</label>
+                                        {% for participant in meeting.participants.all %}
+                                            <div>
+                                                <input type="checkbox" name="attendance_{{ participant.id }}" {% if participant.attendance_status == 'attended' %}checked{% endif %}>
+                                                <span>{{ participant.user.username }}</span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="recommendation">Recommendation:</label>
+                                        <textarea name="recommendation" id="recommendation" class="form-control" rows="3">{{ meeting.recommendation }}</textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary">Update Meeting</button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <!-- Student: Show attendance status -->
+                            <div class="attendance-status">
+                                <h4>Attendance Status:</h4>
+                                <ul>
+                                    {% for participant in meeting.participants.all %}
+                                        <li>
+                                            <strong>{{ participant.user.username }}:</strong> 
+                                            {% if participant.user == user %}
+                                                <span style="font-weight: bold;">Your Attendance Status: {{ participant.attendance_status }}</span>
+                                            {% else %}
+                                                {{ participant.attendance_status }}
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="recommendation-box">
+                                <h4>Teacher's Recommendation:</h4>
+                                {% if meeting.recommendation %}
+                                    <p>{{ meeting.recommendation }}</p>
+                                {% else %}
+                                    <p>There are no recommendations for this meeting.</p>
+                                {% endif %}
+                            </div>
+                            
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No meeting history at the moment.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
