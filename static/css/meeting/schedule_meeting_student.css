@@ -1,0 +1,146 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f2f2f2;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+/* === Navbar stays full width === */
+/* (No restriction in width – handled in HTML layout) */
+
+/* === Outer Wrapper acts like a centered card === */
+.outer-wrapper {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffff;
+    border: 4px solid #e0e0e0; /* soft white-gray border */
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* === Main Inner Container === */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+/* === Heading Centered === */
+h2 {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* === Meeting Options Buttons === */
+.meeting-options {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.meeting-options a {
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    background-color: #a63026;
+    color: white;
+    margin: 5px;
+    display: inline-block;
+    font-weight: 500;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.meeting-options a:hover {
+    background-color: #8e251d;
+}
+
+/* === Form Styling === */
+form {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: left;
+    margin-top: 30px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+    color: #333;
+}
+
+input[type="text"],
+input[type="date"],
+select,
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+/* === Submit Button === */
+button[type="submit"] {
+    background-color: #a63026;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+button[type="submit"]:hover {
+    background-color: #8e251d;
+}
+
+/* === Upcoming Meetings List === */
+.upcoming-meetings ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.upcoming-meetings li {
+    background-color: #f2f2f2;
+    border-left: 5px solid #a63026;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 15px;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+    .outer-wrapper {
+        padding: 20px;
+    }
+
+    .container {
+        width: 100%;
+    }
+
+    form {
+        padding: 15px;
+    }
+
+    input, select, textarea, button {
+        font-size: 14px;
+    }
+
+    button {
+        width: 100%;
+    }
+}

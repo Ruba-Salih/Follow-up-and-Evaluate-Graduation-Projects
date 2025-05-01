@@ -1,0 +1,119 @@
+/* General Notification Container */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px;
+    background-color: #f7f7f7;  /* Light gray background for the container */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Page Title (Red Color) */
+.page-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #a63026;  /* Red color from your design theme */
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+/* Notification List Styles */
+.notification-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Notification Card */
+.notification-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease;
+}
+
+/* Unread Notification (Light Red Background) */
+.notification-card.unread {
+    background-color: #f7f0ed;  /* Light background to differentiate unread notifications */
+}
+
+/* Hover Effect */
+.notification-card:hover {
+    background-color: #f1f1f1;
+}
+
+/* Header Style */
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Status Label (Red or Green for Read/Unread) */
+.status-label {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #a63026;  /* Red for status labels */
+}
+
+/* Notification Time */
+.notification-time {
+    font-size: 0.85rem;
+    color: #6c757d;  /* System gray color */
+}
+
+/* Message Section */
+.notification-message {
+    margin-top: 10px;
+    font-size: 1rem;
+    color: #333;
+}
+
+/* "Mark as Read" Button (Green Color) */
+.mark-read {
+    margin-top: 15px;
+    text-align: right;
+}
+
+.btn-success {
+    background-color: #28a745;  /* Green success color */
+    border-color: #28a745;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+/* Info Alert (for no notifications) */
+.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+    padding: 15px;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    margin-top: 20px;
+}
+
+/* Responsive Styles */
+@media (max-width: 576px) {
+    .page-title {
+        font-size: 1.5rem;
+    }
+
+    .notification-card {
+        padding: 15px;
+    }
+
+    .notification-time {
+        font-size: 0.75rem;
+    }
+}

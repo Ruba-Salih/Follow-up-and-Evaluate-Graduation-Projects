@@ -1,224 +1,175 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Schedule Meeting{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/meeting/schedule_meeting_student.css' %}">
+{% endblock %}
+
 {% block content %}
-<h2>Schedule a Meeting</h2>
+{% include "navbar.html" %}
 
-<div class="meeting-options" style="margin-bottom: 20px;">
-  <a href="{% url 'meeting-requests-page' %}" class="btn btn-warning" style="margin-right: 10px;">📥 Meeting Requests</a>
-  <a href="{% url 'meeting-history-page' %}" class="btn btn-info">📜 Meeting History</a>
+<div class="outer-wrapper">
+    <h2>Schedule a Meeting</h2>
+
+    <div class="meeting-options" style="margin-bottom: 20px;">
+    <a href="{% url 'meeting-requests-page' %}" class="btn btn-warning" style="margin-right: 10px;">📥 Meeting Requests</a>
+    <a href="{% url 'meeting-history-page' %}" class="btn btn-info">📜 Meeting History</a>
+    </div>
+
+    <h2>Upcoming Meetings</h2>
+    <div id="upcoming-meetings" class="upcoming-meetings">
+        <p>Loading upcoming meetings...</p>
+    </div>
+
+    <form id="schedule-meeting-form">
+    {% csrf_token %}
+
+    <label for="teacher">Select a Teacher:</label>
+    <select id="teacher" name="teacher">
+        <option value="">-- Select a Teacher --</option>
+    </select>
+    <br><br>
+
+    <label for="meeting-date">Choose Meeting Date:</label>
+    <input type="date" id="meeting-date" name="meeting_date" disabled>
+    <br><br>
+
+    <label for="available-block">Available Time Blocks:</label>
+    <select id="available-block" name="available_block">
+        <option value="">-- Select a Time Block --</option>
+    </select>
+    <br><br>
+
+    <label for="specific-start-time">Enter Meeting Start Time (HH:MM AM/PM):</label>
+    <input type="text" id="specific-start-time" name="specific_start_time" placeholder="e.g., 4:00 PM" >
+    <br><br>
+
+    <label for="specific-end-time">Enter Meeting End Time (HH:MM AM/PM):</label>
+    <input type="text" id="specific-end-time" name="specific_end_time" placeholder="e.g., 5:00 PM" >
+    <br><br>
+
+    <label for="comment">Special Requests (optional):</label>
+    <textarea name="comment" id="comment"></textarea>
+    <br><br>
+
+    <button type="submit">Request Meeting</button>
+    </form>
 </div>
 
-<h2>Upcoming Meetings</h2>
-
-<div id="upcoming-meetings" class="upcoming-meetings">
-    <p>Loading upcoming meetings...</p>
-</div>
-
-<form id="schedule-meeting-form">
-  {% csrf_token %}
-  
-  <label for="teacher">Select a Teacher:</label>
-  <select id="teacher" name="teacher">
-      <option value="">-- Select a Teacher --</option>
-  </select>
-  <br><br>
-
-  <label for="available-slot">Choose Available Time Slot:</label>
-  <select id="available-slot" name="available_slot">
-      <option value="">-- Select a Time Slot --</option>
-  </select>
-  <br><br>
-
-  <label for="meeting-date">Choose Meeting Date:</label>
-  <input type="date" id="meeting-date" name="meeting_date" disabled>
-  <br><br>
-
-  <label for="specific-start-time">Enter Meeting Start Time (HH:MM AM/PM):</label>
-  <input type="text" id="specific-start-time" name="specific_start_time" placeholder="e.g., 4:00 PM">
-  <br><br>
-
-  <label for="specific-end-time">Enter Meeting End Time (HH:MM AM/PM):</label>
-  <input type="text" id="specific-end-time" name="specific_end_time" placeholder="e.g., 5:00 PM">
-  <br><br>
-
-  <label for="comment">Special Requests (optional):</label>
-  <textarea name="comment" id="comment"></textarea>
-  <br><br>
-
-  <button type="submit">Request Meeting</button>
-</form>
-
-<!-- Include flatpickr CSS -->
-<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
-
-<!-- Include flatpickr JS -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-    let calendar;
-
-    fetch('/api/teachers/')
-        .then(response => response.json())
-        .then(data => {
-            const teacherSelect = document.getElementById('teacher');
-            data.forEach(teacher => {
-                const option = document.createElement('option');
-                option.value = teacher.id;
-                option.textContent = teacher.name;
-                teacherSelect.appendChild(option);
-            });
-        });
-
-    document.getElementById('teacher').addEventListener('change', function() {
-        const teacherId = this.value;
-        const slotSelect = document.getElementById('available-slot');
-        slotSelect.innerHTML = '<option value="">-- Select a Time Slot --</option>';
-
-        if (teacherId) {
-            fetch(`/api/teachers/${teacherId}/available-times/`)
-                .then(response => response.json())
-                .then(data => {
-                    data.forEach(slot => {
-                        const option = document.createElement('option');
-                        option.value = `${slot.day},${slot.start_time},${slot.end_time}`;
-                        option.textContent = `${slot.day.toUpperCase()} from ${slot.start_time} to ${slot.end_time}`;
-                        slotSelect.appendChild(option);
-                    });
-                });
-        }
-    });
+    let selectedTeacherId = null;
+    let selectedSlotStartTime = null;
+    let selectedSlotEndTime = null;
 
     function convertTo24HourFormat(time) {
-    // Ensure we are working with the correct format
-    time = time.trim().toUpperCase();
-
-    // Regular expression to match time in AM/PM format
-    const timePattern = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/;
-    const match = time.match(timePattern);
-
-    // If time doesn't match the expected AM/PM format, assume it's already in 24-hour format
-    if (!match) {
-        return time;  // Already in 24-hour format
+        time = time.trim().toUpperCase();
+        const timePattern = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/;
+        const match = time.match(timePattern);
+        if (!match) {
+            return time;
+        }
+        let hours = parseInt(match[1], 10);
+        const minutes = match[2];
+        const period = match[3];
+        if (period === 'PM' && hours !== 12) {
+            hours += 12;
+        }
+        if (period === 'AM' && hours === 12) {
+            hours = 0;
+        }
+        return `${hours.toString().padStart(2, '0')}:${minutes}`;
     }
-
-    let hours = parseInt(match[1], 10);  // Extract the hours part
-    const minutes = match[2];  // Extract the minutes part
-    const period = match[3];  // Extract AM/PM part
-
-    // Convert PM hours to 24-hour format (except for 12 PM)
-    if (period === 'PM' && hours !== 12) {
-        hours += 12;
-    }
-
-    // Convert 12 AM to 00 hours (midnight)
-    if (period === 'AM' && hours === 12) {
-        hours = 0;
-    }
-
-    // Return the time in 24-hour format
-    return `${hours.toString().padStart(2, '0')}:${minutes}`;
-}
 
     function loadUpcomingMeetings() {
         fetch('/api/upcoming-meetings/')
             .then(response => response.json())
             .then(data => {
-                const upcomingMeetingsDiv = document.getElementById('upcoming-meetings');
-                upcomingMeetingsDiv.innerHTML = '';
+                const upcomingDiv = document.getElementById('upcoming-meetings');
+                upcomingDiv.innerHTML = '';
 
                 if (data.length === 0) {
-                    upcomingMeetingsDiv.innerHTML = '<p>No upcoming meetings scheduled.</p>';
+                    upcomingDiv.innerHTML = '<p>No upcoming meetings scheduled.</p>';
                 } else {
-                    const list = document.createElement('ul');
+                    const ul = document.createElement('ul');
                     data.forEach(meeting => {
-                        const listItem = document.createElement('li');
-                        listItem.textContent = `${meeting.project} - ${meeting.date_time} with ${meeting.teacher}`;
-                        list.appendChild(listItem);
+                        const li = document.createElement('li');
+                        li.textContent = `${meeting.project} - ${meeting.start_datetime} with ${meeting.teacher}`;
+                        ul.appendChild(li);
                     });
-                    upcomingMeetingsDiv.appendChild(list);
+                    upcomingDiv.appendChild(ul);
                 }
             })
-            .catch(error => {
-                console.error('Error loading upcoming meetings:', error);
-                const upcomingMeetingsDiv = document.getElementById('upcoming-meetings');
-                upcomingMeetingsDiv.innerHTML = '<p>Error loading meetings.</p>';
+            .catch(() => {
+                document.getElementById('upcoming-meetings').innerHTML = '<p>Error loading meetings.</p>';
             });
     }
 
-    document.getElementById('available-slot').addEventListener('change', function() {
-        const selectedSlot = this.value;
-        const meetingDateInput = document.getElementById('meeting-date');
-        meetingDateInput.disabled = false;
-        meetingDateInput.value = '';
-
-        const dayOfWeek = selectedSlot.split(',')[0].toLowerCase();
-
-        const today = new Date().toISOString().split('T')[0];
-        meetingDateInput.setAttribute('min', today);
-
-        if (calendar) {
-            calendar.destroy();
-        }
-
-        calendar = flatpickr("#meeting-date", {
-            disable: [
-                function(date) {
-                    const dayMap = {
-                        sun: 0, mon: 1, tue: 2, wed: 3,
-                        thu: 4, fri: 5, sat: 6
-                    };
-                    return date.getDay() !== dayMap[dayOfWeek];
-                }
-            ]
-        });
+    document.getElementById('teacher').addEventListener('change', function () {
+        selectedTeacherId = this.value;
+        const dateInput = document.getElementById('meeting-date');
+        dateInput.disabled = !selectedTeacherId;
+        document.getElementById('available-block').innerHTML = '<option value="">-- Select a Time Block --</option>';
     });
 
-    document.getElementById('schedule-meeting-form').addEventListener('submit', function(event) {
+    document.getElementById('meeting-date').addEventListener('change', function () {
+        const date = this.value;
+        if (!selectedTeacherId || !date) return;
+
+        fetch(`/api/teacher-available-times/?teacher_id=${selectedTeacherId}&date=${date}`)
+            .then(response => response.json())
+            .then(data => {
+                const blockSelect = document.getElementById('available-block');
+                blockSelect.innerHTML = '<option value="">-- Select a Time Block --</option>';
+
+                if (data.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.textContent = 'No available time on this date';
+                    opt.disabled = true;
+                    blockSelect.appendChild(opt);
+                } else {
+                    data.forEach(slot => {
+                        const opt = document.createElement('option');
+                        opt.value = `${slot.start_time},${slot.end_time}`;
+                        opt.textContent = `${slot.start_time} – ${slot.end_time}`;
+                        blockSelect.appendChild(opt);
+                    });
+                }
+            });
+    });
+
+    document.getElementById('available-block').addEventListener('change', function () {
+        const [start, end] = this.value.split(',');
+        selectedSlotStartTime = start;
+        selectedSlotEndTime = end;
+        document.getElementById('specific-start-time').value = start;
+        document.getElementById('specific-end-time').value = end;
+    });
+
+    document.getElementById('schedule-meeting-form').addEventListener('submit', function (event) {
         event.preventDefault();
-        console.log("Submit event triggered");
 
         const teacherId = document.getElementById('teacher').value;
-        const selectedSlot = document.getElementById('available-slot').value;
-        const specificStartTimeRaw = document.getElementById('specific-start-time').value;
-        const specificEndTimeRaw = document.getElementById('specific-end-time').value;
-        const comment = document.getElementById('comment').value;
         const meetingDate = document.getElementById('meeting-date').value;
+        const startTimeRaw = document.getElementById('specific-start-time').value;
+        const endTimeRaw = document.getElementById('specific-end-time').value;
+        const comment = document.getElementById('comment').value;
 
-        console.log("Collected form values:", {teacherId, selectedSlot, specificStartTimeRaw, specificEndTimeRaw, comment, meetingDate});
-
-        if (!teacherId || !selectedSlot || !specificStartTimeRaw || !specificEndTimeRaw || !meetingDate) {
-            alert('Please fill all required fields.');
+        if (!teacherId || !meetingDate || !startTimeRaw || !endTimeRaw) {
+            alert('Please fill in all required fields.');
             return;
         }
-
-        const [day, slotStartTimeRaw, slotEndTimeRaw] = selectedSlot.split(',');
-
-        const slotStartTime = convertTo24HourFormat(slotStartTimeRaw);
-        const slotEndTime = convertTo24HourFormat(slotEndTimeRaw);
-        const specificStartTime = convertTo24HourFormat(specificStartTimeRaw);
-        const specificEndTime = convertTo24HourFormat(specificEndTimeRaw);
-
-        const selectedDay = new Date(meetingDate).toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
-        console.log("Selected day is:", selectedDay);
-
-        if (selectedDay !== day) {
-            alert(`The selected date does not match the selected day (${day}). Please select the correct date.`);
-            return;
-        }
-
         const payload = {
             teacher_id: teacherId,
             meeting_date: meetingDate,
-            day: day,
-            slot_start_time: slotStartTime,
-            slot_end_time: slotEndTime,
-            meeting_start_time: specificStartTime,
-            meeting_end_time: specificEndTime,
+            slot_start_time: convertTo24HourFormat(selectedSlotStartTime),
+            slot_end_time: convertTo24HourFormat(selectedSlotEndTime),
+            meeting_start_time: convertTo24HourFormat(startTimeRaw),
+            meeting_end_time: convertTo24HourFormat(endTimeRaw),
             comment: comment
         };
-        console.log("Payload to send:", payload);
-        console.log("Payload to send (JSON):", JSON.stringify(payload, null, 2));
-
+        console.log("Payload to be sent:", payload);
         fetch('/api/schedule-meeting/', {
             method: 'POST',
             headers: {
@@ -229,22 +180,31 @@
         })
         .then(response => {
             if (!response.ok) {
-                return response.json().then(errData => { throw new Error(errData.error || "Unknown error"); });
+                return response.json().then(err => { throw new Error(err.error || 'Unknown error') });
             }
             return response.json();
         })
-        .then(data => {
-            alert('Meeting successfully scheduled!');
-            console.log(data);
+        .then(() => {
+            alert('Meeting successfully requested!');
+            location.reload();   
             loadUpcomingMeetings();
         })
-        .catch(error => {
-            alert('Failed to schedule the meeting. Please try again.');
-            console.error('Error scheduling meeting:', error);
-        });
+        .catch(err => alert('Error: ' + err.message));
     });
+
+    // Load teacher list
+    fetch('/api/teachers/')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('teacher');
+            data.results.forEach(teacher => {
+                const opt = document.createElement('option');
+                opt.value = teacher.id;
+                opt.textContent = teacher.name;
+                select.appendChild(opt);
+            });
+        });
 
     loadUpcomingMeetings();
 </script>
-
 {% endblock %}

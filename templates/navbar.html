@@ -30,7 +30,14 @@
             {% elif user.student %}
                 <!-- Navbar for Student -->
                 <li><a href="{% url 'profile-page' %}">Profile</a></li>
-                <li><a href="{% url 'notification-list' %}">Notifications</a></li>
+                <li class="notification-link">
+                    <a href="{% url 'notification-list' %}" class="notification-anchor">
+                      Notifications
+                      {% if unread_notifications_count > 0 %}
+                        <span class="notification-badge">{{ unread_notifications_count }}</span>
+                      {% endif %}
+                    </a>
+                </li>
                 <li><a href="#">Dashboard</a></li>
                 <li><a href="#">Grades</a></li>
                 <li><a href="{% url 'logout' %}">Logout</a></li>
@@ -38,7 +45,14 @@
             {% else %}
                 <!-- Navbar for Teacher -->
                 <li><a href="{% url 'profile-page' %}">Profile</a></li>
-                <li><a href="{% url 'notification-list' %}">Notifications</a></li>
+                <li class="notification-link">
+                    <a href="{% url 'notification-list' %}" class="notification-anchor">
+                      Notifications
+                      {% if unread_notifications_count > 0 %}
+                        <span class="notification-badge">{{ unread_notifications_count }}</span>
+                      {% endif %}
+                    </a>
+                </li>
                 <li><a href="#">Dashboard</a></li>
                 <li><a href="{% url 'logout' %}">Logout</a></li>
 

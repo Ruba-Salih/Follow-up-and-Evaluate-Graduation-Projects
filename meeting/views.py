@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.shortcuts import  get_object_or_404
+from django.http import HttpResponseForbidden
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from rest_framework.views import APIView
@@ -16,11 +17,18 @@ import json
 from django.http import HttpResponseNotFound
 import logging
 from datetime import datetime, timedelta
+from django.utils.timezone import now
 from django.utils import timezone
 from project .models import Project, StudentProjectMembership
+from users.services import is_teacher
 from django.views import View
 from notifications.models import Notification
-from notifications.constants import MEETING_DECLINED, MEETING_ACCEPT, MEETING_REQUEST
+from notifications.constants import MEETING_DECLINED, MEETING_ACCEPT, MEETING_REQUEST, MEETING_RECOMMENDATION
+from rest_framework import pagination
+from users.models import User
+from django.http import HttpResponseNotFound
+from django.db.models import Q
+
 
 
 User = get_user_model()
@@ -39,16 +47,31 @@ class SetAvailableTimeAPIView(APIView):
     def post(self, request):
         serializer = AvailableTimeSerializer(data=request.data, many=True)
         if serializer.is_valid():
+            print("hey")
             created_slots = []
             for item in serializer.validated_data:
-                obj, created = AvailableTime.objects.get_or_create(
+                # Check if this slot already exists for the user
+                existing_slot = AvailableTime.objects.filter(
                     user=request.user,
                     day=item['day'],
                     start_time=item['start_time'],
-                    end_time=item['end_time'],
+                    end_time=item['end_time']
+                ).first()
+                
+                if existing_slot:
+                    print("hey it already there")
+                    return Response({'error': f"Slot already exists for {item['day']} at {item['start_time']}-{item['end_time']}"}, status=status.HTTP_400_BAD_REQUEST)
+
+                obj = AvailableTime.objects.create(
+                    user=request.user,
+                    day=item['day'],
+                    start_time=item['start_time'],
+                    end_time=item['end_time']
                 )
                 created_slots.append(obj)
             return Response(AvailableTimeSerializer(created_slots, many=True).data, status=status.HTTP_201_CREATED)
+        else:
+            print(serializer.errors) 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @csrf_exempt
@@ -73,32 +96,113 @@ def delete_available_time(request):
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
+
 class TeacherListAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        teachers = User.objects.filter(is_staff=True)
+        teachers = [user for user in User.objects.all().order_by('id') if is_teacher(user)]
+        
+        # Apply pagination
+        paginator = pagination.PageNumberPagination()
+        paginator.page_size = 10  # ✅ ensure this is set
+
+        paginated_teachers = paginator.paginate_queryset(teachers, request)
+
+        if paginated_teachers is None:
+            return Response({"error": "Pagination failed."}, status=400)
+
         data = [
             {"id": teacher.id, "name": teacher.get_full_name() or teacher.username}
-            for teacher in teachers
+            for teacher in paginated_teachers
         ]
-        return Response(data)
+        return paginator.get_paginated_response(data)
 
 class TeacherAvailableTimeAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, teacher_id):
-        available_times = AvailableTime.objects.filter(user_id=teacher_id)
-        time_slots = [
-            {
-                'day': at.day,
-                'start_time': at.start_time.strftime('%H:%M'),
-                'end_time': at.end_time.strftime('%H:%M')
-            }
-            for at in available_times
-        ]
-        return Response(time_slots)
- 
+    def get(self, request):
+        teacher_id = request.query_params.get('teacher_id')
+        selected_date = request.query_params.get('date')
+
+        if not teacher_id or not selected_date:
+            return Response({'error': 'teacher_id and date are required.'}, status=400)
+
+        try:
+            teacher = User.objects.get(id=teacher_id, is_staff=True)
+        except User.DoesNotExist:
+            return Response({'error': 'Teacher not found'}, status=404)
+
+        try:
+            selected_date = timezone.datetime.strptime(selected_date, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+
+        # Map the full weekday name to the abbreviated form
+        weekday_map = {
+            'Monday': 'mon',
+            'Tuesday': 'tue',
+            'Wednesday': 'wed',
+            'Thursday': 'thu',
+            'Friday': 'fri',
+            'Saturday': 'sat',
+            'Sunday': 'sun',
+        }
+
+        weekday = selected_date.strftime('%A')  # Get full weekday name (e.g., "Monday")
+        weekday_abbr = weekday_map.get(weekday)  # Map to abbreviated form (e.g., "mon")
+
+        if not weekday_abbr:
+            return Response({'error': 'Invalid weekday.'}, status=400)
+
+        now = timezone.now()
+
+        available_blocks = AvailableTime.objects.filter(user=teacher, day=weekday_abbr)
+        if not available_blocks.exists():
+            return Response([], status=200)
+
+        available_slots = []
+
+        for block in available_blocks:
+            block_start = timezone.make_aware(datetime.combine(selected_date, block.start_time))
+            block_end = timezone.make_aware(datetime.combine(selected_date, block.end_time))
+
+            if block_end <= now:
+                continue
+
+            overlapping_meetings = Meeting.objects.filter(
+                teacher=teacher,
+                start_datetime__lt=block_end,
+                end_datetime__gt=block_start,
+            ).exclude(status='pending').order_by('start_datetime')
+
+            free_ranges = []
+            current_start = block_start
+
+            if overlapping_meetings.exists():
+                for meeting in overlapping_meetings:
+                    if meeting.start_datetime > current_start:
+                        free_end = meeting.start_datetime
+                        if free_end > now:
+                            free_ranges.append((current_start, free_end))
+                    current_start = max(current_start, meeting.end_datetime)
+            
+
+            if current_start < block_end:
+                free_ranges.append((current_start, block_end))
+
+            for start, end in free_ranges:
+                if end > now and end > start:
+                    available_slots.append({
+                        'start_time': start.time().strftime('%H:%M'),
+                        'end_time': end.time().strftime('%H:%M'),
+                        'date': selected_date.isoformat(),
+                    })
+
+        return Response(available_slots)
+
+
+
 class TeacherMeetingRequestsAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -127,6 +231,7 @@ class ScheduleMeetingAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        print("heelo from tthe view")
         teacher_id = request.data.get('teacher_id')
         day = request.data.get('day')
         meeting_date = request.data.get('meeting_date')
@@ -136,33 +241,18 @@ class ScheduleMeetingAPIView(APIView):
         meeting_end_time = request.data.get('meeting_end_time')
         comment = request.data.get('comment')
 
-        short_to_full_day = {
-            'sun': 'sunday',
-            'mon': 'monday',
-            'tue': 'tuesday',
-            'wed': 'wednesday',
-            'thu': 'thursday',
-            'fri': 'friday',
-            'sat': 'saturday'
-        }
 
 
-        if not teacher_id or not day or not slot_start_time or not slot_end_time:
+        if not teacher_id or not slot_start_time or not slot_end_time:
+            print("missing")
             return Response({'error': 'Missing required fields.'}, status=400)
         
         try:
+            print(f"meeting date is {meeting_date}")
             meeting_date_obj = datetime.strptime(meeting_date, "%Y-%m-%d").date()
 
             if meeting_start_time and meeting_end_time:
                 print(f"meet start at {meeting_start_time} and end at {meeting_end_time}")
-                # Validate that the date matches the day
-                expected_day = meeting_date_obj.strftime('%A').lower()
-                print(f"exected day is {expected_day}")
-
-                if short_to_full_day.get(day.lower(), '') != expected_day:
-                    print(f"day is {day.lower()}")
-                    return Response({'error': f"The selected date does not match the selected day ({day})."}, status=400)
-
                 start_hour, start_minute = map(int, meeting_start_time.split(':'))
                 end_hour, end_minute = map(int, meeting_end_time.split(':'))
 
@@ -178,31 +268,6 @@ class ScheduleMeetingAPIView(APIView):
             logging.error(f"Error parsing time or date: {e}")
             return Response({'error': 'Invalid time or date format.'}, status=400)
 
-
-        """ # Handle meeting time: either student format or teacher format
-        try:
-
-            if meeting_start_time and meeting_end_time:
-                # Student is sending the request
-                start_hour, start_minute = map(int, meeting_start_time.split(':'))
-                end_hour, end_minute = map(int, meeting_end_time.split(':'))
-            else:
-                meeting_date = request.data.get('meeting_date')
-                print(f"meeting date is: {meeting_date}")
-                meeting_date_obj = timezone.make_aware(datetime.strptime(meeting_date, "%Y-%m-%d"))
-                # Teacher is sending the request
-                start_hour, start_minute = map(int, slot_start_time.split(':'))
-                end_hour, end_minute = map(int, slot_end_time.split(':'))
-                
-                meeting_start = timezone.make_aware(datetime.combine(meeting_date_obj, datetime.min.time()) + timedelta(hours=start_hour, minutes=start_minute))
-                meeting_end = timezone.make_aware(datetime.combine(meeting_date_obj, datetime.min.time()) + timedelta(hours=end_hour, minutes=end_minute))
-
-            
-            #meeting_start = timezone.make_aware(datetime(year=2025, month=4, day=10, hour=start_hour, minute=start_minute))
-            #meeting_end = timezone.make_aware(datetime(year=2025, month=4, day=10, hour=end_hour, minute=end_minute))
-        except ValueError:
-            return Response({'error': 'Invalid time format.'}, status=400) """
-
         # Teacher object
         try:
             teacher = User.objects.get(id=teacher_id)
@@ -210,7 +275,7 @@ class ScheduleMeetingAPIView(APIView):
             return Response({'error': 'Teacher not found'}, status=404)
 
         # Assign project
-        if request.user.is_staff:
+        if is_teacher(request.user):
             project_id = request.data.get('project_id')
             if not project_id:
                 return Response({'error': 'Project field is required for teachers.'}, status=400)
@@ -230,16 +295,18 @@ class ScheduleMeetingAPIView(APIView):
         meeting = Meeting.objects.create(
             requested_by=request.user,
             teacher=teacher, 
-            date_time=meeting_start,
+            start_datetime=meeting_start,
+            end_datetime=meeting_end,
             status='pending',
             comment=comment,
             project=project 
         )
 
+        #add participants function
         meeting.add_participants()
 
         # Notifications
-        if request.user.is_staff:  # Teacher scheduling the meeting
+        if is_teacher(request.user):  # Teacher scheduling the meeting
             # Notify all students in the project
             students = meeting.project.student_memberships.all()
             for membership in students:
@@ -306,13 +373,13 @@ class UpcomingMeetingsView(APIView):
         user = request.user
 
         # Check if the user is a teacher or a student
-        if user.is_staff:
+        if is_teacher(user):
             # User is a teacher, fetch meetings scheduled by the teacher
             upcoming_meetings = Meeting.objects.filter(
                 teacher=request.user,  # Assume the user has a 'teacher' relationship
                 status='accepted',
-                date_time__gte=current_time  # Only future meetings
-            ).order_by('date_time')
+                start_datetime__gte=current_time  # Only future meetings
+            ).order_by('start_datetime')
         else:
             # User is a student, fetch meetings related to the student's projects
             student_memberships = StudentProjectMembership.objects.filter(student=request.user)
@@ -321,12 +388,9 @@ class UpcomingMeetingsView(APIView):
             upcoming_meetings = Meeting.objects.filter(
                 project__id__in=project_ids,  # Filter meetings for projects the student is part of
                 status='accepted',
-                date_time__gte=current_time  # Only future meetings
-            ).order_by('date_time')
+                start_datetime__gte=current_time  # Only future meetings
+            ).order_by('start_datetime')
 
-        for meeting in upcoming_meetings:
-            print(meeting.teacher)  # Check if teacher is populated
-            print(meeting.project)
         # Serialize the meetings to return in the response
         serializer = MeetingSerializer(upcoming_meetings, many=True)
         return Response(serializer.data)
@@ -340,32 +404,47 @@ def set_available_time_page(request):
 
 @login_required
 def meeting_requests_page(request):
-    if request.user.is_staff:  # Teacher
-        # Fetch all pending meetings where the teacher is the recipient
-        meetings = Meeting.objects.filter(teacher=request.user, status='pending').exclude(requested_by=request.user)
+    if is_teacher(request.user):  # Teacher
+        # Teacher's meetings requested by the teacher (sent by them)
+        teacher_requests = Meeting.objects.filter(teacher=request.user, status='pending', requested_by=request.user).order_by('-created_at')
+        # Teacher's meetings received (requested by students)
+        student_requests = Meeting.objects.filter(teacher=request.user, status='pending').exclude(requested_by=request.user).order_by('-created_at')
+        
+        context = {
+            'user_meeting_requests': teacher_requests,
+            'received_meeting_requests': student_requests,
+        }
+    
     else:  # Student
-        # Fetch all pending meetings related to the student's project
+        # Student's meetings requested by the student (sent by them)
+        student_requests = Meeting.objects.filter(requested_by=request.user, status='pending').order_by('-created_at')
+        # Student's meetings received (related to their project)
         try:
             student_membership = StudentProjectMembership.objects.get(student=request.user)
-            meetings = Meeting.objects.filter(project=student_membership.project, status='pending').exclude(requested_by=request.user)
+            project_related_meetings = Meeting.objects.filter(project=student_membership.project, status='pending').exclude(requested_by=request.user).order_by('-created_at')
         except StudentProjectMembership.DoesNotExist:
-            # If the student is not part of any project, return an empty list
-            meetings = []
+            project_related_meetings = []
+        
+        context = {
+            'user_meeting_requests': student_requests,
+            'received_meeting_requests': project_related_meetings,
+        }
 
-    # Pass the meetings to the template
-    return render(request, 'meetings/meeting_requests.html', {'meetings': meetings})
+    return render(request, 'meetings/meeting_requests.html', context)
+
 
 
 @login_required
 def meeting_history_page(request):
-    if request.user.is_staff:  # Teacher
-        # Fetch all meetings where the teacher is the requester and the status is 'pending' or 'completed'
-        meetings = Meeting.objects.filter(requested_by=request.user, status__in=['canceled', 'completed', 'accepted'])
+
+    if is_teacher(request.user):  # Teacher
+        # Fetch all meetings where the teacher is the requester and the status is 'accepted' or 'completed'
+        meetings = Meeting.objects.filter(teacher=request.user, status__in=['cancelled', 'completed', 'accepted']).order_by('-created_at')
     else:  # Student
-        # Fetch all meetings where the student is a member of the project, status is 'pending' or 'completed', and exclude their own requests
+        # Fetch all meetings where the student is a member of the project, status is 'canceled' or 'completed', and exclude their own requests
         try:
             student_membership = StudentProjectMembership.objects.get(student=request.user)
-            meetings = Meeting.objects.filter(project=student_membership.project, status__in=['canceled', 'completed']).exclude(requested_by=request.user)
+            meetings = Meeting.objects.filter(project=student_membership.project, status__in=['cancelled', 'completed']).order_by('-created_at')
         except StudentProjectMembership.DoesNotExist:
             # If the student is not part of any project, return an empty list
             meetings = []
@@ -375,6 +454,7 @@ def meeting_history_page(request):
     for meeting in meetings:
         participants = MeetingParticipant.objects.filter(meeting=meeting)
         meeting_participants[meeting.meeting_id] = participants
+        print(f"meeting participants are: {meeting_participants}")
     
     # Render the template with the meeting details and participant attendance information
     return render(request, 'meetings/meeting_history.html', {
@@ -383,23 +463,44 @@ def meeting_history_page(request):
     })
 
 
-
 @login_required
 def accept_meeting(request, meeting_id):
     try:
+        # Get the meeting by ID
         meeting = Meeting.objects.get(meeting_id=meeting_id)
     except Meeting.DoesNotExist:
         return HttpResponseNotFound("Meeting not found")
-    
+
     user = request.user
+    meeting_start = meeting.start_datetime
+    meeting_end = meeting.end_datetime
 
-    # Accept the meeting
-    meeting.status = 'accepted'
-    meeting.save()
+    # Check if the user is a teacher or a student and apply the respective checks
+    if is_teacher(user):  # Teacher
+        # Check if the teacher already has an accepted meeting during the same time
+        conflict = Meeting.objects.filter(
+            teacher=user,
+            status='accepted',
+            start_datetime__lt=meeting_end,  # If the start time of any accepted meeting is before the end time
+            end_datetime__gt=meeting_start  # And the end time of any accepted meeting is after the start time
+        ).exists()
 
-    # Send notifications
-    if user.is_staff:
-        # If the user is a teacher, notify students in the project
+        if conflict:
+            return HttpResponseNotFound("You already have an accepted meeting during this time slot.")
+
+        # Accept the meeting
+        meeting.status = 'accepted'
+        meeting.save()
+
+        # After accepting, delete any conflicting requested meetings
+        Meeting.objects.filter(
+            Q(project=meeting.project),
+            Q(status='pending'),
+            start_datetime__lt=meeting_end,
+            end_datetime__gt=meeting_start
+        ).delete()
+
+        # Send notifications to students in the project
         students = meeting.project.student_memberships.all()
         for membership in students:
             Notification.objects.create(
@@ -407,14 +508,39 @@ def accept_meeting(request, meeting_id):
                 message=f"Your meeting request has been accepted by {user.get_full_name()}.",
                 notification_type=MEETING_ACCEPT
             )
-    else:
-        # If the user is a student, notify the teacher and other group members
-        # Notify the teacher
+
+    else:  # Student
+        # Check if the student already has an accepted meeting during the same time
+        conflict = Meeting.objects.filter(
+            Q(requested_by=user) |  # The user is the one who requested the meeting
+            Q(project__student_memberships__student=user),
+            status='accepted',  # The meeting must be accepted
+            start_datetime__lt=meeting_end,  # Check if the start time is before the requested end time
+            end_datetime__gt=meeting_start  # Check if the end time is after the requested start time
+        ).exists()
+
+        if conflict:
+            return HttpResponseNotFound("You already have an accepted meeting during this time slot.")
+
+        # Accept the meeting
+        meeting.status = 'accepted'
+        meeting.save()
+
+        # After accepting, delete any conflicting requested meetings
+        Meeting.objects.filter(
+            Q(project=meeting.project),
+            Q(status='pending'),
+            start_datetime__lt=meeting_end,
+            end_datetime__gt=meeting_start
+        ).delete()
+
+        # Notify the teacher about the acceptance
         Notification.objects.create(
             recipient=meeting.teacher,
             message=f"{user.get_full_name()} accepted the meeting.",
             notification_type=MEETING_ACCEPT
         )
+
         # Notify other students in the same project
         students = meeting.project.student_memberships.exclude(student=user)
         for membership in students:
@@ -425,6 +551,7 @@ def accept_meeting(request, meeting_id):
             )
 
     return redirect('meeting-requests-page')
+
 
 
 @login_required
@@ -441,7 +568,7 @@ def decline_meeting(request, meeting_id):
     meeting.save()
 
     # Send notifications
-    if user.is_staff:
+    if is_teacher(user):
         # If the user is a teacher, notify students in the project
         students = meeting.project.student_memberships.all()
         for membership in students:
@@ -473,27 +600,65 @@ def decline_meeting(request, meeting_id):
 def update_meeting_status(request, meeting_id):
     meeting = get_object_or_404(Meeting, meeting_id=meeting_id)
 
-    # Only allow teachers (staff) to update the meeting
-    if not request.user.is_staff:
+    if not is_teacher(request.user):
         messages.error(request, "You are not authorized to update this meeting.")
-        return redirect('meeting-history')
+        return redirect('meeting-history-page')
 
     if request.method == 'POST':
-        # Update the status of the meeting
         status = request.POST.get('status')
+        new_recommendation = request.POST.get('recommendation')
+
+        # Check if a new recommendation was added
+        recommendation_was_added = not meeting.recommendation and new_recommendation
+
         meeting.status = status
+        meeting.recommendation = new_recommendation
         meeting.save()
 
-        # Update attendance for each participant
         for participant in meeting.participants.all():
             attended = request.POST.get(f'attendance_{participant.id}')
-            if attended:
-                participant.attendance_status = 'attended'
-            else:
-                participant.attendance_status = 'absent'
+            participant.attendance_status = 'attended' if attended else 'absent'
             participant.save()
 
-        messages.success(request, "Meeting status and attendance have been updated.")
-        return redirect('meeting-history-page')  # Redirect back to meeting history page
+        # Send notification if recommendation was added
+        if recommendation_was_added:
+            for participant in meeting.participants.all():
+                # Send notification logic here (see below)
+                Notification.objects.create(
+                    recipient=participant.user,
+                    message=f"{request.user.get_full_name()} added a recommendation to the meeting on {meeting.start_datetime.strftime('%Y-%m-%d %H:%M')}.",
+                    notification_type=MEETING_RECOMMENDATION
+                )
+
+        messages.success(request, "Meeting status, attendance, and recommendation updated.")
+        return redirect('meeting-history-page')
 
     return render(request, 'meetings/meeting_requests.html', {'meeting': meeting})
+
+@login_required
+def delete_meeting(request, meeting_id):
+    try:
+        # Fetch the meeting by ID
+        meeting = Meeting.objects.get(meeting_id=meeting_id)
+    except Meeting.DoesNotExist:
+        return HttpResponseNotFound("Meeting not found")
+    
+    user = request.user
+    if is_teacher(user):  # Teacher
+        if meeting.teacher == request.user:  # Only allow deletion if the teacher is the creator
+            meeting.delete()
+            return redirect('meeting-requests-page')
+        else:
+            return HttpResponseForbidden("You do not have permission to delete this meeting.")
+
+    else:  # Student
+        try:
+            student_membership = StudentProjectMembership.objects.get(student=request.user)
+            if meeting.project == student_membership.project and meeting.requested_by == request.user:
+                # Only allow deletion if the meeting is related to the student's project and the student created it
+                meeting.delete()
+                return redirect('meeting-requests-page')
+            else:
+                return HttpResponseForbidden("You do not have permission to delete this meeting.")
+        except StudentProjectMembership.DoesNotExist:
+            return HttpResponseForbidden("You are not part of any project, and cannot delete this meeting.")

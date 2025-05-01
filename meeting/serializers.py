@@ -10,7 +10,9 @@ class AvailableTimeSerializer(serializers.ModelSerializer):
     class Meta:
         model = AvailableTime
         fields = ['day', 'start_time', 'end_time']
-
+        extra_kwargs = {
+            'user': {'read_only': True},  # Ensure 'user' is read-only and not expected in the request
+        }
 
 
 User = get_user_model()
@@ -21,40 +23,59 @@ class MeetingRequestSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(),
         write_only=True
     )
-    date_time = serializers.DateTimeField()  # The datetime of the meeting, which the student chooses
+
+    # Removed 'date_time' field because we are using start_datetime and end_datetime
+    start_datetime = serializers.DateTimeField()  # The start datetime of the meeting
+    end_datetime = serializers.DateTimeField()    # The end datetime of the meeting
 
     class Meta:
         model = Meeting
-        fields = ['meeting_id', 'date_time', 'status', 'recommendation', 'participants']
+        fields = ['meeting_id', 'start_datetime', 'end_datetime', 'status', 'recommendation', 'participants']
 
     def validate(self, attrs):
-        date_time = attrs.get('date_time')
+        start_datetime = attrs.get('start_datetime')
+        end_datetime = attrs.get('end_datetime')
         participants = self.initial_data.get('participants', [])
 
         if not participants:
             raise ValidationError("You must select a teacher.")
 
         teacher_id = participants[0]
+        
+        # Check if the teacher is available at the selected time
         available_times = AvailableTime.objects.filter(user_id=teacher_id)
-
         valid_slot = False
         for slot in available_times:
-            if slot.start_time <= date_time.time() <= slot.end_time:
+            if slot.start_time <= start_datetime.time() <= slot.end_time:
                 valid_slot = True
                 break
 
         if not valid_slot:
             raise ValidationError("The selected teacher is not available at the chosen time.")
 
+        # Check if the student already has a meeting at the selected time
+        student_id = self.context['request'].user.id  # Assuming the student is logged in
+        conflicting_meeting = Meeting.objects.filter(
+            start_datetime__lte=end_datetime,
+            end_datetime__gte=start_datetime,
+            participants__id=student_id
+        ).exists()
+
+        if conflicting_meeting:
+            raise ValidationError("You already have a meeting at this time.")
+
+        # Check if the time slot is already taken by another student for this teacher
+        conflicting_teacher_meeting = Meeting.objects.filter(
+            start_datetime__lte=end_datetime,
+            end_datetime__gte=start_datetime,
+            teacher_id=teacher_id
+        ).exists()
+
+        if conflicting_teacher_meeting:
+            raise ValidationError("This time slot is already taken by another student.")
+
         return attrs
 
-
-    def create(self, validated_data):
-        participants = validated_data.pop('participants')
-        meeting = Meeting.objects.create(**validated_data)
-        for user in participants:
-            MeetingParticipant.objects.create(meeting=meeting, user=user)
-        return meeting
 
 class MeetingParticipantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -67,11 +88,10 @@ class MeetingParticipantSerializer(serializers.ModelSerializer):
 class MeetingSerializer(serializers.ModelSerializer):
     project = serializers.CharField(source='project.name', read_only=True)
     teacher = serializers.SerializerMethodField()
-    date_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
 
     class Meta:
         model = Meeting
-        fields = ['meeting_id', 'requested_by', 'teacher', 'project', 'status', 'date_time', 'recommendation', 'comment']
+        fields = ['meeting_id', 'requested_by', 'teacher', 'project', 'status', 'start_datetime', 'end_datetime', 'recommendation', 'comment']
 
     def get_teacher(self, obj):
         if obj.teacher:
