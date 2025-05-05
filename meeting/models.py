@@ -86,6 +86,11 @@ class Meeting(models.Model):
         null=True,
         help_text="Post-meeting notes or recommendations"
     )
+    meeting_report = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Filled by student after meeting is completed"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -150,26 +155,7 @@ class MeetingFile(models.Model):
     )
     file = models.FileField(upload_to='meeting_files/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"File {self.file_id} for Meeting {self.meeting.meeting_id}"
-
-
-class ProjectFile(models.Model):
-    file_id = models.AutoField(primary_key=True)
-    project = models.ForeignKey(
-        Project,
-        on_delete=models.CASCADE,
-        related_name='project_files'
-    )
-    uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='project_files_uploaded'
-    )
-    file = models.FileField(upload_to='project_files/')
-    description = models.TextField(blank=True, null=True)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Project File {self.file_id} for {self.project.name}"

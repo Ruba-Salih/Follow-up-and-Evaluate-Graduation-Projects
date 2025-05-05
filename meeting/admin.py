@@ -3,7 +3,6 @@ from .models import (
     Meeting, 
     MeetingParticipant, 
     MeetingFile, 
-    ProjectFile,
     AvailableTime
 )
 
@@ -19,7 +18,7 @@ class AvailableTimeAdmin(admin.ModelAdmin):
 # Meeting Admin
 @admin.register(Meeting)
 class MeetingAdmin(admin.ModelAdmin):
-    list_display = ('meeting_id', 'requested_by', 'teacher', 'start_datetime', 'end_datetime', 'status')  # Use 'meeting_id' instead of 'meeting'
+    list_display = ('meeting_id', 'requested_by', 'teacher', 'start_datetime', 'end_datetime', 'meeting_report', 'status')  # Use 'meeting_id' instead of 'meeting'
     list_filter = ('status', 'start_datetime')
     search_fields = ('requested_by__username', 'teacher__username', 'meeting_id')
     ordering = ('-start_datetime',)
@@ -39,12 +38,4 @@ class MeetingFileAdmin(admin.ModelAdmin):
     list_display = ('file_id', 'meeting', 'uploaded_by', 'uploaded_at')
     list_filter = ('uploaded_at',)
     search_fields = ('meeting__meeting_id', 'uploaded_by__username')
-    ordering = ('-uploaded_at',)
-
-# ProjectFile Admin
-@admin.register(ProjectFile)
-class ProjectFileAdmin(admin.ModelAdmin):
-    list_display = ('file_id', 'project', 'uploaded_by', 'uploaded_at')
-    list_filter = ('uploaded_at',)
-    search_fields = ('project__name', 'uploaded_by__username')
     ordering = ('-uploaded_at',)

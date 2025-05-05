@@ -28,3 +28,71 @@
 .meeting-card p {
     margin: 6px 0;
 }
+/* === General Link Styling === */
+a {
+    color: #a63026; /* Primary link color */
+    text-decoration: none; /* Remove underline by default */
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+/* === Link Hover Effects === */
+a:hover {
+    color: #861e1a; /* Slightly darker shade for hover */
+    text-decoration: underline; /* Underline on hover */
+    letter-spacing: 1px; /* Subtle letter-spacing effect */
+    transform: translateY(-2px); /* Lift effect on hover */
+}
+
+/* === Link Focus Effects (for accessibility) === */
+a:focus {
+    outline: 2px solid #a63026; /* Clear outline for keyboard navigation */
+    outline-offset: 4px;
+}
+
+/* === Links Inside Cards or Containers === */
+.meeting-card a {
+    color: #a63026; /* Consistent with card's color theme */
+    font-weight: 600; /* Slightly bolder */
+    text-decoration: none;
+    transition: color 0.3s ease, transform 0.2s ease;
+}
+
+/* Hover effect for links in cards */
+.meeting-card a:hover {
+    color: #861e1a;
+    text-decoration: underline;
+    transform: translateY(-1px); /* Subtle lift for better visual appeal */
+}
+
+/* === Links Inside Button-Like Elements === */
+.meeting-card .action-buttons a {
+    color: white; /* White links inside action buttons */
+    padding: 8px 15px;
+    background-color: #a63026;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-block;
+    text-align: center;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.meeting-card .action-buttons a:hover {
+    background-color: #861e1a; /* Darken background on hover */
+    transform: translateY(-2px); /* Lift effect on hover */
+}
+
+/* === Responsive Design for Links === */
+@media (max-width: 768px) {
+    /* Links inside meeting cards */
+    .meeting-card a {
+        font-size: 14px;
+    }
+    
+    /* Links in action buttons (for mobile view) */
+    .meeting-card .action-buttons a {
+        font-size: 14px;
+        padding: 10px;
+    }
+}

@@ -1,97 +1,307 @@
 {% extends 'base.html' %}
+{% load meeting_filters %}
 {% load static %}
 {% block title %}Meetings History{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{% static 'css/meeting/schedule_meeting_student.css' %}">
-<link rel="stylesheet" href="{% static 'css/meeting/meeting_history.css' %}">
+    <link rel="stylesheet" href="{% static 'css/meeting/schedule_meeting_student.css' %}">
+    <link rel="stylesheet" href="{% static 'css/meeting/meeting_history.css' %}">
 {% endblock %}
 
 {% block content %}
-{% include "navbar.html" %}
+    {% include "navbar.html" %}
 
-<div class="outer-wrapper">
-    <div class="container">
-        <h1 class="page-title">📜 Meeting History</h1>
+    <div class="outer-wrapper">
+        <div class="container">
+            <h1 class="page-title">📜 Meeting History</h1>
 
-        {% if meetings %}
-            <div class="meeting-history">
-                {% for meeting in meetings %}
-                    <div class="meeting-card">
-                        <p><strong>Meeting ID:</strong> {{ meeting.meeting_id }}</p>
-                        <p><strong>Requested By:</strong> {{ meeting.requested_by.username }}</p>
-                        <p><strong>Teacher:</strong> {{ meeting.teacher.username }}</p>
-                        <p><strong>Meeting Time:</strong> {{ meeting.start_datetime }}</p>
-                        <p><strong>Project:</strong> {% if meeting.project %}{{ meeting.project.name }}{% else %}No Project{% endif %}</p>
-                        <p><strong>Status:</strong> {{ meeting.status }}</p>
+            {% if meetings %}
+                <div class="meeting-history">
+                    {% for meeting in meetings %}
+                        <div class="meeting-card">
+                            <p><strong>Meeting ID:</strong> {{ meeting.meeting_id }}</p>
+                            <p><strong>Requested By:</strong> {{ meeting.requested_by.username }}</p>
+                            <p><strong>Teacher:</strong> {{ meeting.teacher.username }}</p>
+                            <p><strong>Meeting Time:</strong> {{ meeting.start_datetime }}</p>
+                            <p><strong>Project:</strong> {% if meeting.project %}{{ meeting.project.name }}{% else %}No Project{% endif %}</p>
+                            <p><strong>Status:</strong> {{ meeting.status }}</p>
 
-                        {% if user.is_staff %}
-                            <!-- Teacher: Update status and attendance -->
+                            {% if user.is_staff %}
+                            <!-- Teacher View -->
                             <div class="meeting-actions">
-                                <h4>Update Meeting</h4>
-                                <form method="POST" action="{% url 'update-meeting-status' meeting.meeting_id %}">
-                                    {% csrf_token %}
-                                    <div class="form-group">
-                                        <label for="status">Update Status:</label>
-                                        <select name="status" id="status" class="form-control">
-                                            <option value="accepted" {% if meeting.status == 'accepted' %}selected{% endif %}>Accepted</option>
-                                            <option value="scheduled" {% if meeting.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
-                                            <option value="completed" {% if meeting.status == 'completed' %}selected{% endif %}>Completed</option>
-                                            <option value="cancelled" {% if meeting.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
-                                        </select>
+                                <div class="meeting-info-box">
+                                    <div class="recommendation-box">
+                                        <h4>Recommendations:</h4>
+                                        <p>{{ meeting.recommendation|default:"No recommendation provided." }}</p>
                                     </div>
-
-                                    <div class="form-group">
-                                        <label>Mark Attendance:</label>
-                                        {% for participant in meeting.participants.all %}
-                                            <div>
-                                                <input type="checkbox" name="attendance_{{ participant.id }}" {% if participant.attendance_status == 'attended' %}checked{% endif %}>
-                                                <span>{{ participant.user.username }}</span>
-                                            </div>
-                                        {% endfor %}
+                                    <div class="recommendation-box">
+                                        <h4>Meeting Report:</h4>
+                                        <p>{{ meeting.meeting_report|default:"No report provided." }}</p>
                                     </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="recommendation">Recommendation:</label>
-                                        <textarea name="recommendation" id="recommendation" class="form-control" rows="3">{{ meeting.recommendation }}</textarea>
-                                    </div>
-
-                                    <button type="submit" class="btn btn-primary">Update Meeting</button>
-                                </form>
-                            </div>
-                        {% else %}
-                            <!-- Student: Show attendance status -->
-                            <div class="attendance-status">
-                                <h4>Attendance Status:</h4>
-                                <ul>
-                                    {% for participant in meeting.participants.all %}
-                                        <li>
-                                            <strong>{{ participant.user.username }}:</strong> 
-                                            {% if participant.user == user %}
-                                                <span style="font-weight: bold;">Your Attendance Status: {{ participant.attendance_status }}</span>
+                                    <div class="uploaded-files">
+                                        <h4>📎 Uploaded Files:</h4>
+                                        {% with files=meeting_files|dict_get:meeting.meeting_id %}
+                                            {% if files %}
+                                                <div class="file-list">
+                                                    {% for file in files %}
+                                                        <div class="file-entry">
+                                                            <p><strong>File:</strong>
+                                                                <a href="{{ file.file.url }}" target="_blank">{{ file.file.name|slice:"10:" }}</a>
+                                                            </p>
+                                                            {% if file.description %}
+                                                                <p><strong>Description:</strong> <em>{{ file.description }}</em></p>
+                                                            {% endif %}
+                                                            <p><small><strong>Uploaded by:</strong> {{ file.uploaded_by.get_full_name }}</small></p>
+                                                            <!-- Hide Remove button initially, show it when updating -->
+                                                            <div class="remove-file-btn" style="display: none;">
+                                                                <form method="POST" action="{% url 'delete-meeting-file' file.file_id %}" style="display: inline;">
+                                                                    {% csrf_token %}
+                                                                    <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                                                </form>
+                                                            </div>
+                                                            <hr>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
                                             {% else %}
-                                                {{ participant.attendance_status }}
+                                                <p>No files uploaded for this meeting.</p>
                                             {% endif %}
-                                        </li>
-                                    {% endfor %}
-                                </ul>
+                                        {% endwith %}
+                                    </div>
+
+                                    <button type="button" class="btn btn-secondary" data-meeting-id="{{ meeting.meeting_id }}">
+                                        ✏️ Update Meeting
+                                    </button>
+                                </div>
+
+                                <div id="update-form-{{ meeting.meeting_id }}" class="update-form" style="display: none; margin-top: 20px;">
+                                    <form method="POST" action="{% url 'update-meeting-status' meeting.meeting_id %}" enctype="multipart/form-data">
+                                        {% csrf_token %}
+
+                                        <div class="form-group">
+                                            <label for="status">Update Status:</label>
+                                            <select name="status" class="form-control">
+                                                <option value="accepted" {% if meeting.status == 'accepted' %}selected{% endif %}>Accepted</option>
+                                                <option value="scheduled" {% if meeting.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                                                <option value="completed" {% if meeting.status == 'completed' %}selected{% endif %}>Completed</option>
+                                                <option value="cancelled" {% if meeting.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Mark Attendance:</label>
+                                            {% for participant in meeting.participants.all %}
+                                                <div>
+                                                    <input type="checkbox" name="attendance_{{ participant.id }}" {% if participant.attendance_status == 'attended' %}checked{% endif %}>
+                                                    <span>{{ participant.user.username }}</span>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="recommendation">Recommendation:</label>
+                                            <textarea name="recommendation" class="form-control" rows="3">{{ meeting.recommendation }}</textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            {% with files=meeting_files|dict_get:meeting.meeting_id %}
+                                                {% if files %}
+                                                    <div class="file-list">
+                                                        {% for file in files %}
+                                                            {% if file.uploaded_by == request.user %}
+                                                                <div class="file-entry">
+                                                                    <p><strong>File:</strong>
+                                                                        <a href="{{ file.file.url }}" target="_blank">{{ file.file.name|slice:'10:' }}</a>
+                                                                    </p>
+                                                                    {% if file.description %}
+                                                                        <p><strong>Description:</strong> <em>{{ file.description }}</em></p>
+                                                                    {% endif %}
+                                                                    <p><small><strong>Uploaded by:</strong> {{ file.uploaded_by.get_full_name }}</small></p>
+                                                                    <label>
+                                                                        <input type="checkbox" name="delete_file" value="{{ file.file_id }}"> Remove
+                                                                    </label>
+                                                                    <hr>
+                                                                </div>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                {% endif %}
+                                            {% endwith %}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="file_description">New File Description:</label>
+                                            <input type="text" name="file_description" class="form-control">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="meeting_files">Attach New Files:</label>
+                                            <input type="file" name="meeting_files" multiple>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                                        <button type="button" class="btn btn-secondary cancel-report-btn" data-meeting-id="{{ meeting.meeting_id }}">
+                                            ❌ Cancel
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="recommendation-box">
-                                <h4>Teacher's Recommendation:</h4>
-                                {% if meeting.recommendation %}
-                                    <p>{{ meeting.recommendation }}</p>
-                                {% else %}
-                                    <p>There are no recommendations for this meeting.</p>
+                            {% else %}
+                                <!-- Student View -->
+                                <div class="attendance-status">
+                                    <h4>Attendance Status:</h4>
+                                    <ul>
+                                        {% for participant in meeting.participants.all %}
+                                            <li>
+                                                <strong>{{ participant.user.username }}:</strong>
+                                                {% if participant.user == user %}
+                                                    <span style="font-weight: bold;">Your Attendance Status: {{ participant.attendance_status }}</span>
+                                                {% else %}
+                                                    {{ participant.attendance_status }}
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+
+                                <div class="recommendation-box">
+                                    <h4>Teacher's Recommendation:</h4>
+                                    {% if meeting.recommendation %}
+                                        <p>{{ meeting.recommendation }}</p>
+                                    {% else %}
+                                        <p>There are no recommendations for this meeting.</p>
+                                    {% endif %}
+                                </div>
+                                <div class="recommendation-box">
+                                    <h4>Meeting report:</h4>
+                                    <p>{{ meeting.meeting_report }}</p>
+                                </div>
+                                <div class="uploaded-files">
+                                    <h4>📎 Uploaded Files:</h4>
+                                    {% with files=meeting_files|dict_get:meeting.meeting_id %}
+                                        {% if files %}
+                                            <div class="file-list">
+                                                {% for file in files %}
+                                                    <div class="file-entry">
+                                                        <p><strong>File:</strong>
+                                                            <a href="{{ file.file.url }}" target="_blank" >{{ file.file.name|slice:'10:' }}</a>
+                                                        </p>
+                                                        {% if file.description %}
+                                                            <p><strong>Description:</strong> <em>{{ file.description }}</em></p>
+                                                        {% endif %}
+                                                        <p><small><strong>Uploaded by:</strong> {{ file.uploaded_by.get_full_name }}</small></p>
+                                                        <hr>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <p>No files uploaded for this meeting.</p>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+
+                                {% if meeting.status == 'completed' %}
+                                    {% for participant in meeting.participants.all %}
+                                        {% if participant.user == user %}
+                                        <div class="report-box">
+                                            {% if meeting.meeting_report %}
+                                                <button type="button" class="btn btn-warning edit-report-btn" data-meeting-id="{{ meeting.meeting_id }}">
+                                                    ✏️ Edit Report
+                                                </button>
+                                            {% else %}
+                                                <button type="button" class="btn btn-info add-report-btn" data-meeting-id="{{ meeting.meeting_id }}">
+                                                    ➕ Add Report
+                                                </button>
+                                            {% endif %}
+                                        
+                                            <!-- Report form (initially hidden) -->
+                                            <div id="report-form-{{ meeting.meeting_id }}" class="report-form" style="display: none; margin-top: 15px;">
+                                                <h4>Submit Meeting Report</h4>
+                                                <form method="POST" action="{% url 'submit-meeting-report' meeting.meeting_id %}" enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                                    <div class="form-group">
+                                                        <label for="report">Your Report:</label>
+                                                        <textarea name="report" class="form-control" rows="3" required>{{ meeting.meeting_report }}</textarea>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {% with files=meeting_files|dict_get:meeting.meeting_id %}
+                                                            {% if files %}
+                                                                <div class="file-list">
+                                                                    {% for file in files %}
+                                                                        {% if file|is_uploaded_by_participant:meeting.participants.all %}
+                                                                            <div class="file-entry">
+                                                                                <p><strong>File:</strong>
+                                                                                    <a href="{{ file.file.url }}" target="_blank">{{ file.file.name|slice:'10:' }}</a>
+                                                                                </p>
+                                                                                {% if file.description %}
+                                                                                    <p><strong>Description:</strong> <em>{{ file.description }}</em></p>
+                                                                                {% endif %}
+                                                                                <p><small><strong>Uploaded by:</strong> {{ file.uploaded_by.get_full_name }}</small></p>
+                                                                                <label>
+                                                                                    <input type="checkbox" name="delete_file" value="{{ file.file_id }}"> Remove
+                                                                                </label>
+                                                                                <hr>
+                                                                            </div>
+                                                                        {% endif %}
+                                                                    {% endfor %}
+                                                            {% endif %}
+                                                        {% endwith %}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label for="file_description">File Description:</label>
+                                                        <input type="text" name="file_description" class="form-control">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label for="meeting_files">Attach Files:</label>
+                                                        <input type="file" name="meeting_files" multiple>
+                                                    </div>
+                                                    <button type="submit" class="btn btn-success">Submit Report</button>
+                                                    <button type="button" class="btn btn-secondary cancel-report-btn" data-meeting-id="{{ meeting.meeting_id }}">
+                                                        ❌ Cancel
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
                                 {% endif %}
                             </div>
-                            
-                        {% endif %}
+                        {% endfor %}
                     </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p>No meeting history at the moment.</p>
-        {% endif %}
+                {% else %}
+                    <p>No meeting history at the moment.</p>
+                {% endif %}
+        </div>
     </div>
-</div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Toggle update form for teachers
+            document.querySelectorAll('.btn-secondary').forEach(button => {
+                button.addEventListener('click', function () {
+                    const meetingId = this.getAttribute('data-meeting-id');
+                    const form = document.getElementById(`update-form-${meetingId}`);
+                    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+    
+            // Toggle report form for students
+            document.querySelectorAll('.add-report-btn, .edit-report-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const meetingId = this.getAttribute('data-meeting-id');
+                    const form = document.getElementById(`report-form-${meetingId}`);
+                    form.style.display = 'block';
+                });
+            });
+    
+            // Cancel report form
+            document.querySelectorAll('.cancel-report-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const meetingId = this.getAttribute('data-meeting-id');
+                    const form = document.getElementById(`report-form-${meetingId}`);
+                    form.style.display = 'none';
+                });
+            });
+        });
+        
+    </script>
+    
 {% endblock %}
