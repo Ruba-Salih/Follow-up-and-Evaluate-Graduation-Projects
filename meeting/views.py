@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import permissions, status
-from .models import AvailableTime, Meeting, MeetingParticipant
+from .models import AvailableTime, Meeting, MeetingParticipant, MeetingFile
 from .serializers import AvailableTimeSerializer, MeetingRequestSerializer, MeetingSerializer
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -449,6 +449,15 @@ def meeting_history_page(request):
             # If the student is not part of any project, return an empty list
             meetings = []
 
+    
+    # Fetch the files related to each meeting
+    meeting_files = {}
+    for meeting in meetings:
+        files = MeetingFile.objects.filter(meeting=meeting)
+        meeting_files[meeting.meeting_id] = files
+        print(f"Meeting files for {meeting.meeting_id}: {meeting_files[meeting.meeting_id]}")
+
+    print(meeting_files)
     # Pass the meetings and attendance status for each participant to the template
     meeting_participants = {}
     for meeting in meetings:
@@ -459,7 +468,8 @@ def meeting_history_page(request):
     # Render the template with the meeting details and participant attendance information
     return render(request, 'meetings/meeting_history.html', {
         'meetings': meetings,
-        'meeting_participants': meeting_participants
+        'meeting_participants': meeting_participants,
+        'meeting_files': meeting_files  # Pass the files to the template
     })
 
 
@@ -596,6 +606,7 @@ def decline_meeting(request, meeting_id):
 
     return redirect('meeting-requests-page')
 
+
 @login_required
 def update_meeting_status(request, meeting_id):
     meeting = get_object_or_404(Meeting, meeting_id=meeting_id)
@@ -607,7 +618,24 @@ def update_meeting_status(request, meeting_id):
     if request.method == 'POST':
         status = request.POST.get('status')
         new_recommendation = request.POST.get('recommendation')
+        files_to_delete = request.POST.getlist('delete_file')
 
+        # Delete the files
+        for file_id in files_to_delete:
+            file = get_object_or_404(MeetingFile, pk=file_id)
+            file.delete()
+
+        files = request.FILES.getlist('meeting_files')
+        print(f"files are: {files}")
+        for uploaded_file in files:
+            print(f"File uploaded: {uploaded_file.name}")
+            MeetingFile.objects.create(
+                meeting=meeting,
+                uploaded_by=request.user,
+                file=uploaded_file,
+                description=request.POST.get('file_description', '')
+            )
+            print("finished")
         # Check if a new recommendation was added
         recommendation_was_added = not meeting.recommendation and new_recommendation
 
@@ -662,3 +690,78 @@ def delete_meeting(request, meeting_id):
                 return HttpResponseForbidden("You do not have permission to delete this meeting.")
         except StudentProjectMembership.DoesNotExist:
             return HttpResponseForbidden("You are not part of any project, and cannot delete this meeting.")
+
+
+@login_required
+def submit_meeting_report(request, meeting_id):
+    meeting = get_object_or_404(Meeting, meeting_id=meeting_id)
+
+    if meeting.status != 'completed':
+        messages.error(request, "You can only submit a report for completed meetings.")
+        return redirect('meeting-history-page')
+
+    # Only students in the meeting can submit
+    if not meeting.participants.filter(user=request.user).exists():
+        messages.error(request, "You are not a participant of this meeting.")
+        return redirect('meeting-history-page')
+
+    if request.method == 'POST':
+        report = request.POST.get('report')
+        if not report:
+            messages.error(request, "Report text cannot be empty.")
+            return redirect('submit-meeting-report', meeting_id=meeting.id)
+
+        files_to_delete = request.POST.getlist('delete_file')
+
+        # Delete the files
+        for file_id in files_to_delete:
+            file = get_object_or_404(MeetingFile, pk=file_id)
+            file.delete()
+        # Save report
+        meeting.meeting_report = report
+        meeting.save()
+
+        # Handle file uploads
+        files_uploaded = False
+        for uploaded_file in request.FILES.getlist('meeting_files'):
+            MeetingFile.objects.create(
+                meeting=meeting,
+                uploaded_by=request.user,
+                file=uploaded_file,
+                description=request.POST.get('file_description', '')
+            )
+            files_uploaded = True
+
+        if files_uploaded:
+            messages.success(request, "Meeting report and files submitted successfully.")
+        else:
+            messages.success(request, "Meeting report submitted successfully without files.")
+
+        return redirect('meeting-history-page')
+
+    return render(request, 'meetings/submit_report.html', {'meeting': meeting})
+
+@login_required
+def edit_meeting_file(request, file_id):
+    file = get_object_or_404(MeetingFile, id=file_id)
+    if request.user != file.uploaded_by:
+        messages.error(request, "You are not allowed to edit this file.")
+        return redirect('meeting-history-page')
+    
+    if request.method == 'POST':
+        file.description = request.POST.get('file_description', '')
+        file.save()
+        messages.success(request, "File description updated.")
+    
+    return redirect('meeting-history-page')
+
+@login_required
+def delete_meeting_file(request, file_id):
+    file = get_object_or_404(MeetingFile, id=file_id)
+    if request.user != file.uploaded_by:
+        messages.error(request, "You are not allowed to delete this file.")
+        return redirect('meeting-history-page')
+    
+    file.delete()
+    messages.success(request, "File deleted successfully.")
+    return redirect('meeting-history-page')
