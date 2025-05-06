@@ -60,7 +60,7 @@
                 <div class="feedback-item"
                     data-title="{{ item.feedback.title|lower }}"
                     data-sender="{{ item.feedback.sender.get_full_name|default:item.feedback.sender.username|lower }}">
-                    {% if item.feedback.sender == user or item.feedback.project|is_project_member:user %}
+                    {% if item.feedback.sender == user or item.feedback.project|is_project_member:item.feedback.sender %}
                         <!-- Action buttons -->
                         <div class="feedback-header">
                             <button class="edit-button"
