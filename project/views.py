@@ -286,6 +286,11 @@ class ProjectProposalView(APIView):
                 with transaction.atomic():
                     proposal = serializer.save(submitted_by=user, proposed_to=proposed_user)
 
+                    if is_teacher(user):
+                        proposal.teacher_status = 'accepted'
+                        proposal.save(update_fields=["teacher_status"])
+
+
                     if team_members_ids:
                         proposal.team_members.set(team_members_ids)
 
@@ -672,6 +677,38 @@ def track_project_view(request, pk):
         "project_id": project.id,
         "project_name": project.name,
         "is_super_coord": is_super
+    })
+
+@login_required
+def teacher_projects_page(request):
+    user = request.user
+
+    if not is_teacher(user):
+        return redirect("home")
+
+    print("🔍 Logged in teacher:", user.username, "| ID:", user.id)
+
+    memberships = ProjectMembership.objects.select_related(
+        "project", "role", "project__department"
+    ).filter(user_id=user.id)
+
+    print(f"🔎 Total memberships found: {memberships.count()}")
+
+    projects = []
+    for membership in memberships:
+        if membership.project:
+            project = membership.project
+            project.my_role = membership.role.name if membership.role else "Unassigned"
+            print("➡️ Project found:", project.name, "| Role:", project.my_role)
+            projects.append(project)
+
+    if not projects:
+        print("⚠️ No projects found despite existing membership. Possible issue with role or project link.")
+
+    print(f"📦 Total projects to render: {len(projects)}")
+
+    return render(request, "project/teacher_projects.html", {
+        "projects": projects
     })
 
 def student_project_page(request):

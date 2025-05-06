@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manage My Projects{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/project/teacher_projects.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+    <h2>📂 My Projects</h2>
+
+    {% if projects %}
+        {% for project in projects %}
+            <div class="project-card">
+                <h4>{{ project.name }}</h4>
+                <p><strong>Department:</strong> {{ project.department.name }}</p>
+                <p><strong>My Role:</strong> {{ project.my_role }}</p>
+
+                <div class="action-buttons">
+                    <a href="{% url 'project-detail' project.id %}" class="btn btn-primary view-project-btn" data-project-id="{{ project.id }}">🔍 View</a>
+                    <form class="project-leave-form" method="POST" action="/api/project/available/{{ project.id }}/" data-project-id="{{ project.id }}">
+                        {% csrf_token %}
+                        <button class="btn btn-delete">❌ Remove Myself</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>You are not enrolled in any projects yet.</p>
+    {% endif %}
+</div>
+
+<script src="{% static 'js/project/teacher_projects.js' %}"></script>
+{% endblock %}

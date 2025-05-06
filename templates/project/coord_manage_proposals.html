@@ -29,11 +29,17 @@
                 <div class="proposal-header">
                     <h4>{{ proposal.title }}</h4>
                     <div class="status-group">
-                        <span class="status {{ proposal.teacher_status }}">
-                            {% blocktrans %}Teacher: {{ proposal.get_teacher_status_display }}{% endblocktrans %}
-                        </span>
-                        <span class="status {{ proposal.coordinator_status }}">
-                            {% blocktrans %}Coordinator: {{ proposal.get_coordinator_status_display }}{% endblocktrans %}
+                        {% if proposal.submitted_by.student %}
+                            <span class="status {{ proposal.teacher_status|default:"pending" }}">
+                                {% blocktrans with status=proposal.get_teacher_status_display|default:"Pending" %}
+                                    Teacher: {{ status }}
+                                {% endblocktrans %}
+                            </span>
+                            {% endif %}
+                        <span class="status {{ proposal.coordinator_status|default:"pending" }}">
+                            {% blocktrans with status=proposal.get_coordinator_status_display|default:"Pending" %}
+                                Coordinator: {{ status }}
+                            {% endblocktrans %}
                         </span>
                     </div>
                 </div>

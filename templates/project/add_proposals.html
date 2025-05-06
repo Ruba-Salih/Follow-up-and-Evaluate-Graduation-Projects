@@ -32,13 +32,18 @@
                 <div class="status-group">
                     {% if not is_teacher %}
                     <span class="status {{ proposal.teacher_status|default:"pending" }}">
-                        {% blocktrans %}Teacher: {{ proposal.get_teacher_status_display }}{% endblocktrans %}
+                        {% blocktrans with status=proposal.get_teacher_status_display|default:"Pending" %}
+                            Teacher: {{ status }}
+                        {% endblocktrans %}
                     </span>
                     {% endif %}
                     <span class="status {{ proposal.coordinator_status|default:"pending" }}">
-                        {% blocktrans %}Coordinator: {{ proposal.get_coordinator_status_display }}{% endblocktrans %}
+                        {% blocktrans with status=proposal.get_coordinator_status_display|default:"Pending" %}
+                            Coordinator: {{ status }}
+                        {% endblocktrans %}
                     </span>
                 </div>
+                
             </div>
             <p><strong>{% trans "Field" %}:</strong> {{ proposal.field }}</p>
             <p><strong>{% trans "Submitted" %}:</strong> {{ proposal.created_at|date:"M d, Y" }}</p>
@@ -78,7 +83,7 @@
             <label>{% trans "Team Members Count" %}:</label>
             <input type="number" id="team_member_count">
 
-            <label for="duration">{% trans "Project Duration (months)" %}:</label>
+            <label for="duration">{% trans "Project Duration (weeks)" %}:</label>
             <input type="number" name="duration" id="duration" required>
 
             {% if is_teacher %}

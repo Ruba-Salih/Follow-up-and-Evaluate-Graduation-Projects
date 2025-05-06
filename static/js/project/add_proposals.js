@@ -254,7 +254,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         card.querySelector(".delete-btn")?.addEventListener("click", async () => {
-            if (confirmAction("Delete this proposal?")) {
+            const confirmed = await confirmAction("Delete this proposal?");
+            if (confirmed) {
                 const res = await fetch(`/api/project/proposals/${id}/`, {
                     method: "DELETE",
                     headers: {
@@ -267,6 +268,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     showAlert("Delete failed.", 'error');
                 }
             }
+
         });
     });
 

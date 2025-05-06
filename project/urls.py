@@ -29,6 +29,8 @@ urlpatterns = [
 
     path("project/my/", views.student_project_page, name="student-projects"),
 
+    path("project/teacher/", views.teacher_projects_page, name="teacher_projects"),
+
     path('project/tasks/', views.project_tasks_page, name='project-tasks-page'),
 
     path("available-projects/", views.available_projects_view, name="available-projects"),
