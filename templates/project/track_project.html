@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Track Projects{% endblock %}
+{% block title %}{% trans "Track Projects" %}{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/project/track_projects.css' %}">
@@ -11,14 +11,14 @@
 {% include "navbar.html" %}
 
 <div class="container">
-    <h2>🎯 Project Tracker</h2>
+    <h2>🎯 {% trans "Project Tracker" %}</h2>
 
     <div class="search-bar">
-        <input type="text" id="search-input" placeholder="🔍 Search by project name, academic year, or supervisor...">
+        <input type="text" id="search-input" placeholder="{% trans '🔍 Search by project name, academic year, or supervisor...' %}">
 
         {% if is_super_coord %}
         <select id="department-filter" style="display: none;">
-            <option value="">All Departments</option>
+            <option value="">{% trans "All Departments" %}</option>
         </select>
         {% endif %}
     </div>
@@ -34,55 +34,54 @@
 <div id="coord-modal" class="modal hidden">
     <div class="modal-content">
         <span class="close-btn">&times;</span>
-        <h3>📋 Project Details</h3>
+        <h3>📋 {% trans "Project Details" %}</h3>
 
         <div id="modal-body">
-            <p><strong>Project Name:</strong> <span id="modal-title-text"></span></p>
-            <p><strong>Field:</strong> <span id="modal-field"></span></p>
-            <p><strong>Description:</strong> <span id="modal-description"></span></p>
-            <p><strong>Team Members Count:</strong> <span id="modal-team-count"></span></p>
-            <p><strong>Team Members:</strong> <span id="modal-team-members"></span></p>
-            <p><strong>Supervisor:</strong> <span id="modal-supervisor"></span></p>
-            <p><strong>Reader:</strong> <span id="modal-reader"></span></p>
-            <p><strong>Judges:</strong> <span id="modal-judges"></span></p>
-            <p><strong>Attached File:</strong> <span id="modal-file"></span></p>
+            <p><strong>{% trans "Project Name" %}:</strong> <span id="modal-title-text"></span></p>
+            <p><strong>{% trans "Field" %}:</strong> <span id="modal-field"></span></p>
+            <p><strong>{% trans "Description" %}:</strong> <span id="modal-description"></span></p>
+            <p><strong>{% trans "Team Members Count" %}:</strong> <span id="modal-team-count"></span></p>
+            <p><strong>{% trans "Team Members" %}:</strong> <span id="modal-team-members"></span></p>
+            <p><strong>{% trans "Supervisor" %}:</strong> <span id="modal-supervisor"></span></p>
+            <p><strong>{% trans "Reader" %}:</strong> <span id="modal-reader"></span></p>
+            <p><strong>{% trans "Judges" %}:</strong> <span id="modal-judges"></span></p>
+            <p><strong>{% trans "Attached File" %}:</strong> <span id="modal-file"></span></p>
 
             <hr>
 
             <!-- 🛠 Project Plan Progress -->
-            <h4>📈 Project Completion</h4>
+            <h4>📈 {% trans "Project Completion" %}</h4>
             <div id="project-completion">
-                Progress: <span id="completion-status">N/A</span>%
+                {% trans "Progress" %}: <span id="completion-status">N/A</span>%
             </div>
 
             <hr>
 
             <!-- 🛠 Tasks Section -->
-            <h4>🗂 Project Tasks</h4>
+            <h4>🗂 {% trans "Project Tasks" %}</h4>
             <div id="tasks-list">
                 <!-- JS will render tasks dynamically here -->
-                <p>No tasks available.</p>
+                <p>{% trans "No tasks available." %}</p>
             </div>
-
 
             <hr>
 
             <!-- 🛠 Logs Section -->
-            <h4>📜 Project Logs</h4>
+            <h4>📜 {% trans "Project Logs" %}</h4>
             <div id="logs-list">
                 <!-- JS will render logs dynamically here -->
-                <p>No logs available yet.</p>
+                <p>{% trans "No logs available yet." %}</p>
             </div>
 
             <hr>
-            <!-- 🛠 Coordinator Feedback -->
-<h4>📝 Coordinator Feedback</h4>
-<div id="feedback-section">
-    <textarea id="coord-feedback-input" placeholder="Write your feedback here..." rows="4" style="width: 100%; margin-bottom: 10px;"></textarea>
-    <button id="submit-feedback-btn" class="btn btn-primary" style="margin-top:5px;">Submit Feedback</button>
-    <p id="feedback-message" style="margin-top: 10px; color: green;"></p>
-</div>
 
+            <!-- 🛠 Coordinator Feedback -->
+            <h4>📝 {% trans "Coordinator Feedback" %}</h4>
+            <div id="feedback-section">
+                <textarea id="coord-feedback-input" placeholder="{% trans 'Write your feedback here...' %}" rows="4" style="width: 100%; margin-bottom: 10px;"></textarea>
+                <button id="submit-feedback-btn" class="btn btn-primary" style="margin-top:5px;">{% trans "Submit Feedback" %}</button>
+                <p id="feedback-message" style="margin-top: 10px; color: green;"></p>
+            </div>
 
         </div>
     </div>

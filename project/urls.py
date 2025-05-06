@@ -26,4 +26,13 @@ urlpatterns = [
 
     path("project/track/", views.TrackProjectView.as_view(), name="track-project-list"),
     path("project/track/<int:pk>/", views.TrackProjectView.as_view(), name="track-project-detail"),
+
+    path("project/my/", views.student_project_page, name="student-projects"),
+
+    path('project/tasks/', views.project_tasks_page, name='project-tasks-page'),
+
+    path("available-projects/", views.available_projects_view, name="available-projects"),
+    path("projects/available/action/", views.AvailableProjectActionView.as_view(), name="available-project-action"),
+    path("available/<int:project_id>/", views.AvailableProjectActionView.as_view(), name="available-project-action-item"),
+
 ]

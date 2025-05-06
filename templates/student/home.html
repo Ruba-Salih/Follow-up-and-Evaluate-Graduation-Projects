@@ -1,7 +1,8 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Student home{% endblock %}
+{% block title %}{% trans "Student Home" %}{% endblock %}
+
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
 {% endblock %}
@@ -13,21 +14,21 @@
 <div class="container">
     <!-- Quick Links -->
     <div class="quick-links">
-        <div class="link-item"><a href="{% url 'manage-proposals' %}">📤 Submit Proposal</a></div>
-        <div class="link-item"><a href="#">📋 Available Projects</a></div>
-        <div class="link-item"><a href="#">👥 Form A Group</a></div>
-        <div class="link-item"><a href="#">📅 Schedule Meeting</a></div>
-        <div class="link-item"><a href="#">📄 Upload Report</a></div>
+        <div class="link-item"><a href="{% url 'manage-proposals' %}">📤 {% trans "Submit Proposal" %}</a></div>
+        <div class="link-item"><a href="{% url 'available-projects' %}">📋 {% trans "Available Projects" %}</a></div>
+        <div class="link-item"><a href="{% url 'student-projects' %}">📂 {% trans "My Project" %}</a></div>
+        <div class="link-item"><a href="#">📅 {% trans "Schedule Meeting" %}</a></div>
+        <div class="link-item"><a href="#">📄 {% trans "Upload Report" %}</a></div>
     </div>
 
     <!-- Announcements Section -->
     <div class="announcements">
-        <h3>📢 Recent Announcements</h3>
+        <h3>📢 {% trans "Recent Announcements" %}</h3>
         <ul>
             {% for announcement in announcements %}
                 <li>{{ announcement.title }} - {{ announcement.date_posted }}</li>
             {% empty %}
-                <li>No announcements available.</li>
+                <li>{% trans "No announcements available." %}</li>
             {% endfor %}
         </ul>
     </div>

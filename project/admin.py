@@ -3,6 +3,7 @@ from .models import (
     ProjectProposal,
     Project,
     ProjectPlan,
+    ProjectGoal,
     ProjectTask,
     ProjectLog,
     ProjectMembership,
@@ -32,6 +33,14 @@ class ProjectPlanAdmin(admin.ModelAdmin):
     list_display = ('project', 'completion_status')
     list_filter = ('completion_status',)
     search_fields = ('project__name',)
+
+
+@admin.register(ProjectGoal)
+class ProjectGoalAdmin(admin.ModelAdmin):
+    list_display = ('goal', 'project', 'duration', 'created_at')
+    list_filter = ('project',)
+    search_fields = ('goal', 'project__name')
+    ordering = ('-created_at',)
 
 
 @admin.register(ProjectTask)

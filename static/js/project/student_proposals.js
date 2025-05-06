@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const response = await fetch(`/api/project/proposals/${proposalId}/`);
                 const data = await response.json();
                 if (!response.ok) {
-                    alert(data.detail || "Error fetching proposal details.");
+                    showAlert((data.detail || "Error fetching proposal details."), 'error');
                     return;
                 }
 
@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                alert("Update failed: " + (errorData.detail || JSON.stringify(errorData)));
+                showAlert("Update failed: " + (errorData.detail || JSON.stringify(errorData)), 'error');
                 return;
             }
 

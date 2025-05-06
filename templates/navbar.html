@@ -1,51 +1,50 @@
-{% load static %}
+{% load static i18n %}
 <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
 
 <!-- Global Navigation Bar -->
 <nav class="navbar">
     <div class="logo">
         <a href="/">
-            <img src="{% static 'images/lo.png' %}" alt="Site Logo"  class="lo">
+            <img src="{% static 'images/lo.png' %}" alt="Site Logo" class="lo">
         </a>
-        <h2 class="site-name"> Graduation System</h2>
+        <h2 class="site-name">{% trans "Graduation System" %}</h2>
     </div>
-    
 
     <ul class="nav-links">
         {% if user.is_authenticated %}
             {% if user.admin %}
                 <!-- Navbar for Admin -->
-                <li><a href="{% url 'profile-page' %}">Profile</a></li>
-                <li><a href="#">Notifications</a></li>
-                <li><a href="{% url 'coordinator-dashboard' %}">Dashboard</a></li>
-                <li><a href="{% url 'logout' %}">Logout</a></li>
+                <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
+                <li><a href="#">{% trans "Notifications" %}</a></li>
+                <li><a href="{% url 'coordinator-dashboard' %}">{% trans "Dashboard" %}</a></li>
+                <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
             {% elif user.coordinator %}
                 <!-- Navbar for Coordinator -->
-                <li><a href="{% url 'profile-page' %}">Profile</a></li>
-                <li><a href="#">Notifications</a></li>
-                <li><a href="{% url 'coordinator-dashboard' %}">Dashboard</a></li>
-                <li><a href="{% url 'logout' %}">Logout</a></li>
+                <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
+                <li><a href="#">{% trans "Notifications" %}</a></li>
+                <li><a href="{% url 'coordinator-dashboard' %}">{% trans "Dashboard" %}</a></li>
+                <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
             {% elif user.student %}
                 <!-- Navbar for Student -->
-                <li><a href="{% url 'profile-page' %}">Profile</a></li>
-                <li><a href="#">Notifications</a></li>
-                <li><a href="#">Dashboard</a></li>
-                <li><a href="#">Grades</a></li>
-                <li><a href="{% url 'logout' %}">Logout</a></li>
+                <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
+                <li><a href="#">{% trans "Notifications" %}</a></li>
+                <li><a href="#">{% trans "Dashboard" %}</a></li>
+                <li><a href="#">{% trans "Grades" %}</a></li>
+                <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
             {% else %}
                 <!-- Navbar for Teacher -->
-                <li><a href="{% url 'profile-page' %}">Profile</a></li>
-                <li><a href="#">Notifications</a></li>
-                <li><a href="#">Dashboard</a></li>
-                <li><a href="{% url 'logout' %}">Logout</a></li>
+                <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
+                <li><a href="#">{% trans "Notifications" %}</a></li>
+                <li><a href="#">{% trans "Dashboard" %}</a></li>
+                <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
             {% endif %}
         {% else %}
             <!-- If user is not logged in -->
-            <li><a href="{% url 'login' %}">Login</a></li>
+            <li><a href="{% url 'login' %}">{% trans "Login" %}</a></li>
         {% endif %}
     </ul>
 </nav>

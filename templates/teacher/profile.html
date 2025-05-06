@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Teacher Profile{% endblock %}
+{% block title %}{% trans "Teacher Profile" %}{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/profile.css' %}">
@@ -12,40 +12,42 @@
 {% include "navbar.html" %}
 
 <div class="container">
-    <h2>👨‍🏫 Teacher Profile</h2>
+    <h2>👨‍🏫 {% trans "Teacher Profile" %}</h2>
     <form id="profile-form" method="POST">
         {% csrf_token %}
-        <label for="username">Username:</label>
+        <label for="username">{% trans "Username" %}:</label>
         <input type="text" name="username" id="username" value="{{ user.username }}" required>
 
-        <label for="email">Email:</label>
+        <label for="email">{% trans "Email" %}:</label>
         <input type="email" name="email" id="email" value="{{ user.email }}">
 
-        <label for="phone">Phone Number:</label>
+        <label for="phone">{% trans "Phone Number" %}:</label>
         <input type="text" name="phone_number" id="phone_number" value="{{ user.phone_number }}">
 
-        <label for="qualification" style="display: none;">Qualification:</label>
+        <label for="qualification" style="display: none;">{% trans "Qualification" %}:</label>
         <input type="text" name="qualification" id="qualification" style="display: none;">
 
-        <label for="work_place" style="display: none;">Work Place:</label>
+        <label for="work_place" style="display: none;">{% trans "Work Place" %}:</label>
         <input type="text" name="work_place" id="work_place" style="display: none;">
-        <button type="submit" class="save btn-primary">Save Profile</button>
-        </form>
-
-        <hr>
-
-        <form id="password-form" method="POST">
-            {% csrf_token %}
-
-            <h2>🔐 Change Password</h2>
-            <label for="old_password">Old Password:</label>
-            <input type="password" id="old_password" required>
         
-            <label for="new_password">New Password:</label>
-            <input type="password" id="new_password" required>
+        <button type="submit" class="save btn-primary">{% trans "Save Profile" %}</button>
+    </form>
+
+    <hr>
+
+    <form id="password-form" method="POST">
+        {% csrf_token %}
+
+        <h2>🔐 {% trans "Change Password" %}</h2>
         
-            <button type="submit" class="change btn-primary">Change Password</button>
-        </form>
+        <label for="old_password">{% trans "Old Password" %}:</label>
+        <input type="password" id="old_password" required>
+
+        <label for="new_password">{% trans "New Password" %}:</label>
+        <input type="password" id="new_password" required>
+
+        <button type="submit" class="change btn-primary">{% trans "Change Password" %}</button>
+    </form>
 </div>
 
 <script src="{% static 'js/profile.js' %}"></script>

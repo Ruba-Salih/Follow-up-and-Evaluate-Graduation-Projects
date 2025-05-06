@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Manage Accounts{% endblock %}
+{% block title %}{% trans "Manage Accounts" %}{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/coordinator/manage_accounts.css' %}">
@@ -9,38 +9,38 @@
 
 {% block content %}
 
-{% include "navbar.html" %} 
+{% include "navbar.html" %}
 
 <div class="container">
-    <h2>👤 Manage Accounts</h2>
+    <h2>👤 {% trans "Manage Accounts" %}</h2>
 
     <!-- Create User Button -->
-    <button id="create-user-btn" class="btn btn-primary">+ Create New Account</button>
+    <button id="create-user-btn" class="btn btn-primary">+ {% trans "Create New Account" %}</button>
 
     <!-- 🔍 Search and Filter Controls -->
 <div class="search-filter-bar">
-    <input type="text" id="search-input" placeholder="🔍 Search by username..." />
+    <input type="text" id="search-input" placeholder="{% trans '🔍 Search by username...' %}" />
     
     <select id="role-filter">
-        <option value="">🔽 All Roles</option>
-        <option value="student">👨‍🎓 Students</option>
-        <option value="user">👤 Teachers</option>
+        <option value="">{% trans "🔽 All Roles" %}</option>
+        <option value="student">👨‍🎓 {% trans "Students" %}</option>
+        <option value="user">👤 {% trans "Teachers" %}</option>
         {% if is_super %}
-        <option value="coordinator">🧑‍💼 Coordinators</option>
+        <option value="coordinator">🧑‍💼 {% trans "Coordinators" %}</option>
         {% endif %}
     </select>
 
-    <button id="download-btn" class="btn-download">⬇️ Download List</button>
+    <button id="download-btn" class="btn-download">⬇️ {% trans "Download List" %}</button>
 </div>
 
     <table>
         <thead>
             <tr>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Department</th>
-                <th>Actions</th>
+                <th>{% trans "Username" %}</th>
+                <th>{% trans "Email" %}</th>
+                <th>{% trans "Phone" %}</th>
+                <th>{% trans "Department" %}</th>
+                <th>{% trans "Actions" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -62,16 +62,16 @@
                             data-student_id="{{ user.student.student_id }}"
                             data-sitting_number="{{ user.student.sitting_number }}"
                         {% endif %}>
-                        ✏️ Edit
+                        ✏️ {% trans "Edit" %}
                     </button>
-                    <button class="delete-btn btn-delete" data-id="{{ user.id }}" >
-                        🗑️ Delete
+                    <button class="delete-btn btn-delete" data-id="{{ user.id }}">
+                        🗑️ {% trans "Delete" %}
                     </button>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5">No users found.</td>
+                <td colspan="5">{% trans "No users found." %}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -82,71 +82,40 @@
 <div id="create-user-modal" class="modal hidden">
     <div class="modal-content">
         <span class="close-btn">&times;</span>
-        <h3>Create New User</h3>
+        <h3>{% trans "Create New User" %}</h3>
 
-        <!-- ✅ Step 1: Choose User Type (Defaults to Student) -->
-        <label for="user-role">Select User Type:</label>
+        <!-- ✅ Step 1: Choose User Type -->
+        <label for="user-role">{% trans "Select User Type" %}:</label>
         <select id="user-role">
-            <option value="student">👨‍🎓 Student</option>
-            <option value="user">👤 Teacher</option>
+            <option value="student">👨‍🎓 {% trans "Student" %}</option>
+            <option value="user">👤 {% trans "Teacher" %}</option>
             {% if is_super %}
-            <option value="coordinator">👥 Coordinator</option>
+            <option value="coordinator">👥 {% trans "Coordinator" %}</option>
             {% endif %}
         </select>
-        
 
-        <!-- ✅ Step 2: Student Form (DEFAULT VISIBLE) -->
+        <!-- ✅ Student Form -->
         <form id="student-form">
-            <h4>👨‍🎓 Student Details</h4>
-            <label for="student-name">Name:</label>
+            <h4>👨‍🎓 {% trans "Student Details" %}</h4>
+            <label for="student-name">{% trans "Name" %}:</label>
             <input type="text" id="student-name" required>
 
-            <label for="student-id">University Number:</label>
+            <label for="student-id">{% trans "University Number" %}:</label>
             <input type="text" id="student-id" required>
 
-            <label for="student-email">Email (optional):</label>
+            <label for="student-email">{% trans "Email (optional)" %}:</label>
             <input type="email" id="student-email">
 
-            <label for="student-phone">Phone Number (optional):</label>
+            <label for="student-phone">{% trans "Phone Number (optional)" %}:</label>
             <input type="text" id="student-phone">
 
-            <label for="sitting-number">Sitting Number:</label>
+            <label for="sitting-number">{% trans "Sitting Number" %}:</label>
             <input type="text" id="sitting-number" required>
 
-            <label for="student-department">Department:</label>
+            <label for="student-department">{% trans "Department" %}:</label>
             <select id="student-department" name="student-department" {% if not request.user.coordinator.is_super %}disabled{% endif %}>
                 {% if request.user.coordinator.is_super %}
-                    <option value="">-- Select Department --</option>
-                    {% for dept in departments %}
-                        <option value="{{ dept.id }}">{{ dept.name }}</option>
-                     {% endfor %}
-                {% else %}
-                    <option value="{{ request.user.department.id }}">{{ request.user.department.name }}</option>
-                {% endif %}
-            </select>
-
-            <label for="student-password">Password:</label>
-            <input type="password" id="student-password" required>
-
-            <button type="submit" class="btn-primary">Save Student</button>
-        </form>
-
-        <!-- ✅ Step 2: Normal User Form (HIDDEN BY DEFAULT) -->
-        <form id="user-form" class="hidden">
-            <h4>👤  Teacher Details</h4>
-            <label for="user-name">Name:</label>
-            <input type="text" id="user-name" required>
-
-            <label for="user-email">Email (optional):</label>
-            <input type="email" id="user-email">
-
-            <label for="user-phone">Phone Number (optional):</label>
-            <input type="text" id="user-phone">
-
-            <label for="user-department">Department:</label>
-            <select id="user-department" name="user-department" {% if not request.user.coordinator.is_super %}disabled{% endif %}>
-                {% if request.user.coordinator.is_super %}
-                    <option value="">-- Select Department --</option>
+                    <option value="">{% trans "-- Select Department --" %}</option>
                     {% for dept in departments %}
                         <option value="{{ dept.id }}">{{ dept.name }}</option>
                     {% endfor %}
@@ -154,47 +123,75 @@
                     <option value="{{ request.user.department.id }}">{{ request.user.department.name }}</option>
                 {% endif %}
             </select>
-            
 
-            <label for="user-password">Password:</label>
-            <input type="password" id="user-password" required>
+            <label for="student-password">{% trans "Password" %}:</label>
+            <input type="password" id="student-password" required>
 
-            <button type="submit" class="btn-primary">Save Teacher</button>
+            <button type="submit" class="btn-primary">{% trans "Save Student" %}</button>
         </form>
 
+        <!-- ✅ Teacher Form -->
+        <form id="user-form" class="hidden">
+            <h4>👤 {% trans "Teacher Details" %}</h4>
+            <label for="user-name">{% trans "Name" %}:</label>
+            <input type="text" id="user-name" required>
 
-        <!-- 👥 Coordinator Form (Hidden by default) -->
-<form id="coordinator-form" class="hidden">
-    <h4>👥 Coordinator Details</h4>
-    <label for="coord-name">Name:</label>
-    <input type="text" id="coord-name" required>
+            <label for="user-email">{% trans "Email (optional)" %}:</label>
+            <input type="email" id="user-email">
 
-    <label for="coord-email">Email (optional):</label>
-    <input type="email" id="coord-email">
+            <label for="user-phone">{% trans "Phone Number (optional)" %}:</label>
+            <input type="text" id="user-phone">
 
-    <label for="coord-phone">Phone Number (optional):</label>
-    <input type="text" id="coord-phone">
+            <label for="user-department">{% trans "Department" %}:</label>
+            <select id="user-department" name="user-department" {% if not request.user.coordinator.is_super %}disabled{% endif %}>
+                {% if request.user.coordinator.is_super %}
+                    <option value="">{% trans "-- Select Department --" %}</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="{{ request.user.department.id }}">{{ request.user.department.name }}</option>
+                {% endif %}
+            </select>
 
-    <label for="coord-id">Coordinator ID:</label>
-    <input type="text" id="coord-id" required>
+            <label for="user-password">{% trans "Password" %}:</label>
+            <input type="password" id="user-password" required>
 
-    <label for="coord-department">Department:</label>
-    <select id="coord-department" {% if not request.user.coordinator.is_super %}disabled{% endif %}>
-        {% if request.user.coordinator.is_super %}
-            <option value="">-- Select Department --</option>
-            {% for dept in departments %}
-                <option value="{{ dept.id }}">{{ dept.name }}</option>
-            {% endfor %}
-        {% else %}
-            <option value="{{ request.user.department.id }}">{{ request.user.department.name }}</option>
-        {% endif %}
-    </select>
+            <button type="submit" class="btn-primary">{% trans "Save Teacher" %}</button>
+        </form>
 
-    <label for="coord-password">Password:</label>
-    <input type="password" id="coord-password" required>
+        <!-- ✅ Coordinator Form -->
+        <form id="coordinator-form" class="hidden">
+            <h4>👥 {% trans "Coordinator Details" %}</h4>
+            <label for="coord-name">{% trans "Name" %}:</label>
+            <input type="text" id="coord-name" required>
 
-    <button type="submit" class="btn-primary">Save Coordinator</button>
-</form>
+            <label for="coord-email">{% trans "Email (optional)" %}:</label>
+            <input type="email" id="coord-email">
+
+            <label for="coord-phone">{% trans "Phone Number (optional)" %}:</label>
+            <input type="text" id="coord-phone">
+
+            <label for="coord-id">{% trans "Coordinator ID" %}:</label>
+            <input type="text" id="coord-id" required>
+
+            <label for="coord-department">{% trans "Department" %}:</label>
+            <select id="coord-department" {% if not request.user.coordinator.is_super %}disabled{% endif %}>
+                {% if request.user.coordinator.is_super %}
+                    <option value="">{% trans "-- Select Department --" %}</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="{{ request.user.department.id }}">{{ request.user.department.name }}</option>
+                {% endif %}
+            </select>
+
+            <label for="coord-password">{% trans "Password" %}:</label>
+            <input type="password" id="coord-password" required>
+
+            <button type="submit" class="btn-primary">{% trans "Save Coordinator" %}</button>
+        </form>
 
     </div>
 </div>

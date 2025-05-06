@@ -44,6 +44,15 @@ class ProjectPlan(models.Model):
     project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name='plan')
     completion_status = models.IntegerField(blank=True, null=True)
 
+class ProjectGoal(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='goals')
+    goal = models.TextField(blank=True, null=True)
+    duration = models.IntegerField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.goal} (Project: {self.project.name})"
+
 
 class ProjectTask(models.Model):
     STATUS_CHOICES = [
@@ -52,6 +61,7 @@ class ProjectTask(models.Model):
         ('done', 'Done'),
     ]
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
+    goal = models.ForeignKey(ProjectGoal, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     name = models.CharField(max_length=255)
     outputs = models.TextField(blank=True)
     goals = models.TextField(blank=True)

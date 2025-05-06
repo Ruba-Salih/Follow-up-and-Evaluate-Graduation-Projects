@@ -1,5 +1,6 @@
-from .models import ProjectMembership
+from .models import ProjectGoal, ProjectMembership, ProjectTask
 from users.models import Role
+from django.db.models import Count, Q
 from rest_framework.exceptions import ValidationError
 
 def validate_student_limit(data, is_proposal=True):
@@ -66,3 +67,25 @@ def assign_project_memberships(project, members):
             role=role_obj,
             group_id=member.get("group_id")
         )
+
+def calculate_completion_by_tasks(project):
+    tasks = ProjectTask.objects.filter(project=project)
+    total = tasks.count()
+    done = tasks.filter(task_status="done").count()
+    return (done / total) * 100 if total > 0 else 0
+
+def calculate_completion_by_goals(project):
+    goals = ProjectGoal.objects.filter(project=project).annotate(
+        total_tasks=Count("tasks"),
+        done_tasks=Count("tasks", filter=Q(tasks__task_status="done"))
+    )
+
+    if not goals.exists():
+        return 0
+
+    total_completion = 0
+    for g in goals:
+        if g.total_tasks > 0:
+            total_completion += (g.done_tasks / g.total_tasks) * 100
+
+    return total_completion / goals.count()

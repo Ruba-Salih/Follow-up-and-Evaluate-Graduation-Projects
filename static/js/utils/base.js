@@ -7,6 +7,7 @@ window.showAlert = function (message, type = "success", duration = 0, onClose = 
         console.warn("⚠️ Alert container not found.");
         return;
     }
+    // success  warning  error
 
     alertMessage.textContent = message;
 

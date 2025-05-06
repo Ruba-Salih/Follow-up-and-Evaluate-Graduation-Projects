@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (isTeacher) {
             if (!departmentSelect?.value) {
-                alert("Please select a department before submitting your proposal.");
+                showAlert("Please select a department before submitting your proposal.", 'warning');
                 return; // 🚨 stop the submit
             }
         }
@@ -203,7 +203,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else {
             const error = await response.json();
             console.error("Error submitting proposal:", error);
-            alert("Something went wrong. Check console for details.");
+            showAlert("Something went wrong.", 'error');
         }
     });
 
@@ -254,7 +254,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         card.querySelector(".delete-btn")?.addEventListener("click", async () => {
-            if (confirm("Delete this proposal?")) {
+            if (confirmAction("Delete this proposal?")) {
                 const res = await fetch(`/api/project/proposals/${id}/`, {
                     method: "DELETE",
                     headers: {
@@ -264,7 +264,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (res.ok) {
                     location.reload();
                 } else {
-                    alert("Delete failed.");
+                    showAlert("Delete failed.", 'error');
                 }
             }
         });

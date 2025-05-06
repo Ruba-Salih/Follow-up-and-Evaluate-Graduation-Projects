@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Manage Project Tasks" %}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/project/project_tasks.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+  <h2>🧩 {% trans "Manage Project Tasks" %}</h2>
+
+  <div class="filter-search-bar">
+    <select id="filter-goal" class="form-control">
+      <option value="">{% trans "🎯 All Goals" %}</option>
+    </select>
+
+    <select id="filter-status" class="form-control">
+      <option value="">{% trans "📌 All Statuses" %}</option>
+      <option value="to do">{% trans "To Do" %}</option>
+      <option value="in progress">{% trans "In Progress" %}</option>
+      <option value="done">{% trans "Done" %}</option>
+    </select>
+  </div>
+
+  <div id="task-list">
+    <!-- Task cards will be inserted by JS -->
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="task-modal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close-btn">&times;</span>
+    <h3>{% trans "Task Details" %}</h3>
+
+    <div id="task-update-form">
+      <label>{% trans "Project Goal" %}</label>
+      <select id="update-goal" class="form-control" disabled></select>
+
+      <label>{% trans "Task Name" %}</label>
+      <input type="text" id="update-task-name" class="form-control" readonly>
+
+      <label>{% trans "Task Goal" %}</label>
+      <input type="text" id="update-task-goal" class="form-control" readonly>
+
+      <label>{% trans "Assign To" %}</label>
+      <select id="update-assigned-to" class="form-control" disabled></select>
+
+      <label>{% trans "Outputs" %}</label>
+      <textarea id="update-outputs" class="form-control" rows="2" readonly></textarea>
+
+      <label>{% trans "Deliverable Text" %}</label>
+      <textarea id="update-deliverable" class="form-control" rows="2" readonly></textarea>
+
+      <label>{% trans "Deliverable File" %}</label>
+      <div id="current-file-download" style="margin-bottom: 8px;"></div>
+      <input type="file" id="update-deliverable-file" class="form-control" disabled>
+
+      <label>{% trans "Deadline (days)" %}</label>
+      <input type="number" id="update-deadline" class="form-control" readonly>
+
+      <label>{% trans "Status" %}</label>
+      <select id="update-status" class="form-control" disabled>
+        <option value="to do">{% trans "To Do" %}</option>
+        <option value="in progress">{% trans "In Progress" %}</option>
+        <option value="done">{% trans "Done" %}</option>
+      </select>
+
+      <div class="status-buttons" style="margin-top: 15px; display: none;">
+        <button class="btn btn-primary" id="save-task-btn">{% trans "Save Changes" %}</button>
+        <button class="btn btn-delete" id="delete-task-btn">{% trans "Delete Task" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'js/project/project_tasks.js' %}"></script>
+{% endblock %}

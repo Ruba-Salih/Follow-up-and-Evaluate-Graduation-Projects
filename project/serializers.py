@@ -3,7 +3,8 @@ from datetime import datetime
 from users.serializers import StudentSerializer
 from .models import (
     ProjectProposal, Project, ProjectPlan, ProjectMembership,
-    ProjectTask, StudentProjectMembership, AnnualGrade, FeedbackExchange
+    ProjectGoal, ProjectTask, StudentProjectMembership, AnnualGrade,
+    FeedbackExchange
 )
 from users.models import Supervisor, Student, Role
 from university.models import Department
@@ -134,6 +135,13 @@ class ProjectSerializer(serializers.ModelSerializer):
             assign_project_memberships(instance, memberships)
 
         return instance
+
+
+class ProjectGoalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectGoal
+        fields = '__all__'
+
 
 class ProjectTaskSerializer(serializers.ModelSerializer):
     assign_to = StudentSerializer(read_only=True)

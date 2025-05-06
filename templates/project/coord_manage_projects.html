@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Manage Project{% endblock %}
+{% block title %}{% trans "Manage Project" %}{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/project/teacher_manage_proposals.css' %}">
@@ -11,11 +11,11 @@
 {% include "navbar.html" %}
 
 <div class="container text-center">
-    <h2 class="mt-4">Manage Projects</h2>
+    <h2 class="mt-4">{% trans "Manage Projects" %}</h2>
 
     <div class="entry-buttons">
-        <a href="{% url 'manage-projects' %}"> 📁 Manage projects</a>
-        <a href="{% url 'track-project-page' %}"> 📊 Track Projects</a>
+        <a href="{% url 'manage-projects' %}"> 📁 {% trans "Manage Projects" %}</a>
+        <a href="{% url 'track-project-page' %}"> 📊 {% trans "Track Projects" %}</a>
     </div>
 </div>
 {% endblock %}
