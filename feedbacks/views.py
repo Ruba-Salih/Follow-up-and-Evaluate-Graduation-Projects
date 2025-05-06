@@ -2,10 +2,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from .models import ProjectFeedback, FeedbackFile, FeedbackReply
-from project.models import Project, StudentProjectMembership
+from project.models import Project, StudentProjectMembership, ProjectMembership
 from users.services import is_teacher
 from django.views.decorators.http import require_POST
-
+from django.http import JsonResponse
+from django.db.models import Q
+from django.db.models import F
+from users.models import Coordinator
 User = get_user_model()
 
 
@@ -34,9 +37,14 @@ def review_exchanges(request):
                 'student_files': student_files
             })
     else:
-        # Feedbacks related to this student (as sender or receiver)
-        sent_feedbacks = ProjectFeedback.objects.filter(sender=request.user)
-        feedbacks = ProjectFeedback.objects.filter(project=project).order_by('-created_at')
+
+        # Get all student user accounts in the project
+        student_users = project.student_memberships.all().values_list('student', flat=True)
+
+        feedbacks = ProjectFeedback.objects.filter(
+            Q(project=project, sender=F('teacher')) |
+            Q(project=project, sender__in=student_users)
+        ).distinct().order_by('-created_at')
 
         for feedback in feedbacks:
             # Filter files to only include those where 'reply' is null (student files)
@@ -55,9 +63,7 @@ def review_exchanges(request):
         message = request.POST.get('message')
         files = request.FILES.getlist('files')
 
-        print(f"teacher: {teacher_id}, title is: {title}, message is: {message}, files are: {files}")
         if teacher_id and title and message and project:
-            print("hey data are there")
             try:
                 teacher = User.objects.get(id=teacher_id)
                 feedback = ProjectFeedback.objects.create(
@@ -89,164 +95,294 @@ def review_exchanges(request):
     })
 
 
+User = get_user_model()
+
 @login_required
 def teacher_review_exchanges(request):
-    print("hello from the view")
     user = request.user
-
-    # project list for teacher to send feedback to
     department = user.department
-    print(f"department: {department}]")
     college = department.college
-    print(f"collage: {college}]")
-    projects = Project.objects.filter(department__college=college)
-    print(f"projects are: {projects}")
 
+    # 1) Projects in this college (for the “project” scenario)
+    college_projects = Project.objects.filter(department__college=college)
+
+    # 2) Projects this teacher actually belongs to (for the “coord” scenario)
+    teacher_project_ids = ProjectMembership.objects\
+                            .filter(user=user)\
+                            .values_list('project_id', flat=True)
+    teacher_projects = Project.objects.filter(id__in=teacher_project_ids)
+
+    # 3) All coordinators
+    coordinators = User.objects.filter(id__in=Coordinator.objects.values_list('id', flat=True))
+    # 4) Feedbacks this teacher is the “teacher” for
     filtered_feedbacks = []
-
-    if is_teacher(request.user):
-        feedbacks = ProjectFeedback.objects.filter(teacher=request.user).order_by('-created_at')
-
-        for feedback in feedbacks:
-            student_files = feedback.files.filter(reply__isnull=True)
+    if is_teacher(user):
+        qs = ProjectFeedback.objects.filter(
+            Q(teacher=user) | Q(sender=user)
+        ).order_by('-created_at')
+        for fb in qs:
+            student_files = fb.files.filter(reply__isnull=True)
             filtered_feedbacks.append({
-                'feedback': feedback,
-                'student_files': student_files
+                'feedback': fb,
+                'student_files': student_files,
             })
 
     error = None
+
+    # 5) Handle the form POST
     if request.method == 'POST':
-        print("POST received for teacher")
-        teacher = request.user
+        recipient_type  = request.POST.get('recipient_type')   # "project" or "coordinator"
+        project_id      = request.POST.get('project_id')
+        coordinator_id  = request.POST.get('coordinator_id')
+        title           = request.POST.get('title')
+        message         = request.POST.get('message')
+        files           = request.FILES.getlist('files')
+        
+
+        # Basic validation
+        if recipient_type not in ('project', 'coordinator'):
+            error = "You must choose whether to send to a project or a coordinator."
+        elif not title or not message:
+            error = "Please fill in both title and message."
+
+        # Resolve project and “teacher” user
+        if not error:
+            # Project scenario
+            if recipient_type == 'project':
+                try:
+                    project_obj = college_projects.get(id=project_id)
+                except Project.DoesNotExist:
+                    error = "Invalid project selected."
+                teacher_user = user
+
+            # Coordinator scenario
+            else:
+                if not coordinator_id:
+                    error = "Please select a coordinator."
+                else:
+                    print("here we are")
+                    teacher_user = get_object_or_404(Coordinator, id=coordinator_id)
+
+                try:
+                    project_obj = teacher_projects.get(id=project_id)
+                    print("all good")
+                except Project.DoesNotExist:
+                    error = "Invalid project for coordinator scenario."
+
+        # If all good, create the feedback + files
+        if not error:
+            print("finally")
+            fb = ProjectFeedback.objects.create(
+                project=project_obj,
+                sender=user,
+                teacher=teacher_user,
+                title=title,
+                message=message
+            )
+            for f in files:
+                FeedbackFile.objects.create(feedback=fb, file=f)
+            print("yaay")
+            return redirect('teacher-review-exchanges')
+
+    # 6) Render
+    return render(request, 'feedbacks/review_exchanges_teacher.html', {
+        'college_projects':   college_projects,
+        'teacher_projects':   teacher_projects,
+        'coordinators':       coordinators,
+        'filtered_feedbacks': filtered_feedbacks,
+        'error':              error,
+    })
+
+@login_required
+def coord_review_exchanges(request):
+    teachers = [user for user in User.objects.all() if is_teacher(user)]
+    selected_teacher = request.GET.get('teacher_id')
+    selected_project_id = request.GET.get('project_id')
+    filtered_feedbacks = []
+    projects = []
+    error = None
+
+    if selected_teacher:
+        teacher = get_object_or_404(User, id=selected_teacher)
+        memberships = ProjectMembership.objects.filter(user=teacher)
+        projects = [m.project for m in memberships]
+
+
+    if hasattr(request.user, 'coordinator'):
+        print("yes")
+        feedbacks = ProjectFeedback.objects.filter(
+            Q(teacher=request.user) | Q(sender=request.user)
+        ).order_by('-created_at')
+
+        for feedback in feedbacks:
+            teacher_files = feedback.files.filter(reply__isnull=True)
+            filtered_feedbacks.append({
+                'feedback': feedback,
+                'teacher_files': teacher_files
+            })
+
+    if request.method == 'POST':
+        teacher_id = request.POST.get('teacher')
         project_id = request.POST.get('project')
         title = request.POST.get('title')
         message = request.POST.get('message')
         files = request.FILES.getlist('files')
 
-        print(f"teacher: {teacher}, title: {title}, message: {message}, files: {files}")
-
-        try:
-            project_obj = Project.objects.get(id=project_id)
-        except Project.DoesNotExist:
-            error = "Invalid project selected."
-            return render(request, 'feedbacks/review_exchanges_teacher.html', {'error': error})
-
-        if teacher and title and message and project_obj:
-            print("data are valid")
+        if teacher_id and project_id and title and message:
             try:
+                teacher = User.objects.get(id=teacher_id)
+                project = Project.objects.get(id=project_id)
+
                 feedback = ProjectFeedback.objects.create(
-                    project=project_obj,
-                    sender=teacher,
+                    project=project,
+                    sender=request.user,
                     teacher=teacher,
                     title=title,
                     message=message
                 )
 
-                if files:
-                    for file in files:
-                        FeedbackFile.objects.create(
-                            feedback=feedback,
-                            file=file
-                        )
-
-                return redirect('teacher-review-exchanges')
-
-            except Exception as e:
-                print(f"Error: {str(e)}")
-                error = "There was an error submitting your feedback."
-
+                for file in files:
+                    FeedbackFile.objects.create(
+                        feedback=feedback,
+                        file=file
+                    )
+                return redirect('coord-review-exchanges')
+            except (User.DoesNotExist, Project.DoesNotExist, ValueError):
+                error = "Invalid teacher or project selected."
         else:
             error = "Please fill in all required fields."
-
-    return render(request, 'feedbacks/review_exchanges_teacher.html', {
-        'filtered_feedbacks': filtered_feedbacks,
+    print(f"filtered feedbacks are: {filtered_feedbacks}")
+    return render(request, 'feedbacks/review_exchanges_coord.html', {
+        'teachers': teachers,
         'projects': projects,
-        'error': error
+        'selected_teacher': selected_teacher,
+        'selected_project_id': selected_project_id,
+        'filtered_feedbacks': filtered_feedbacks,
+        'error': error,
     })
+
 
 
 @login_required
 @require_POST
 def reply_to_feedback(request):
-    # Get the original feedback ID, message, and files
     original_feedback_id = request.POST.get('original_feedback_id')
     message = request.POST.get('message')
     files = request.FILES.getlist('files')
 
+    # If missing data, just bounce back
     if not original_feedback_id or not message:
-        return redirect('teacher-review-exchanges')  # or show an error message if needed
+        return _redirect_by_role(request.user)
 
-    try:
-        # Fetch the original feedback that the teacher is replying to
-        original_feedback = ProjectFeedback.objects.get(id=original_feedback_id)
+    # Fetch the feedback (404 if not found)
+    feedback_obj = get_object_or_404(ProjectFeedback, id=original_feedback_id)
 
-        # Ensure only a teacher can reply
-        if not is_teacher(request.user):
-            return redirect('teacher-review-exchanges')
+    # Check role
+    user = request.user
+    is_teacher_user = is_teacher(user)
+    is_coordinator = hasattr(user, 'coordinator')
 
-        # Create a new reply for the feedback
-        reply = FeedbackReply.objects.create(
-            feedback=original_feedback,  # Link the reply to the original feedback
-            message=message
+    if not (is_teacher_user or is_coordinator):
+        # Neither teacher nor coordinator: no reply allowed
+        return _redirect_by_role(user)
+
+    # Create the reply
+    reply = FeedbackReply.objects.create(
+        feedback=feedback_obj,
+        message=message,
+    )
+
+    # Attach any uploaded files
+    for f in files:
+        FeedbackFile.objects.create(
+            feedback=feedback_obj,  # link back to the original feedback
+            reply=reply,
+            file=f
         )
+    print("done")
+    # Redirect based on role
+    return _redirect_by_role(user)
 
-        # Attach files to the reply
-        for file in files:
-            FeedbackFile.objects.create(
-                feedback=original_feedback,  # The original feedback
-                reply=reply,  # Attach the file to the reply
-                file=file
-            )
 
-    except ProjectFeedback.DoesNotExist:
-        pass  # Optional error handling if the feedback does not exist
-
-    return redirect('teacher-review-exchanges')
+def _redirect_by_role(user):
+    """
+    Helper to choose the correct 'review-exchanges' URL name
+    based on whether the user is a coordinator, teacher, or student.
+    """
+    if hasattr(user, 'coordinator'):
+        return redirect('coord-review-exchanges')
+    if is_teacher(user):
+        return redirect('teacher-review-exchanges')
+    return redirect('review-exchanges')
 
 
 @login_required
 def delete_feedback(request, id):
     print("hey from delete view")
     feedback = get_object_or_404(ProjectFeedback, id=id)
+    user = request.user
 
-    if is_teacher(feedback.sender) != is_teacher(request.user):
-        print("Cross-role editing not allowed.")
-        return redirect('review-exchanges' if not is_teacher(request.user) else 'teacher-review-exchanges')
+    # Determine user role
+    is_teacher_user = is_teacher(user)
+    is_coordinator = hasattr(user, 'coordinator')
 
-    # For students, also confirm they're members of the project
-    project = feedback.project
-    is_member = StudentProjectMembership.objects.filter(project=project, student=request.user).exists()
-    if not is_member and not is_teacher(request.user):
-        print("Student not part of the project.")
-        return redirect('review-exchanges' if not is_teacher(request.user) else 'teacher-review-exchanges')
+    # Check if user is the sender
+    is_sender = feedback.sender == user
 
-    # Delete associated reply and files
+    if not is_sender:
+        # Students must be project members
+        if not is_teacher_user and not is_coordinator:
+            is_member = StudentProjectMembership.objects.filter(project=feedback.project, student=user).exists()
+            if not is_member:
+                print("Student not part of the project.")
+                return redirect('review-exchanges')
+
+        else:
+            # Teachers/Coordinators can't delete others' feedback
+            print("Cross-role or unauthorized delete attempt.")
+            return redirect(
+                'coord-review-exchanges' if is_coordinator else
+                'teacher-review-exchanges'
+            )
+
+    # Delete reply and attached files
     if hasattr(feedback, 'reply'):
         feedback.reply.files.all().delete()
         feedback.reply.delete()
 
     feedback.files.all().delete()
     feedback.delete()
-    return redirect('review-exchanges' if not is_teacher(request.user) else 'teacher-review-exchanges')
+
+    if is_coordinator:
+        return redirect('coord-review-exchanges')
+    elif is_teacher_user:
+        return redirect('teacher-review-exchanges')
+    else:
+        return redirect('review-exchanges')
 
 
 @login_required
 def edit_feedback(request, id):
     print("hello from edit view")
     feedback = get_object_or_404(ProjectFeedback, id=id)
+    user = request.user
 
+    is_sender = feedback.sender == user
+    is_coordinator_user = hasattr(user, 'coordinator')
+    is_teacher_user = is_teacher(user)
+    is_student_user = not is_teacher_user and not is_coordinator_user
 
-    if is_teacher(feedback.sender) != is_teacher(request.user):
-        print("Cross-role editing not allowed.")
-        return redirect('review-exchanges' if not is_teacher(request.user) else 'teacher-review-exchanges')
+    # Prevent cross-role editing unless coordinator or sender
+    if not is_sender and not is_coordinator_user and not is_student_user:
+        print("Unauthorized access: not the sender or coordinator.")
+        return redirect('review-exchanges')
 
-    # For students, also confirm they're members of the project
-    project = feedback.project
-    is_member = StudentProjectMembership.objects.filter(project=project, student=request.user).exists()
-    if not is_member and not is_teacher(request.user):
-        print("Student not part of the project.")
-        return redirect('review-exchanges' if not is_teacher(request.user) else 'teacher-review-exchanges')
-
+    # If student, ensure they are part of the project
+    if is_student_user:
+        is_member = StudentProjectMembership.objects.filter(project=feedback.project, student=user).exists()
+        if not is_member:
+            print("Student not part of the project.")
+            return redirect('review-exchanges')
 
     error = None
 
@@ -262,18 +398,22 @@ def edit_feedback(request, id):
 
             # Delete marked files
             delete_file_ids = request.POST.getlist('delete_files')
-            print(f"file ides are: {delete_file_ids}")
+            print(f"File IDs to delete: {delete_file_ids}")
             if delete_file_ids:
-                print("im deleting")
                 FeedbackFile.objects.filter(id__in=delete_file_ids, feedback=feedback).delete()
 
+            # Add new files
             for file in files:
-                FeedbackFile.objects.create(
-                    feedback=feedback,
-                    file=file
-                )
-            print("going well")
-            return redirect('review-exchanges' if not is_teacher(request.user) else 'teacher-review-exchanges')
+                FeedbackFile.objects.create(feedback=feedback, file=file)
+
+            print("Edit completed successfully")
+            if is_coordinator_user:
+                return redirect('coord-review-exchanges')
+            elif is_teacher_user:
+                return redirect('teacher-review-exchanges')
+            else:
+                return redirect('review-exchanges')
+
         else:
             error = 'Title and message are required.'
 
@@ -288,104 +428,71 @@ def edit_feedback_reply(request, reply_id):
     reply = get_object_or_404(FeedbackReply, id=reply_id)
     feedback = reply.feedback
 
-    # Only teacher who sent the reply can edit
-    if  not is_teacher(request.user):
-        return redirect('teacher-review-exchanges')
+    user = request.user
+    is_teacher_user = is_teacher(user)
+    is_coordinator = hasattr(user, 'coordinator')
+
+    # Only teachers and coordinators may edit replies
+    if not (is_teacher_user or is_coordinator):
+        # send everyone else back to their respective listing
+        if is_coordinator:
+            return redirect('coord-review-exchanges')
+        if is_teacher_user:
+            return redirect('teacher-review-exchanges')
+        return redirect('review-exchanges')
 
     error = None
 
     if request.method == 'POST':
         message = request.POST.get('message')
+        # note the form field name is files[] so getlist('files[]')
         files = request.FILES.getlist('files[]')
 
-        if message:
+        if not message:
+            error = "Message is required."
+        else:
+            # update text
             reply.message = message
             reply.save()
 
-             # Delete marked files
-            delete_file_ids = request.POST.getlist('delete_files')
-            print(f"file ides are: {delete_file_ids}")
-            if delete_file_ids:
-                print("im deleting")
-                FeedbackFile.objects.filter(id__in=delete_file_ids, feedback=feedback).delete()
+            # delete any files the user checked for removal
+            delete_ids = request.POST.getlist('delete_files')
+            if delete_ids:
+                FeedbackFile.objects.filter(
+                    id__in=delete_ids,
+                    feedback=feedback,
+                    reply=reply
+                ).delete()
 
-            # Add new files to the reply
-            for file in files:
-                FeedbackFile.objects.create(feedback=feedback, reply=reply, file=file)
+            # add any newly uploaded files
+            for f in files:
+                FeedbackFile.objects.create(
+                    feedback=feedback,
+                    reply=reply,
+                    file=f
+                )
 
-            return redirect('teacher-review-exchanges')
-        else:
-            error = "Message is required."
+            # redirect back to teacher or coordinator listing
+            return redirect('coord-review-exchanges' if is_coordinator else 'teacher-review-exchanges')
 
     return render(request, 'feedbacks/edit_reply.html', {
         'reply': reply,
         'feedback': feedback,
-        'error': error
+        'error': error,
     })
 
-""" 
-@login_required
-def delete_feedback(request, id):
-    print("hey from delete view")
-    feedback = get_object_or_404(ProjectFeedback, id=id)
-    
-    project = feedback.project  # Assuming Feedback model has a FK to Project
-    is_member = StudentProjectMembership.objects.filter(project=project, student=request.user).exists()
+def get_teacher_projects(request, teacher_id):
+    try:
+        memberships = ProjectMembership.objects.filter(user_id=teacher_id)
+        project_ids = memberships.values_list('project_id', flat=True)
 
-    if feedback.sender != request.user and not is_member:
-        return redirect('review-exchanges' if not is_teacher(request.user) else 'teacher-review-exchanges')
+        # Check for debugging
+        print("Teacher ID:", teacher_id)
+        print("Memberships:", memberships)
+        print("Project IDs:", list(project_ids))
 
-
-    # Only the sender (student or teacher) can delete it
-    if feedback.sender != request.user and not is_member:
-        print(f"you are not allowed feedback sender: {feedback.sender}, and user {request.user}")
-        return redirect('review-exchanges' if not is_teacher(request.user) else 'teacher-review-exchanges')
-
-    # Delete associated reply and files
-    if hasattr(feedback, 'reply'):
-        feedback.reply.files.all().delete()
-        feedback.reply.delete()
-
-    feedback.files.all().delete()
-    feedback.delete()
-    return redirect('review-exchanges' if not is_teacher(request.user) else 'teacher-review-exchanges')
-
-
-@login_required
-def edit_feedback(request, id):
-    print("hello from the view")
-    feedback = get_object_or_404(ProjectFeedback, id=id)
-    
-    project = feedback.project  # Assuming Feedback model has a FK to Project
-    is_member = StudentProjectMembership.objects.filter(project=project, student=request.user).exists()
-    print(is_member)
-    if feedback.sender != request.user and not is_member:
-        return redirect('review-exchanges' if not is_teacher(request.user) else 'teacher-review-exchanges')
-
-    error = None
-
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        message = request.POST.get('message')
-        files = request.FILES.getlist('files')  # Get uploaded files
-
-        if title and message:
-            feedback.title = title
-            feedback.message = message
-            feedback.save()
-
-            for file in files:
-                FeedbackFile.objects.create(
-                    feedback=feedback,
-                    file=file
-                )
-            print("going well")
-            return redirect('review-exchanges' if not is_teacher(request.user) else 'teacher-review-exchanges')
-        else:
-            error = 'Title and message are required.'
-
-    return render(request, 'feedbacks/edit_feedback.html', {
-        'feedback': feedback,
-        'error': error
-    })
- """
+        projects = Project.objects.filter(id__in=project_ids).values('id', 'name')
+        return JsonResponse({'projects': list(projects)})
+    except Exception as e:
+        print("Error in get_teacher_projects:", e)  # <== Log the actual error
+        return JsonResponse({'error': str(e)}, status=500)

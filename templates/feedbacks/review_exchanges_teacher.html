@@ -24,34 +24,78 @@
         <input type="text" id="feedback-search" placeholder="🔍 Search by title or sender name...">
     </div>
 
-    <!-- Pop-up form -->
-    <div id="feedback-popup" class="popup">
-        <div class="popup-content">
-            <span class="close-btn" id="close-popup-btn">&times;</span>
-            <h3>Send Feedback</h3>
-            <form method="POST" enctype="multipart/form-data" action="{% url 'teacher-review-exchanges' %}">
-                {% csrf_token %}
-                <label for="project">Select Project:</label><br>
-                <select name="project" required>
-                    <option value="">-- Select Project --</option>
-                    {% for project in projects %}
-                        <option value="{{ project.id }}">{{ project.name }}</option>
-                    {% endfor %}
-                </select><br><br>
-                <div>
-                    <label>Title:</label>
-                    <input type="text" name="title" required>
-                </div>
-                <label for="message">Feedback Message:</label><br>
-                <textarea name="message" rows="4" required></textarea><br><br>
-
-                <label for="files">Attach Files (Optional):</label><br>
-                <input type="file" name="files" multiple><br><br>
-                
-                <button type="submit">Send Feedback</button>
-            </form>
+    <!-- Pop‑up form -->
+<div id="feedback-popup" class="popup">
+    <div class="popup-content">
+      <span class="close-btn" id="close-popup-btn">&times;</span>
+      <h3>Send Feedback</h3>
+      <form method="POST"
+            enctype="multipart/form-data"
+            action="{% url 'teacher-review-exchanges' %}">
+        {% csrf_token %}
+  
+        <!-- 1) Choose recipient type -->
+        <label for="recipientType">Send feedback to:</label><br>
+        <select id="recipientType" name="recipient_type" required>
+          <option value="">-- Select --</option>
+          <option value="project">Project (all students)</option>
+          <option value="coordinator">Coordinator</option>
+        </select>
+        <br><br>
+  
+        <!-- 2a) If “Project” scenario: all college‑wide projects -->
+        <div id="project-container" style="display:none;">
+          <label for="projectAll">Select Project:</label><br>
+          <select id="projectAll" name="project_id" disabled >
+            <option value="">-- Select Project --</option>
+            {% for project in college_projects %}
+              <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+          </select>
+          <br><br>
         </div>
+  
+        <!-- 2b) If “Coordinator” scenario: pick a coord, then your own projects -->
+        <div id="coord-container" style="display:none;">
+          <label for="coordinatorSelect">Select Coordinator:</label><br>
+          <select id="coordinatorSelect" name="coordinator_id">
+            <option value="">-- Select Coordinator --</option>
+            {% for coord in coordinators %}
+              <option value="{{ coord.id }}">{{ coord.get_full_name }}</option>
+            {% endfor %}
+          </select>
+          <br><br>
+  
+          <label for="projectTeacher">Select Your Project:</label><br>
+          <select id="projectTeacher" name="project_id" disabled>
+            <option value="">-- Select Project --</option>
+            {% for project in teacher_projects %}
+              <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+          </select>
+          <br><br>
+        </div>
+  
+        <!-- 3) Common fields -->
+        <div>
+          <label>Title:</label><br>
+          <input type="text" name="title" required>
+        </div>
+        <br>
+  
+        <label for="message">Feedback Message:</label><br>
+        <textarea name="message" rows="4" required></textarea>
+        <br><br>
+  
+        <label for="files">Attach Files (Optional):</label><br>
+        <input type="file" name="files" multiple>
+        <br><br>
+  
+        <button type="submit">Send Feedback</button>
+      </form>
     </div>
+  </div>
+  
 
     {% if filtered_feedbacks %}
         <h3>Your Feedbacks</h3>
@@ -82,6 +126,7 @@
                     {% endif %}
                     
                     <p><strong>Title:</strong> {{ item.feedback.title }}</p>
+                    <p><strong>Project:</strong> {{ item.feedback.project.name }}</p>
                     <p><strong>Message:</strong> {{ item.feedback.message }}</p>
                     <p><strong>Sender:</strong> {{ item.feedback.sender }}</p>
 
@@ -101,63 +146,63 @@
                     {% endwith %}
 
                     {% if item.feedback.reply %}
-    <div class="teacher-reply">
-        <strong>Teacher's Reply:</strong>
-        <div class="reply-content">
-            <p>{{ item.feedback.reply.message }}</p>
-            {% with item.feedback.reply.files.all as reply_files %}
-                {% if reply_files %}
-                    <strong>Reply Attachments:</strong>
-                    <ul>
-                        {% for file in reply_files %}
-                            <li>
-                                <a href="{{ file.file.url }}" target="_blank">
-                                    {{ file.file.name|cut:"feedback_files/" }}
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            {% endwith %}
-        </div>
+                        <div class="teacher-reply">
+                            <strong>Reply to feedback:</strong>
+                            <div class="reply-content">
+                                <p>{{ item.feedback.reply.message }}</p>
+                                {% with item.feedback.reply.files.all as reply_files %}
+                                    {% if reply_files %}
+                                        <strong>Reply Attachments:</strong>
+                                        <ul>
+                                            {% for file in reply_files %}
+                                                <li>
+                                                    <a href="{{ file.file.url }}" target="_blank">
+                                                        {{ file.file.name|cut:"feedback_files/" }}
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
 
-        <!-- Edit Reply Button -->
-        {% if user.is_authenticated and user|is_teacher_filter %}
-            <div class="feedback-actions">
-                <!-- Edit Reply Button instead of Reply button if reply exists -->
-                <a href="#" 
-                    class="edit-reply-btn"
-                    data-reply-id="{{ item.feedback.reply.id }}"
-                    data-reply-message="{{ item.feedback.reply.message }}"
-                    data-reply-files='[
-                        {% for file in item.feedback.reply.files.all %}
-                            {
-                                "id": "{{ file.id }}",
-                                "name": "{{ file.file.name|cut:"feedback_files/" }}",
-                                "url": "{{ file.file.url }}"
-                            }{% if not forloop.last %},{% endif %}
-                        {% endfor %}
-                    ]'>
-                    ✏️ Edit Reply
-                </a>
-            </div>
-        {% endif %}
-    </div>
-{% else %}
-    {% if user.is_authenticated and user|is_teacher_filter %}
-        <!-- Reply button only when there is no reply -->
-        <button class="reply-btn" data-feedback-id="{{ item.feedback.id }}">Reply</button>
+                            <!-- Edit Reply Button -->
+                            {% if user.is_authenticated and user != item.feedback.sender %}
+                                <div class="feedback-actions">
+                                    <!-- Edit Reply Button instead of Reply button if reply exists -->
+                                    <a href="#" 
+                                        class="edit-reply-btn"
+                                        data-reply-id="{{ item.feedback.reply.id }}"
+                                        data-reply-message="{{ item.feedback.reply.message }}"
+                                        data-reply-files='[
+                                            {% for file in item.feedback.reply.files.all %}
+                                                {
+                                                    "id": "{{ file.id }}",
+                                                    "name": "{{ file.file.name|cut:"feedback_files/" }}",
+                                                    "url": "{{ file.file.url }}"
+                                                }{% if not forloop.last %},{% endif %}
+                                            {% endfor %}
+                                        ]'>
+                                        ✏️ Edit Reply
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        {% if user.is_authenticated and user != item.feedback.sender %}
+                                <!-- Reply button only when there is no reply -->
+                                <button class="reply-btn" data-feedback-id="{{ item.feedback.id }}">Reply</button>
 
-        <form method="POST" action="{% url 'reply_to_feedback' %}" enctype="multipart/form-data" class="reply-form" id="reply-form-{{ item.feedback.id }}" style="display:none;">
-            {% csrf_token %}
-            <input type="hidden" name="original_feedback_id" value="{{ item.feedback.id }}">
-            <textarea name="message" placeholder="Your reply..." required></textarea>
-            <input type="file" name="files" multiple>
-            <button type="submit">Send Reply</button>
-            <span class="cancel-reply" data-feedback-id="{{ item.feedback.id }}">❌</span>
-        </form>
-    {% endif %}
-{% endif %}
+                                <form method="POST" action="{% url 'reply_to_feedback' %}" enctype="multipart/form-data" class="reply-form" id="reply-form-{{ item.feedback.id }}" style="display:none;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="original_feedback_id" value="{{ item.feedback.id }}">
+                                    <textarea name="message" placeholder="Your reply..." required></textarea>
+                                    <input type="file" name="files" multiple>
+                                    <button type="submit">Send Reply</button>
+                                    <span class="cancel-reply" data-feedback-id="{{ item.feedback.id }}">❌</span>
+                                </form>
+                            {% endif %}
+                        {% endif %}
 
                 </div>
             {% endfor %}
@@ -247,6 +292,29 @@
 <script>
     const feedbackBtn = document.getElementById('send-feedback-btn');
     const popup = document.getElementById('feedback-popup');
+
+    // Toggle between “project” vs “coordinator” mode
+    const recipientType = document.getElementById('recipientType');
+    const projectContainer = document.getElementById('project-container');
+    const coordContainer   = document.getElementById('coord-container');
+
+    recipientType.addEventListener('change', () => {
+    if (recipientType.value === 'project') {
+        projectAll.disabled = false;
+        projectTeacher.disabled = true;
+        projectContainer.style.display = 'block';
+        coordContainer.style.display   = 'none';
+    } else if (recipientType.value === 'coordinator') {
+        projectAll.disabled = true;
+        projectTeacher.disabled = false;
+        projectContainer.style.display = 'none';
+        coordContainer.style.display   = 'block';
+    } else {
+        projectAll.disabled = projectTeacher.disabled = true;
+        projectContainer.style.display = coordContainer.style.display = 'none';
+    }
+    });
+
     const closeBtn = document.getElementById('close-popup-btn');
     const feedbackForm = popup.querySelector('form');
 

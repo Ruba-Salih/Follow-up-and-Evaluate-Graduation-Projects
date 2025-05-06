@@ -1,0 +1,393 @@
+{% extends 'base.html' %}
+{% load feedback_filters %}
+{% load static %}
+
+{% block title %}Review Exchanges{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/feedbacks/feedback.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="feedback-container">
+    <h2>Review Exchanges</h2>
+
+    <!-- Send Feedback Section -->
+    <div class="send-feedback-box">
+        <button id="send-feedback-btn">📨 Send Feedback</button>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="feedback-search" placeholder="🔍 Search by title or sender name...">
+    </div>
+
+    <!-- Pop-up form -->
+    <div id="feedback-popup" class="popup">
+        <div class="popup-content">
+            <span class="close-btn" id="close-popup-btn">&times;</span>
+            <h3>Send Feedback</h3>
+            <form method="POST" enctype="multipart/form-data" action="">
+                {% csrf_token %}
+                <label for="teacher">Select Teacher:</label><br>
+                <select id="teacherSelect" name="teacher" required>
+                    <option value="">-- Select Teacher --</option>
+                    {% for teacher in teachers %}
+                        <option value="{{ teacher.id }}">{{ teacher.get_full_name }}</option>
+                    {% endfor %}
+                </select><br><br>
+                
+                <label for="project">Select Project:</label><br>
+                <select id="projectSelect" name="project" required>
+                    <option value="">-- Select Project --</option>
+                    <!-- Projects will be dynamically populated -->
+                </select>
+                
+                <div>
+                    <label>Title:</label>
+                    <input type="text" name="title" required>
+                </div>
+
+                <label for="message">Feedback Message:</label><br>
+                <textarea name="message" rows="4" required></textarea><br><br>
+
+                <label for="files">Attach Files (Optional):</label><br>
+                <input type="file" name="files" multiple><br><br>
+                
+                <button type="submit">Send Feedback</button>
+            </form>
+        </div>
+    </div>
+    {% if filtered_feedbacks %}
+    <h3>Your Feedbacks</h3>
+    <div class="feedback-list">
+        {% for feedback in filtered_feedbacks %}
+            <div class="feedback-item">
+                {% if feedback.feedback.sender == user %}
+                    <!-- Action buttons -->
+                    <button class="edit-button"
+                        data-id="{{ feedback.feedback.id }}"
+                        data-title="{{ feedback.feedback.title }}"
+                        data-message="{{ feedback.feedback.message }}"
+                        data-feedback-files='[
+                            {% for file in feedback.teacher_files %}
+                                {
+                                    "id": "{{ file.id }}",
+                                    "name": "{{ file.file.name|cut:"feedback_files/" }}",
+                                    "url": "{{ file.file.url }}"
+                                }{% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        ]'>
+                        ✏️ Edit
+                    </button>
+
+                    <a href="{% url 'delete-feedback' feedback.feedback.id %}" class="delete-btn" onclick="return confirm('Are you sure you want to delete this feedback?')">🗑️ Delete</a>
+                {% endif %}
+
+                <div class="feedback-header">
+                    <p><strong>Teacher:</strong> {{ feedback.feedback.teacher.get_full_name }}</p> <br>
+                    <p><strong>Project:</strong> {{ feedback.feedback.project.name }}</p>
+                </div>
+                <p><strong>Title:</strong> {{ feedback.feedback.title }}</p>
+                <p><strong>Sender:</strong> {{ feedback.feedback.sender }}</p>
+                <p><strong>Message:</strong> {{ feedback.feedback.message }}</p>
+
+                {% with feedback.teacher_files as files %}
+                    {% if files %}
+                        <strong>Attachments:</strong>
+                        <ul>
+                            {% for file in files %}
+                                <li>
+                                    <a href="{{ file.file.url }}" target="_blank">
+                                        {{ file.file.name|cut:"feedback_files/" }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
+
+                {% if feedback.feedback.reply %}
+                    <div class="teacher-reply">
+                        <strong>Reply to feedback:</strong>
+                        <div class="reply-content">
+                            <p>{{ feedback.feedback.reply.message }}</p>
+                            {% with feedback.feedback.reply.files.all as reply_files %}
+                                {% if reply_files %}
+                                    <strong>Reply Attachments:</strong>
+                                    <ul>
+                                        {% for file in reply_files %}
+                                            <li>
+                                                <a href="{{ file.file.url }}" target="_blank">
+                                                    {{ file.file.name|cut:"feedback_files/" }}
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+
+                    {% if user.is_authenticated and user != feedback.feedback.sender %}
+                        <div class="feedback-actions">
+                            <a href="#" 
+                                class="edit-reply-btn"
+                                data-reply-id="{{ feedback.feedback.reply.id }}"
+                                data-reply-message="{{ feedback.feedback.reply.message }}"
+                                data-reply-files='[
+                                    {% for file in feedback.feedback.reply.files.all %}
+                                        {
+                                            "id": "{{ file.id }}",
+                                            "name": "{{ file.file.name|cut:"feedback_files/" }}",
+                                            "url": "{{ file.file.url }}"
+                                        }{% if not forloop.last %},{% endif %}
+                                    {% endfor %}
+                                ]'>
+                                ✏️ Edit Reply
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    {% if user.is_authenticated and user != feedback.feedback.sender %}
+                        <!-- Reply button and form -->
+                        <button class="reply-btn" data-feedback-id="{{ feedback.feedback.id }}">Reply</button>
+
+                        <form method="POST" action="{% url 'reply_to_feedback' %}" enctype="multipart/form-data" class="reply-form" id="reply-form-{{ feedback.feedback.id }}" style="display:none;">
+                            {% csrf_token %}
+                            <input type="hidden" name="original_feedback_id" value="{{ feedback.feedback.id }}">
+                            <textarea name="message" placeholder="Your reply..." required></textarea>
+                            <input type="file" name="files" multiple>
+                            <button type="submit">Send Reply</button>
+                            <span class="cancel-reply" data-feedback-id="{{ feedback.feedback.id }}">❌</span>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            </div> <!-- End of feedback-item -->
+        {% endfor %}
+    </div> <!-- End of feedback-list -->
+{% else %}
+    <p style="text-align: center;">You haven't sent any feedback yet.</p>
+{% endif %}
+
+      <!-- Edit Feedback Pop-up -->
+ <div id="edit-feedback-popup" class="popup" style="display: none;">
+    <div class="popup-content">
+        <span class="close-btn" id="close-edit-popup-btn">&times;</span>
+        <h3>Edit Feedback</h3>
+        <form method="POST" enctype="multipart/form-data" action="{% url 'edit-feedback' 0 %}" id="edit-feedback-form">
+            {% csrf_token %}
+            <input type="hidden" name="feedback_id" id="edit-feedback-id">
+            
+            <label>Title:</label>
+            <input type="text" name="title" id="edit-title" required>
+
+            <label>Message:</label>
+            <textarea name="message" id="edit-message" rows="4" required></textarea>
+
+             <!-- Existing Files Section -->
+             <div id="existing-files-section">
+                <label>Existing Files:</label>
+                <ul id="existing-files-list">
+                </ul>
+            </div>
+
+            <label>Attach More Files (optional):</label>
+            <input type="file" name="files" multiple>
+
+            <button type="submit">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Reply Pop-up -->
+<div id="edit-reply-popup" class="popup" style="display: none;">
+    <div class="popup-content">
+      <span class="close-btn" id="close-edit-reply-btn">&times;</span>
+      <h3>Edit Reply</h3>
+     <!--  <form method="POST" enctype="multipart/form-data" action="{% url 'edit-feedback-reply' 0 %}" id="edit-reply-form"> -->
+      <form method="POST" enctype="multipart/form-data" action="" id="edit-reply-form">
+
+        {% csrf_token %}
+        <textarea name="message" id="edit-reply-message" rows="5" required></textarea><br><br>
+        
+        <!-- Existing Files Section -->
+        <div id="existing-reply-files-section">
+            <label>Existing Files:</label>
+            <ul id="existing-reply-files-list">
+                <!-- {% for file in reply_files %}
+                    <li>
+                        <a href="{{ file.file.url }}" target="_blank">{{ file.file.name|cut:"feedback_files/" }}</a>
+                        <label>
+                            <input type="checkbox" name="delete_files" value="{{ file.id }}"> Remove
+                        </label>
+                    </li>
+                {% endfor %} -->
+            </ul>
+        </div>
+        <label>Attach More Files (optional):</label><br>
+        <input type="file" name="files[]" multiple><br><br>
+  
+        <button type="submit">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Teacher -> Project dropdown logic
+        const teacherSelect = document.getElementById('teacherSelect');
+        if (teacherSelect) {
+            teacherSelect.addEventListener('change', function () {
+                const teacherId = this.value;
+                const projectSelect = document.getElementById('projectSelect');
+                projectSelect.innerHTML = '<option value="">-- Select Project --</option>';
+    
+                if (teacherId) {
+                    fetch(`/feedbacks/get-teacher-projects/${teacherId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.projects) {
+                                data.projects.forEach(project => {
+                                    const option = document.createElement('option');
+                                    option.value = project.id;
+                                    option.textContent = project.name;
+                                    projectSelect.appendChild(option);
+                                });
+                            }
+                        });
+                }
+            });
+        }
+    
+        // Show send feedback popup
+        const feedbackBtn = document.getElementById('send-feedback-btn');
+        const popup = document.getElementById('feedback-popup');
+        const closeBtn = document.getElementById('close-popup-btn');
+        if (feedbackBtn && popup && closeBtn) {
+            feedbackBtn.addEventListener('click', () => popup.style.display = 'block');
+            closeBtn.addEventListener('click', () => popup.style.display = 'none');
+            window.addEventListener('click', (event) => {
+                if (event.target === popup) {
+                    popup.style.display = 'none';
+                }
+            });
+        }
+    
+        // Edit Feedback popup
+        document.querySelectorAll('.edit-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const feedbackId = button.dataset.id;
+                const title = button.dataset.title;
+                const message = button.dataset.message;
+                const files = JSON.parse(button.dataset.feedbackFiles || '[]');
+    
+                document.getElementById('edit-feedback-id').value = feedbackId;
+                document.getElementById('edit-title').value = title;
+                document.getElementById('edit-message').value = message;
+    
+                const form = document.getElementById('edit-feedback-form');
+                form.action = `/feedbacks/feedback/edit/${feedbackId}/`;
+    
+                const fileList = document.getElementById('existing-files-list');
+                fileList.innerHTML = '';
+                files.forEach(file => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <a href="${file.url}" target="_blank">${file.name}</a>
+                        <label>
+                            <input type="checkbox" name="delete_files" value="${file.id}"> Remove
+                        </label>
+                    `;
+                    fileList.appendChild(li);
+                });
+    
+                document.getElementById('edit-feedback-popup').style.display = 'block';
+            });
+        });
+    
+        // Close Edit Feedback popup
+        const closeEditPopupBtn = document.getElementById('close-edit-popup-btn');
+        if (closeEditPopupBtn) {
+            closeEditPopupBtn.addEventListener('click', function () {
+                document.getElementById('edit-feedback-popup').style.display = 'none';
+            });
+        }
+    
+        // Filter/search feedback items (guarded)
+        const searchInput = document.getElementById('feedback-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                const query = this.value.toLowerCase();
+                document.querySelectorAll('.feedback-item').forEach(item => {
+                    const combinedText = item.textContent.toLowerCase();
+                    item.style.display = combinedText.includes(query) ? 'block' : 'none';
+                });
+            });
+        }
+    
+        // Reply button ↔ form toggle
+        document.querySelectorAll('.reply-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const id = button.dataset.feedbackId;
+                const form = document.getElementById(`reply-form-${id}`);
+                if (!form) return;
+    
+                button.style.display = 'none';
+                form.style.display = 'block';
+    
+                const cancelBtn = form.querySelector('.cancel-reply');
+                if (cancelBtn) cancelBtn.style.display = 'inline-block';
+            });
+        });
+    
+        document.querySelectorAll('.cancel-reply').forEach(button => {
+            button.addEventListener('click', () => {
+                const id = button.dataset.feedbackId;
+                const form = document.getElementById(`reply-form-${id}`);
+                const replyBtn = document.querySelector(`.reply-btn[data-feedback-id="${id}"]`);
+                if (!form || !replyBtn) return;
+    
+                form.style.display = 'none';
+                replyBtn.style.display = 'inline-block';
+            });
+        });
+    
+        // Open Edit Reply Modal
+        document.querySelectorAll('.edit-reply-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const replyId = button.dataset.replyId;
+                const message = button.dataset.replyMessage;
+                const files = JSON.parse(button.dataset.replyFiles || '[]');
+    
+                const textarea = document.getElementById('edit-reply-message');
+                textarea.value = message;
+    
+                const form = document.getElementById('edit-reply-form');
+                form.action = `/feedbacks/edit-reply/${replyId}/`;
+    
+                const fileList = document.getElementById('existing-reply-files-list');
+                fileList.innerHTML = '';
+                files.forEach(file => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <a href="${file.url}" target="_blank">${file.name}</a>
+                        <label>
+                            <input type="checkbox" name="delete_files" value="${file.id}"> Remove
+                        </label>
+                    `;
+                    fileList.appendChild(li);
+                });
+    
+                document.getElementById('edit-reply-popup').style.display = 'block';
+            });
+        });
+    });
+    </script>
+    
+{% endblock %}
