@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Manage Colleges{% endblock %}
+{% block title %}{% trans "Manage Colleges" %}{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/admin/manage_colleges.css' %}">
@@ -11,23 +11,23 @@
 {% include "navbar.html" %}
 
 <div class="container">
-    <h2>🏫 Manage Colleges</h2>
+    <h2>🏫 {% trans "Manage Colleges" %}</h2>
 
     <!-- ➕ Create College Button -->
-    <button id="create-college-btn" class="btn btn-primary">+ Add New College</button>
+    <button id="create-college-btn" class="btn btn-primary">+ {% trans "Add New College" %}</button>
 
     <!-- 🔍 Search and Download Controls -->
     <div class="search-filter-bar">
-        <input type="text" id="college-search" placeholder="🔍 Search Colleges..." />
-        <button id="download-colleges" class="btn-download">⬇️ Download List</button>
+        <input type="text" id="college-search" placeholder="{% trans '🔍 Search Colleges...' %}" />
+        <button id="download-colleges" class="btn-download">⬇️ {% trans "Download List" %}</button>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>College Name</th>
-                <th>Departments</th>
-                <th>Actions</th>
+                <th>{% trans "College Name" %}</th>
+                <th>{% trans "Departments" %}</th>
+                <th>{% trans "Actions" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -42,7 +42,7 @@
                         {% endfor %}
                         </ul>
                     {% else %}
-                        <em>No departments</em>
+                        <em>{% trans "No departments" %}</em>
                     {% endif %}
                 </td>
                 <td>
@@ -54,16 +54,16 @@
                                 {"id": "{{ dept.id }}", "name": "{{ dept.name }}"}{% if not forloop.last %},{% endif %}
                             {% endfor %}
                         ]'>
-                        ✏️ Edit
+                        ✏️ {% trans "Edit" %}
                     </button>
                     <button class="delete-btn btn-delete" data-id="{{ college.id }}">
-                        🗑️ Delete
+                        🗑️ {% trans "Delete" %}
                     </button>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="3">No colleges available.</td>
+                <td colspan="3">{% trans "No colleges available." %}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -74,27 +74,26 @@
 <div id="college-modal" class="modal hidden">
     <div class="modal-content">
         <span class="close-btn">&times;</span>
-        <h3 id="college-modal-title">Add New College</h3>
-        
+        <h3 id="college-modal-title">{% trans "Add New College" %}</h3>
+
         <form id="college-form" method="POST">
             {% csrf_token %}
-            <label for="college-name">College Name:</label>
+            <label for="college-name">{% trans "College Name" %}:</label>
             <input type="text" id="college-name" required>
             <input type="hidden" id="college-id">
 
             <!-- Department Inputs -->
             <div id="department-fields">
-                <label>Departments:</label>
+                <label>{% trans "Departments" %}:</label>
                 <div class="department-group">
-                    <input type="text" name="departments" class="department-input" placeholder="Department Name">
+                    <input type="text" name="departments" class="department-input" placeholder="{% trans 'Department Name' %}">
                 </div>
             </div>
-            <button type="button" id="add-department-btn" class="btn-secondary"><span style="color: white;">➕</span> Add Department</button>
+            <button type="button" id="add-department-btn" class="btn-secondary"><span style="color: white;">➕</span> {% trans "Add Department" %}</button>
 
-            <button type="submit" class="btn btn-primary">Save College</button>
+            <button type="submit" class="btn btn-primary">{% trans "Save College" %}</button>
         </form>
     </div>
 </div>
 <script src="{% static 'js/admin/manage_colleges.js' %}"></script>
 {% endblock %}
-

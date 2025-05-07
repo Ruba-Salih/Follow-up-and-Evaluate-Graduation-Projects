@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Available Projects{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/project/available_projects.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+<div class="container">
+    <h2>📋 Available Projects</h2>
+
+    <!-- Filter Dropdown -->
+    <div class="filter-bar" style="margin-bottom: 20px; text-align: right;">
+        <label for="project-filter"><strong>Filter:</strong></label>
+        <select id="project-filter" class="form-control" style="width: auto; display: inline-block;">
+            <option value="all">All Projects</option>
+            <option value="available">Available</option>
+            <option value="taken">Taken</option>
+            <option value="joined">My Projects</option>
+        </select>
+    </div>
+
+    {% if available_projects %}
+        {% for entry in available_projects %}
+            {% with project=entry.project %}
+            <div class="proposal-card 
+                {% if entry.is_full and not project.id in joined_project_ids and not project.id in joined_teacher_project_ids %}disabled-card{% endif %}"
+                data-status="{% if project.id in joined_project_ids or project.id in joined_teacher_project_ids %}joined{% elif entry.is_full %}taken{% else %}available{% endif %}">
+                
+                <h4>{{ project.name }}</h4>
+                <p><strong>Field:</strong> {{ project.field }}</p>
+
+                {% if entry.supervisor %}
+                    <p><strong>Supervisor:</strong> {{ entry.supervisor.username }}</p>
+                {% endif %}
+
+                {% if student %}
+                    <p><strong>Team Members:</strong> {{ project.student_memberships.count }}/{{ project.team_member_count }}</p>
+                    <div class="action-buttons">
+                        {% if project.id in joined_project_ids %}
+                            <form class="project-action-form" data-project-id="{{ project.id }}" data-action="leave">
+                                {% csrf_token %}
+                                <button class="btn btn-delete">❌ Leave Project</button>
+                            </form>
+                        {% elif not entry.is_full %}
+                            <form class="project-action-form" data-project-id="{{ project.id }}" data-action="join">
+                                {% csrf_token %}
+                                <button class="btn btn-primary">🔗 Request to Join</button>
+                            </form>
+                        {% endif %}
+
+                        <button class="btn btn-edit view-project-btn"
+                                data-name="{{ project.name }}"
+                                data-description="{{ project.description }}"
+                                data-team-count="{{ project.team_member_count }}"
+                                data-students="{{ entry.assigned_students|join:', ' }}"
+                                data-field="{{ project.field }}"
+                                data-department="{{ project.department.name }}"
+                                data-duration="{{ project.duration|default:'N/A' }}">
+                            🔍 View
+                        </button>
+                    </div>
+                    {% if entry.is_full and not project.id in joined_project_ids %}
+                        <p class="full-notice">🔒 This project is full</p>
+                    {% endif %}
+
+                {% elif teacher_roles %}
+                    {% if entry.reader %}
+                        <p><strong>Reader:</strong> {{ entry.reader.username }}</p>
+                    {% endif %}
+                    <p><strong>Committee:</strong>
+                        {% if entry.judges %}
+                            {{ entry.judges|join:", " }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </p>
+
+                    <div class="action-buttons">
+                        {% if project.id in joined_teacher_project_ids %}
+                            {% for pid, role in teacher_roles.items %}
+                                {% if pid == project.id %}
+                                    <p><strong>Your Role:</strong> {{ role }}</p>
+                                {% endif %}
+                            {% endfor %}
+                            <form class="project-action-form" data-project-id="{{ project.id }}" data-action="leave">
+                                {% csrf_token %}
+                                <button class="btn btn-delete">❌ Remove My Role</button>
+                            </form>
+                        {% elif not entry.is_full %}
+                            <form class="project-action-form" data-project-id="{{ project.id }}" data-action="join">
+                                {% csrf_token %}
+                                <label><strong>Select Role:</strong></label>
+                                <select name="role" class="form-control" required>
+                                    <option value="">-- Choose Role --</option>
+                                    <option value="Supervisor">Supervisor</option>
+                                    <option value="Reader">Reader</option>
+                                    <option value="Judge">Committee Member</option>
+                                </select>
+                                <button class="btn btn-primary" style="margin-top: 10px;">➕ Join as Selected Role</button>
+                            </form>
+                        {% endif %}
+
+                        <button class="btn btn-edit view-project-btn"
+                                data-name="{{ project.name }}"
+                                data-description="{{ project.description }}"
+                                data-team-count="{{ project.team_member_count }}"
+                                data-students="{{ entry.assigned_students|join:', ' }}"
+                                data-field="{{ project.field }}"
+                                data-department="{{ project.department.name }}"
+                                data-duration="{{ project.duration|default:'N/A' }}">
+                            🔍 View
+                        </button>
+                    </div>
+                    {% if entry.is_full and not project.id in joined_teacher_project_ids %}
+                        <p class="full-notice">🔒 This project is full</p>
+                    {% endif %}
+                {% endif %}
+            </div>
+            {% endwith %}
+        {% endfor %}
+    {% else %}
+        <p>No projects available right now.</p>
+    {% endif %}
+</div>
+
+<!-- Modal -->
+<div class="modal hidden" id="project-details-modal">
+    <div class="modal-content">
+        <span class="close-btn" id="close-project-modal">&times;</span>
+        <h3 id="modal-project-name">Project Name</h3>
+        <p><strong>Description:</strong> <span id="modal-project-description"></span></p>
+        <p><strong>Field:</strong> <span id="modal-project-field"></span></p>
+        <p><strong>Department:</strong> <span id="modal-project-department"></span></p>
+        <p><strong>Team Member Count:</strong> <span id="modal-project-team-count"></span></p>
+        <p><strong>Assigned Students:</strong> <span id="modal-project-students"></span></p>
+        <p><strong>Duration:</strong> <span id="modal-project-duration"></span></p>
+    </div>
+</div>
+
+<script src="{% static 'js/project/available_projects.js' %}"></script>
+{% endblock %}

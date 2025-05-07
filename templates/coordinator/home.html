@@ -1,37 +1,38 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Coordinator Home{% endblock %}
+{% block title %}{% trans "Coordinator Home" %}{% endblock %}
+
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
 {% endblock %}
 
 {% block content %}
 
-{% include "navbar.html" %} 
+{% include "navbar.html" %}
 
 <div class="container">
     <!-- Quick Links -->
     <div class="quick-links">
-        <div class="link-item"><a href="{% url 'manage-accounts' %}">👤 Manage Accounts</a></div>
-        <div class="link-item"><a href="#">📂 Manage Projects</a></div>
-        <div class="link-item"><a href="{% url 'form:form-list' %}" class="text-decoration-none">📝 Manage Evaluation Forms</a></div>
-        <div class="link-item"><a href="#">💻 Manage Labs</a></div>
-        <div class="link-item"><a href="{% url 'coordinator-manage-proposals' %}">📄 Manage Proposals</a></div>
-        <div class="link-item"><a href="#">📑 Manage Reports</a></div>
-        <div class="link-item"><a href="#">📢 Manage Announcements</a></div>
-        <div class="link-item"><a href="{% url 'manage_grades' %}">📊 Manage Grades</a></div>
-        <div class="link-item"><a href="{% url 'coord-review-exchanges' %}">📝 Review Exchanges</a></div>
+        <div class="link-item"><a href="{% url 'manage-accounts' %}">👤 {% trans "Manage Accounts" %}</a></div>
+        <div class="link-item"><a href="{% url 'manage-project-landing' %}">📂 {% trans "Manage Projects" %}</a></div>
+        <div class="link-item"><a href="{% url 'form:form-list' %}" class="text-decoration-none">📝 {% trans "Manage Evaluation Forms" %}</a></div>
+        <div class="link-item"><a href="#">💻 {% trans "Manage Labs" %}</a></div>
+        <div class="link-item"><a href="{% url 'coordinator-manage-proposals' %}">📄 {% trans "Manage Proposals" %}</a></div>
+        <div class="link-item"><a href="#">📑 {% trans "Manage Reports" %}</a></div>
+        <div class="link-item"><a href="#">📢 {% trans "Manage Announcements" %}</a></div>
+        <div class="link-item"><a href="{% url 'manage_grades' %}">📊 {% trans "Manage Grades" %}</a></div>
+        <div class="link-item"><a href="{% url 'coord-review-exchanges' %}">📝 Review Exchanges</a></div> 
     </div>
 
     <!-- Announcements Section -->
     <div class="announcements">
-        <h3>📢 Recent Announcements</h3>
+        <h3>📢 {% trans "Recent Announcements" %}</h3>
         <ul>
             {% for announcement in announcements %}
                 <li>{{ announcement.title }} - {{ announcement.date_posted }}</li>
             {% empty %}
-                <li>No announcements available.</li>
+                <li>{% trans "No announcements available." %}</li>
             {% endfor %}
         </ul>
     </div>

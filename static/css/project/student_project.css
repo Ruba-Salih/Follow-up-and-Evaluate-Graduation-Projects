@@ -1,0 +1,232 @@
+/* ===== Layout Container ===== */
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== Section Headings ===== */
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+h3 {
+    color: #a63026;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* ===== Project Overview Card ===== */
+.card {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.07);
+    margin-bottom: 30px;
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.project-name {
+    font-size: 24px;
+    color: #a63026;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+
+/* ===== New Grid Layout for Project Info ===== */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 25px;
+}
+
+.info-grid .label {
+    font-weight: bold;
+    color: #333;
+    font-size: 15px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.info-grid .value,
+.info-grid p {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ===== Progress Bar ===== */
+.progress-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.progress-bar {
+    background-color: #eee;
+    border-radius: 10px;
+    height: 16px;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #a63026;
+    transition: width 0.4s ease;
+    border-radius: 10px;
+}
+
+/* ===== Buttons ===== */
+.btn,
+form button {
+    padding: 10px 20px;
+    font-weight: bold;
+    font-size: 14px;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin-top: 10px;
+}
+
+.goal-entry {
+    background-color: #fff9f9;
+    border-left: 4px solid #a63026;
+    padding: 20px;
+    margin: 15px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    text-align: left;
+}
+
+
+/* ===== Modal ===== */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    text-align: left;
+}
+
+.modal-content h3 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.4rem;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+/* ===== Forms ===== */
+form input[type="text"],
+form input[type="number"],
+form textarea,
+form select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+form input[type="file"] {
+    display: block;
+    margin-top: 10px;
+    padding: 6px;
+    font-size: 14px;
+    background: #fefefe;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+form input[type="file"]::file-selector-button {
+    padding: 5px 8px;
+    border: none;
+    border-radius: 4px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+/* ===== Goal Inputs ===== */
+.add-goal,
+.goal-entry {
+    text-align: center;
+}
+
+.add-goal input[type="text"],
+.add-goal input[type="number"],
+.goal-entry input[type="text"],
+.goal-entry input[type="number"] {
+    width: 30%;
+    padding: 8px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content {
+        width: 95%;
+    }
+
+    .add-goal input,
+    .goal-entry input {
+        width: 90%;
+    }
+}

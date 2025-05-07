@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manage My Projects{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/project/teacher_projects.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+    <h2>📂 My Projects</h2>
+
+    <!-- 🔍 Search and Filter -->
+    <div class="search-filter-bar">
+        <input type="text" id="search-input" placeholder="🔍 Search by project name..." />
+        <select id="role-filter">
+            <option value="">🔽 All Roles</option>
+            <option value="Supervisor">Supervisor</option>
+            <option value="Reader">Reader</option>
+            <option value="Judge">Judge Committee</option>
+        </select>
+    </div>
+
+    <div id="project-list">
+        {% if projects %}
+            {% for project in projects %}
+            <div class="project-card" data-name="{{ project.name|lower }}" data-role="{{ project.my_role|lower }}">
+                    <h4>{{ project.name }}</h4>
+                    <p><strong>Department:</strong> {{ project.department.name }}</p>
+                    <p><strong>My Role:</strong> {{ project.my_role }}</p>
+
+                    <div class="action-buttons">
+                        <a href="{% url 'project-detail' project.id %}" class="btn btn-edit view-project-btn" data-project-id="{{ project.id }}">🔍 View</a>
+                        <form class="project-leave-form" method="POST" action="/api/project/available/{{ project.id }}/" data-project-id="{{ project.id }}">
+                            {% csrf_token %}
+                            <button class="btn btn-delete">❌ Remove Myself</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>You are not enrolled in any projects yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script src="{% static 'js/project/teacher_projects.js' %}"></script>
+{% endblock %}

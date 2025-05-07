@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "My Project" %}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/project/student_project.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+    <h2>🎓 {% trans "My Project Overview" %}</h2>
+
+    <div class="project-overview card">
+        <h3 id="project-title" class="project-name">{% trans "Loading..." %}</h3>
+        <div class="info-grid">
+            <div>
+                <span class="label">📌 {% trans "Field" %}</span>
+                <p id="project-field" class="value">{% trans "Loading..." %}</p>
+            </div>
+            <div>
+                <span class="label">👨‍🏫 {% trans "Supervisor" %}</span>
+                <p id="project-supervisor" class="value">{% trans "Loading..." %}</p>
+            </div>
+            <div>
+                <span class="label">📊 {% trans "Completion" %}</span>
+                <div class="progress-wrapper">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="completion-bar" style="width: 0%;"></div>
+                    </div>
+                    <span id="project-status-text">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions" style="margin-top: 40px; text-align: center;">
+        <button class="btn btn-primary action-btn" data-target="#goalsModal">🎯 {% trans "Project Goals" %}</button>
+        <button class="btn btn-primary action-btn" data-target="#weeklyReportModal">📝 {% trans "Weekly Report" %}</button>
+        <button class="btn btn-primary action-btn" data-target="#progressModal">📈 {% trans "Progress" %}</button>
+        <a href="{% url 'project-tasks-page' %}" class="btn btn-primary action-btn" style="text-decoration: none;">🧩 {% trans "Manage Tasks" %}</a>
+    </div>
+
+    <!-- Project Goals Modal -->
+    <div class="modal" id="goalsModal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3>🎯 {% trans "Project Goals" %}</h3>
+
+            <div class="add-goal" style="margin-top: 20px;">
+                <h4>{% trans "Add New Goal" %}</h4>
+                <input type="text" id="new-goal-text" class="form-control" placeholder="{% trans 'Goal description...' %}" />
+                <input type="number" id="new-goal-duration" class="form-control" placeholder="{% trans 'Duration (weeks)' %}" style="margin-top:10px;" />
+                <button id="add-goal-btn" class="btn btn-primary" style="margin-top:10px;">+ {% trans "Add Goal" %}</button>
+            </div>
+
+            <div id="goal-list"></div>
+        </div>
+    </div>
+
+    <!-- Weekly Report Modal -->
+    <div class="modal" id="weeklyReportModal">
+        <div class="modal-content">
+            <div class="modal-body">
+                <span class="close-btn">&times;</span>
+
+                <h3>📝 {% trans "Weekly Report" %}</h3>
+
+                <form id="weekly-report-form" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <label><strong>{% trans "Select Goal:" %}</strong></label>
+                    <select id="selected-goal-for-task" class="form-control" style="margin-bottom: 10px;"></select>
+
+                    <br>
+                    <button type="button" id="add-task-btn" class="btn btn-primary" style="margin: 10px 0;">+ {% trans "Add New Task" %}</button>
+
+                    <div id="task-entries"></div>
+
+                    <div style="margin-top:15px;">
+                        <label><strong>{% trans "Additional Comments:" %}</strong></label>
+                        <textarea id="report-comment" class="form-control" rows="3" placeholder="{% trans 'Write your overall notes...' %}"></textarea>
+                    </div>
+
+                    <div style="margin-top:15px;">
+                        <label><strong>{% trans "Attach File (Optional):" %}</strong></label>
+                        <input type="file" id="feedback-file" name="feedback_file" class="form-control">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary save" style="margin-top: 20px;">{% trans "Submit Report" %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Modal -->
+    <div class="modal" id="progressModal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3>📈 {% trans "Weekly Progress" %}</h3>
+
+            <form id="progress-form" enctype="multipart/form-data">
+                {% csrf_token %}
+                <label><strong>{% trans "Select Goal:" %}</strong></label>
+                <select id="goal-progress-filter" class="form-control" style="margin-bottom: 15px;"></select>
+
+                <div id="progress-task-entries"></div>
+
+                <div style="margin-top:15px;">
+                    <label><strong>{% trans "Additional Comments:" %}</strong></label>
+                    <textarea id="report-comment" class="form-control" rows="3" placeholder="{% trans 'Write your overall notes...' %}"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary save" style="margin-top: 20px;">{% trans "Submit Progress" %}</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal" id="feedbackModal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3>💬 {% trans "Supervisor Feedback" %}</h3>
+            <div id="feedback-list">
+                <p>{% trans "No feedback yet." %}</p>
+            </div>
+        </div>
+    </div>
+
+<script src="{% static 'js/project/student_project.js' %}"></script>
+
+{% endblock %}

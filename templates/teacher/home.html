@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Teacher Home{% endblock %}
+{% block title %}{% trans "Teacher Home" %}{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
 {% endblock %}
@@ -13,28 +13,27 @@
 <div class="container">
     <!-- Total Projects Section -->
     <div class="total-projects">
-        <h3>📊 Total Projects</h3>
+        <h3>📊 {% trans "Total Projects" %}</h3>
         <p>{{ total_projects }}</p>
     </div>
 
     <!-- Quick Links -->
     <div class="quick-links">
-        <div class="link-item"><a href="{% url 'teacher-manage-proposals' %}">📄 Manage Proposals</a></div>
-        <div class="link-item"><a href="{% url 'manage_projects' %}">📂 Manage Projects</a></div>
-        <div class="link-item"><a href="{% url 'set-available-time-page' %}">⏳ Set Available Times</a></div>
-        <div class="link-item"><a href="{% url 'schedule-meeting-page' %}">📅 Schedule Meeting</a></div>
+        <div class="link-item"><a href="{% url 'teacher-manage-proposals' %}">📄 {% trans "Manage Proposals" %}</a></div>
+        <div class="link-item"><a href="{% url 'teacher_projects' %}">📂 {% trans "Manage Projects2" %}</a></div>
+        <div class="link-item"><a href="{% url 'set-available-time-page' %}">⏳ {% trans "Set Available Times" %}</a></div>
+        <div class="link-item"><a href="{% url 'schedule-meeting-page' %}">📅 {% trans "Schedule Meeting" %}</a></div>
         <div class="link-item"><a href="{% url 'teacher-review-exchanges' %}">📝 Review Exchanges</a></div>
-        
     </div>
 
     <!-- Announcements Section -->
     <div class="announcements">
-        <h3>📢 Recent Announcements</h3>
+        <h3>📢 {% trans "Recent Announcements" %}</h3>
         <ul>
             {% for announcement in announcements %}
                 <li>{{ announcement.title }} - {{ announcement.date_posted }}</li>
             {% empty %}
-                <li>No announcements available.</li>
+                <li>{% trans "No announcements available." %}</li>
             {% endfor %}
         </ul>
     </div>

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Login{% endblock %}
+{% block title %}{% trans "Login" %}{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/login.css' %}">
@@ -12,22 +12,22 @@
     <div class="login-card">
         <div class="login-header">
             <img src="{% static 'images/lo.png' %}" alt="Logo" class="login-logo">
-            <h2 class="system-name">Graduation System</h2>
+            <h2 class="system-name">{% trans "Graduation System" %}</h2>
         </div>
 
         <form method="post" id="login-form">
             {% csrf_token %}
             <div class="form-group">
-                <label for="username">Username:</label>
+                <label for="username">{% trans "Username" %}:</label>
                 <input type="text" id="username" name="username" required>
             </div>
 
             <div class="form-group">
-                <label for="password">Password:</label>
+                <label for="password">{% trans "Password" %}:</label>
                 <input type="password" id="password" name="password" required>
             </div>
 
-            <button type="submit">Login</button>
+            <button type="submit">{% trans "Login" %}</button>
             <p id="error-message" class="error-msg"></p>
         </form>
     </div>

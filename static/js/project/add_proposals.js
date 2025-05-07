@@ -23,6 +23,79 @@ document.addEventListener("DOMContentLoaded", async () => {
     let editMode = false;
     let currentProposalId = null;
     let isTeacher = false;
+    let departmentToCoordinator = {};
+
+    function populateSelect(selectEl, items, isMulti = true, selectedIds = []) {
+        if (!selectEl) return;
+        selectEl.innerHTML = "";
+        if (!isMulti) {
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = "-- Select Recipient --";
+            selectEl.appendChild(placeholder);
+        }
+        items.forEach(item => {
+            const option = document.createElement("option");
+            option.value = item.id;
+            option.textContent = item.username || item.name || "";
+            if (selectedIds.includes(item.id)) {
+                option.selected = true;
+            }
+            selectEl.appendChild(option);
+        });
+    }
+
+    function renderCheckboxes(list, selectedIds = []) {
+        if (!teamMemberWrapper) return;
+        teamMemberWrapper.innerHTML = "";
+    
+        const searchInput = document.createElement("input");
+        searchInput.type = "text";
+        searchInput.placeholder = "🔍 Search students...";
+        teamMemberWrapper.appendChild(searchInput);
+    
+        const checkboxContainer = document.createElement("div");
+        checkboxContainer.classList.add("team-checkbox-list");
+        teamMemberWrapper.appendChild(checkboxContainer);
+    
+        function displayList(filtered) {
+            checkboxContainer.innerHTML = "";
+            filtered.forEach(student => {
+                const wrapper = document.createElement("div");
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.name = "team_members";
+                checkbox.value = student.id;
+    
+                const label = document.createElement("label");
+    
+                const isSelected = selectedIds.includes(student.id);
+    
+                if (student.already_assigned && !isSelected) {
+                    checkbox.disabled = true;
+                    label.style.opacity = "0.6";
+                    label.title = "Already assigned to another project.";
+                    label.appendChild(checkbox);
+                    label.append(` ${student.username} (Assigned)`);
+                } else {
+                    checkbox.checked = isSelected;
+                    label.appendChild(checkbox);
+                    label.append(` ${student.username}`);
+                }
+    
+                wrapper.appendChild(label);
+                checkboxContainer.appendChild(wrapper);
+            });
+        }
+    
+        displayList(list);
+    
+        searchInput.addEventListener("input", () => {
+            const query = searchInput.value.toLowerCase();
+            const filtered = list.filter(s => s.username.toLowerCase().includes(query));
+            displayList(filtered);
+        });
+    }    
 
     async function loadData() {
         const res = await fetch("/api/project/proposals/");
@@ -32,68 +105,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         coordinatorsList = data.coordinators || [];
         teachersList = data.teachers || [];
 
+        coordinatorsList.forEach(coordinator => {
+            if (coordinator.department) {
+                departmentToCoordinator[coordinator.department] = coordinator.id;
+            }
+        });
+
         renderCheckboxes(studentsList);
-        isTeacher = coordinatorsList.length > 0 && departmentSelect;
-    }
+        isTeacher = coordinatorsList.length > 0 && Boolean(departmentSelect);
 
-    function renderCheckboxes(list, selectedIds = []) {
-        if (!teamMemberWrapper) return;
-        teamMemberWrapper.innerHTML = "";
-
-        const searchInput = document.createElement("input");
-        searchInput.type = "text";
-        searchInput.placeholder = "🔍 Search students...";
-        teamMemberWrapper.appendChild(searchInput);
-
-        const checkboxContainer = document.createElement("div");
-        checkboxContainer.classList.add("team-checkbox-list");
-        teamMemberWrapper.appendChild(checkboxContainer);
-
-        function displayList(filtered) {
-            checkboxContainer.innerHTML = "";
-            filtered.forEach(student => {
-                const wrapper = document.createElement("div");
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.value = student.id;
-                checkbox.name = "team_members";
-                if (selectedIds.includes(student.id)) checkbox.checked = true;
-
-                const label = document.createElement("label");
-                label.appendChild(checkbox);
-                label.append(" " + student.username);
-                wrapper.appendChild(label);
-                checkboxContainer.appendChild(wrapper);
-            });
+        if (isTeacher && proposedToSelect) {
+            const proposedToLabel = proposedToSelect.closest("label");
+            if (proposedToLabel) {
+                proposedToLabel.remove();
+            }
+            proposedToSelect.remove();
         }
-
-        displayList(list);
-
-        searchInput.addEventListener("input", () => {
-            const query = searchInput.value.toLowerCase();
-            const filtered = list.filter(s => s.username.toLowerCase().includes(query));
-            displayList(filtered);
-        });
-    }
-
-    function populateSelect(selectEl, list, isMulti = true, selectedIds = []) {
-        if (!selectEl) return;
-        selectEl.innerHTML = "";
-
-        if (!isMulti) {
-            const placeholder = document.createElement("option");
-            placeholder.value = "";
-            placeholder.textContent = "-- Select Recipient --";
-            selectEl.appendChild(placeholder);
-        }
-
-        list.forEach(item => {
-            const option = document.createElement("option");
-            option.value = item.id;
-            option.textContent = item.username;
-            if (selectedIds.includes(item.id)) option.selected = true;
-            selectEl.appendChild(option);
-        });
     }
 
     await loadData();
@@ -106,9 +133,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         feedbackSection.classList.add("hidden");
         feedbackContent.textContent = "";
 
-        const recipientList = isTeacher ? coordinatorsList : teachersList;
         renderCheckboxes(studentsList);
-        populateSelect(proposedToSelect, recipientList, false);
+
+        if (!isTeacher && proposedToSelect) {
+            populateSelect(proposedToSelect, teachersList, false);
+        }
 
         modal.classList.add("show");
         modal.classList.remove("hidden");
@@ -124,14 +153,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     form?.addEventListener("submit", async (e) => {
         e.preventDefault();
 
+        if (isTeacher) {
+            if (!departmentSelect?.value) {
+                showAlert("Please select a department before submitting your proposal.", 'warning');
+                return; // 🚨 stop the submit
+            }
+        }
+        
         const formData = new FormData();
         formData.append("title", titleInput.value);
         formData.append("description", descriptionInput.value);
         formData.append("field", fieldInput.value);
         formData.append("team_member_count", teamCount.value || 1);
+        formData.append("duration", document.getElementById("duration").value || 0);
         if (additionalComment?.value) formData.append("additional_comment", additionalComment.value);
         if (departmentSelect?.value) formData.append("department", departmentSelect.value);
-        if (proposedToSelect?.value) formData.append("proposed_to", proposedToSelect.value);
+
+        if (isTeacher) {
+            const deptId = departmentSelect?.value;
+            const coordId = departmentToCoordinator[deptId];
+            if (coordId) {
+                formData.append("proposed_to", coordId);
+            }
+        } else {
+            if (proposedToSelect?.value) {
+                formData.append("proposed_to", proposedToSelect.value);
+            }
+        }
+
         if (fileInput?.files.length > 0) {
             formData.append("attached_file", fileInput.files[0]);
         }
@@ -139,13 +188,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         const checkedBoxes = teamMemberWrapper.querySelectorAll("input[type='checkbox']:checked");
         checkedBoxes.forEach(cb => formData.append("team_members_ids", cb.value));
 
-        const url = editMode
-            ? `/api/project/proposals/${currentProposalId}/`
-            : `/api/project/proposals/`;
-        const method = editMode ? "PUT" : "POST";
+        const url = editMode ? `/api/project/proposals/${currentProposalId}/` : `/api/project/proposals/`;
 
         const response = await fetch(url, {
-            method,
+            method: editMode ? "PUT" : "POST",
             headers: {
                 "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
             },
@@ -157,7 +203,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else {
             const error = await response.json();
             console.error("Error submitting proposal:", error);
-            alert("Something went wrong. Check console for details.");
+            showAlert("Something went wrong.", 'error');
         }
     });
 
@@ -167,9 +213,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             const res = await fetch(`/api/project/proposals/${id}/`);
             const data = await res.json();
 
-            console.log("📥 Modal Data Received:", data);
-            console.log("👀 Feedback Received:", data.teacher_feedback);
-
             editMode = true;
             currentProposalId = data.id;
 
@@ -178,10 +221,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             fieldInput.value = data.field;
             teamCount.value = data.team_member_count || "";
             additionalComment.value = data.additional_comment || "";
+            document.getElementById("duration").value = data.duration || 0;
 
-            const feedback = data.teacher_feedback?.trim();
+            const feedback = data.feedback_text?.trim();
+            const role = data.feedback_sender_role || "Teacher";
             if (feedback) {
                 feedbackSection.classList.remove("hidden");
+                const label = feedbackSection.querySelector("label");
+                if (label) {
+                    label.innerHTML = `<strong>${role} Feedback:</strong>`;
+                }
                 feedbackContent.textContent = feedback;
             } else {
                 feedbackSection.classList.add("hidden");
@@ -192,11 +241,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 departmentSelect.value = data.department;
             }
 
-            const recipientList = isTeacher ? coordinatorsList : teachersList;
             const selectedTeamMemberIds = data.team_members?.map(s => s.id) || [];
-
             renderCheckboxes(studentsList, selectedTeamMemberIds);
-            populateSelect(proposedToSelect, recipientList, false, [data.proposed_to]);
+
+            if (!isTeacher && proposedToSelect) {
+                populateSelect(proposedToSelect, teachersList, false, [data.proposed_to]);
+            }
 
             modal.classList.add("show");
             modal.classList.remove("hidden");
@@ -204,16 +254,62 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         card.querySelector(".delete-btn")?.addEventListener("click", async () => {
-            if (confirm("Delete this proposal?")) {
+            const confirmed = await confirmAction("Delete this proposal?");
+            if (confirmed) {
                 const res = await fetch(`/api/project/proposals/${id}/`, {
                     method: "DELETE",
                     headers: {
                         "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
                     }
                 });
-                if (res.ok) location.reload();
-                else alert("Delete failed.");
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    showAlert("Delete failed.", 'error');
+                }
             }
+
         });
     });
+
+    function filterProposals() {
+        const query = searchInput.value.toLowerCase();
+        const selectedStatus = statusFilter.value.toLowerCase();
+        const cards = proposalList.querySelectorAll(".proposal-card");
+    
+        cards.forEach(card => {
+            const title = card.querySelector("h4")?.textContent.toLowerCase() || "";
+            const field = card.querySelector("p:nth-of-type(1)")?.textContent.toLowerCase() || "";
+            const date = card.querySelector("p:nth-of-type(2)")?.textContent.toLowerCase() || "";
+    
+            const statusBadges = card.querySelectorAll(".status");
+            let teacherStatus = "", coordinatorStatus = "";
+    
+            if (statusBadges.length > 0) {
+                teacherStatus = statusBadges[0]?.classList[1] || "";
+            }
+            if (statusBadges.length > 1) {
+                coordinatorStatus = statusBadges[1]?.classList[1] || "";
+            }
+    
+            const matchesSearch = title.includes(query) || field.includes(query) || date.includes(query);
+            const matchesStatus = selectedStatus === "" || teacherStatus.includes(selectedStatus) || coordinatorStatus.includes(selectedStatus);
+    
+            if (matchesSearch && matchesStatus) {
+                card.style.display = "block";
+            } else {
+                card.style.display = "none";
+            }
+        });
+    }
+    
+    // ✅ You must ADD these 4 lines after defining the function:
+    const searchInput = document.getElementById("search-input");
+    const statusFilter = document.getElementById("status-filter");
+    const proposalList = document.getElementById("proposal-list");
+    
+    searchInput.addEventListener("input", filterProposals);
+    statusFilter.addEventListener("change", filterProposals);
+    
+
 });
