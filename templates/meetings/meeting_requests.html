@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Meetings Requests{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/meeting/schedule_meeting_student.css' %}">
+<link rel="stylesheet" href="{% static 'css/meeting/meeting_requests.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="outer-wrapper">
+    <div class="container">
+        <h2>📥 Meeting Requests</h2>
+        <p>This page shows meetings that have been requested by you or by others.</p>
+
+        {% if user.is_staff %}
+            <!-- ========================= TEACHER VIEW ========================= -->
+            <div class="meeting-section">
+                <h3>Meetings You Requested</h3>
+                {% if user_meeting_requests %}
+                    <ul class="meeting-list">
+                        {% for meeting in user_meeting_requests %}
+                            <li class="meeting-card">
+                                <p><strong>Requested By:</strong> {{ meeting.requested_by.username }}</p>
+                                <p><strong>Meeting Time:</strong> {{ meeting.start_datetime }}</p>
+                                <p><strong>Project:</strong> 
+                                    {% if meeting.project %}
+                                        {{ meeting.project.name }}
+                                    {% else %}
+                                        <em>No Project</em>
+                                    {% endif %}
+                                </p>
+                                <a href="{% url 'delete-meeting' meeting.meeting_id %}" class="btn btn-danger">🗑 Delete</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No meetings you requested at the moment.</p>
+                {% endif %}
+            </div>
+
+            <div class="meeting-section">
+                <h3>Meetings Requested By Students</h3>
+                {% if received_meeting_requests %}
+                    <ul class="meeting-list">
+                        {% for meeting in received_meeting_requests %}
+                            <li class="meeting-card">
+                                <p><strong>Requested By:</strong> {{ meeting.requested_by.username }}</p>
+                                <p><strong>Meeting Time:</strong> {{ meeting.start_datetime }}</p>
+                                <p><strong>Project:</strong> 
+                                    {% if meeting.project %}
+                                        {{ meeting.project.name }}
+                                    {% else %}
+                                        <em>No Project</em>
+                                    {% endif %}
+                                </p>
+                                <a href="{% url 'accept-meeting' meeting.meeting_id %}" class="btn btn-success">✅ Accept</a>
+                                <a href="{% url 'decline-meeting' meeting.meeting_id %}" class="btn btn-danger">❌ Decline</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No meetings requested by students at the moment.</p>
+                {% endif %}
+            </div>
+
+        {% else %}
+            <!-- ========================= STUDENT VIEW ========================= -->
+            <div class="meeting-section">
+                <h3>Your Meeting Requests</h3>
+                {% if user_meeting_requests %}
+                    <ul class="meeting-list">
+                        {% for meeting in user_meeting_requests %}
+                            <li class="meeting-card">
+                                <p><strong>Teacher:</strong> {{ meeting.teacher.username }}</p>
+                                <p><strong>Meeting Time:</strong> {{ meeting.start_datetime }}</p>
+                                <p><strong>Project:</strong> 
+                                    {% if meeting.project %}
+                                        {{ meeting.project.name }}
+                                    {% else %}
+                                        <em>No Project</em>
+                                    {% endif %}
+                                </p>
+                                <a href="{% url 'delete-meeting' meeting.meeting_id %}" class="btn btn-danger">🗑 Delete</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No meetings you requested at the moment.</p>
+                {% endif %}
+            </div>
+
+            <div class="meeting-section">
+                <h3>Meetings Related to Your Project</h3>
+                {% if received_meeting_requests %}
+                    <ul class="meeting-list">
+                        {% for meeting in received_meeting_requests %}
+                            <li class="meeting-card">
+                                <p><strong>Requested By:</strong> {{ meeting.requested_by.username }}</p>
+                                <p><strong>Teacher:</strong> {{ meeting.teacher.username }}</p>
+                                <p><strong>Meeting Time:</strong> {{ meeting.start_datetime }}</p>
+                                <p><strong>Project:</strong> 
+                                    {% if meeting.project %}
+                                        {{ meeting.project.name }}
+                                    {% else %}
+                                        <em>No Project</em>
+                                    {% endif %}
+                                </p>
+                                <a href="{% url 'accept-meeting' meeting.meeting_id %}" class="btn btn-success">✅ Accept</a>
+                                <a href="{% url 'decline-meeting' meeting.meeting_id %}" class="btn btn-danger">❌ Decline</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No meetings related to your project at the moment.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

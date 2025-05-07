@@ -38,8 +38,14 @@ class Project(models.Model):
     proposal = models.OneToOneField(ProjectProposal, on_delete=models.SET_NULL, blank=True, null=True, related_name='accepted_project')
     supervisor = models.ForeignKey('users.Supervisor', on_delete=models.SET_NULL, null=True, blank=True, related_name='projects')
     coordinator = models.ForeignKey('users.Coordinator', on_delete=models.SET_NULL, null=True, blank=True, related_name='projects')
+    
+    def __str__(self):
+        return self.name
 
 
+# =============================
+# Project Plan Model
+# =============================
 class ProjectPlan(models.Model):
     project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name='plan')
     completion_status = models.IntegerField(blank=True, null=True)

@@ -21,8 +21,8 @@
                 <div class="form-card">
                     <h3>Title: {{ form.name }}</h3>
                     <div class="form-actions">
-                        <a href="{% url 'form:evaluation_form_detail' form.id %}" class="btn view-btn btn-edit">🔍 View</a>
-                        <a href="{% url 'form:edit_evaluation_form' form.id %}" class="btn edit-btn btn-delete">✏️ Edit</a>
+                        <a href="{% url 'form:evaluation_form_detail' form.id %}" class="btn view-btn">🔍 View</a>
+                        <a href="{% url 'form:duplicate_evaluation_form' form.id %}" class="btn duplicate-btn">🔄 Duplicate</a>
                     </div>
                 </div>
             {% endfor %}

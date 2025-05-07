@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", function () {
             email: document.getElementById("coord-email").value,
             phone_number: document.getElementById("coord-phone").value,
             password: document.getElementById("coord-password").value,
-            coord_id: document.getElementById("coord-id").value,
+            //coord_id: document.getElementById("coord-id").value,
             role: "coordinator",
             department_id: getDepartmentValue("coord-department"),
         };

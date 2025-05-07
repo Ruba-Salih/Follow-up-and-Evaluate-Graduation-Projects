@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+{% endblock %} 
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+    <h1 class="page-title">🔔 Notifications</h1>
+
+    {% if notifications %}
+        <div class="notification-list">
+            {% for notification in notifications %}
+                <div class="notification-card {% if not notification.read %}unread{% endif %}">
+                    <div class="notification-header">
+                        <span class="status-label">
+                            {% if notification.read %}
+                                <strong class="text-muted">(Read)</strong>
+                            {% else %}
+                                <strong class="text-success">(New)</strong>
+                            {% endif %}
+                        </span>
+                        <small class="notification-time">
+                            Sent at: {{ notification.sent_at|date:"d M Y H:i" }}
+                        </small>
+                    </div>
+                    <div class="notification-message">
+                        <p>{{ notification.message }}</p>
+                    </div>
+                    {% if not notification.read %}
+                        <div class="mark-read">
+                            <button class="btn btn-sm btn-success mark-read-btn"
+                                    data-id="{{ notification.id }}">
+                                Mark as Read
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No notifications yet!
+        </div>
+    {% endif %}
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll('.mark-read-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const notificationId = this.getAttribute('data-id');
+    
+                fetch(`/notifications/read/${notificationId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const card = this.closest('.notification-card');
+                        card.classList.remove('unread');
+                        card.querySelector('.status-label').innerHTML =
+                            '<strong class="text-muted">(Read)</strong>';
+                        this.remove();  // remove the button
+                    } else {
+                        alert("Failed to mark as read.");
+                    }
+                });
+            });
+        });
+    });
+    </script>
+    
+{% endblock %}

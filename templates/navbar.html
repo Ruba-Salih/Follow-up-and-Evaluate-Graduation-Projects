@@ -15,29 +15,44 @@
             {% if user.admin %}
                 <!-- Navbar for Admin -->
                 <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
-                <li><a href="#">{% trans "Notifications" %}</a></li>
+                <li><a href="{% url 'notification-list' %}">{% trans "Notifications" %}</a></li>
                 <li><a href="{% url 'coordinator-dashboard' %}">{% trans "Dashboard" %}</a></li>
                 <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
             {% elif user.coordinator %}
                 <!-- Navbar for Coordinator -->
                 <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
-                <li><a href="#">{% trans "Notifications" %}</a></li>
+                <li><a href="{% url 'notification-list' %}">{% trans "Notifications" %}</a></li>
                 <li><a href="{% url 'coordinator-dashboard' %}">{% trans "Dashboard" %}</a></li>
                 <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
             {% elif user.student %}
                 <!-- Navbar for Student -->
                 <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
-                <li><a href="#">{% trans "Notifications" %}</a></li>
+                <li class="notification-link">
+                    <a href="{% url 'notification-list' %}" class="notification-anchor">
+                        {% trans Notifications %}
+                      {% if unread_notifications_count > 0 %}
+                        <span class="notification-badge">{{ unread_notifications_count }}</span>
+                      {% endif %}
+                    </a>
+                </li>
                 <li><a href="#">{% trans "Dashboard" %}</a></li>
                 <li><a href="#">{% trans "Grades" %}</a></li>
                 <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
             {% else %}
                 <!-- Navbar for Teacher -->
+                <li><a href="{% url 'logout' %}">Logout</a></li>
                 <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
-                <li><a href="#">{% trans "Notifications" %}</a></li>
+                <li class="notification-link">
+                    <a href="{% url 'notification-list' %}" class="notification-anchor">
+                        {% trans Notifications %}
+                      {% if unread_notifications_count > 0 %}
+                        <span class="notification-badge">{{ unread_notifications_count }}</span>
+                      {% endif %}
+                    </a>
+                </li>
                 <li><a href="#">{% trans "Dashboard" %}</a></li>
                 <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 

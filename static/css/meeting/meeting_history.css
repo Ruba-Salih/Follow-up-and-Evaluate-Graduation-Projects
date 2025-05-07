@@ -1,0 +1,173 @@
+/* Page Title */
+.page-title {
+    color: #a63026;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+    font-weight: bold;
+}
+
+/* Meeting History Grid */
+.meeting-history {
+    display: grid;
+    gap: 30px;
+}
+.meeting-actions {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #ddd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    margin-top: 30px;
+    margin-bottom: 40px;
+}
+/* Meeting Card */
+.meeting-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    padding: 25px;
+    border-left: 6px solid #a63026;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.meeting-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.meeting-card p {
+    margin: 8px 0;
+    font-size: 15px;
+    color: #333;
+}
+
+/* Section Headings inside cards */
+.meeting-actions h4,
+.attendance-status h4,
+.uploaded-files h4 {
+    color: #a63026;
+    font-size: 16px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+/* Recommendation & Report Box */
+.recommendation-box {
+    background-color: #ece8e8;
+    border-left: 5px solid #a63026;
+    padding: 12px 16px;
+    margin-top: 15px;
+    border-radius: 8px;
+}
+
+/* Uploaded Files */
+.uploaded-files {
+    margin-top: 20px;
+    background: #fcfcfc;
+    padding: 15px 18px;
+    border-radius: 10px;
+    border: 1px solid #eee;
+}
+
+.file-entry {
+    border-bottom: 1px dashed #ddd;
+    padding: 10px 0;
+}
+
+.file-entry:last-child {
+    border-bottom: none;
+}
+
+.file-entry p {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+/* Forms & Inputs */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 6px;
+    color: #444;
+}
+
+.form-control,
+input[type="file"],
+textarea {
+    width: 100%;
+    padding: 8px 10px;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+/* Buttons */
+button[type="submit"],
+button[type="button"] {
+    background-color: #a63026;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+    margin-right: 10px;
+}
+
+button[type="submit"]:hover,
+button[type="button"]:hover {
+    background-color: #861e1a;
+}
+
+.cancel-report-btn {
+    background-color: #999;
+}
+
+.cancel-report-btn:hover {
+    background-color: #777;
+}
+
+/* Update Form Section */
+.update-form {
+    background-color: #f7f7f7;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-top: 20px;
+}
+
+a {
+    color: #a63026;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease-in-out, text-decoration 0.2s ease-in-out;
+}
+
+a:hover {
+    color: #861e1a;
+    text-decoration: underline;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .meeting-card {
+        padding: 20px 15px;
+    }
+
+    .page-title {
+        font-size: 1.8em;
+    }
+
+    button {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+

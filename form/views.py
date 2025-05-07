@@ -4,7 +4,8 @@ from .serializers import EvaluationFormSerializer
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from project.models import Role  
+from project.models import Role 
+from django.utils.timezone import now
 
 def evaluation_form_list(request):
     """List all evaluation forms."""
@@ -74,3 +75,38 @@ def delete_subcategory(request, subcategory_id):
         subcategory.delete()
         return JsonResponse({'success': True, 'message': 'Subcategory deleted successfully!'})
     return JsonResponse({'success': False, 'message': 'Invalid request'}, status=400)
+
+
+@csrf_exempt
+def duplicate_evaluation_form(request, form_id):
+    # Logic for duplicating the evaluation form
+    original_form = EvaluationForm.objects.get(id=form_id)
+
+    # Duplicate the form
+    new_form = EvaluationForm.objects.create(
+        name=f"Copy of {original_form.name}",
+        target_role=original_form.target_role,
+        form_weight=original_form.form_weight,
+        created_at=now(),  # Use now() to set the created_at field
+    )
+    
+    # Duplicate main categories and subcategories
+    for main_category in original_form.main_categories.all():
+        new_main_category = MainCategory.objects.create(
+            evaluation_form=new_form,
+            number=main_category.number,
+            text=main_category.text,
+            weight=main_category.weight,
+            grade_type=main_category.grade_type,
+        )
+        
+        for subcategory in main_category.sub_categories.all():
+            SubCategory.objects.create(
+                main_category=new_main_category,
+                text=subcategory.text
+            )
+    
+    # Duplicate the coordinators using set()
+    new_form.coordinators.set(original_form.coordinators.all())
+    
+    return JsonResponse({'message': 'Form duplicated successfully!'}, status=201)

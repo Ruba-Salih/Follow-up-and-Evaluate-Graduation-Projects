@@ -46,8 +46,10 @@ INSTALLED_APPS = [
     'notifications',
     'form',
     'grades',
+    'feedbacks',
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_extensions',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -92,6 +94,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'notifications.context_processors.unread_notifications_count',
             ],
         },
     },
@@ -99,7 +102,31 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'graduation_projects_management.wsgi.application'
 
-
+# settings.py
+""" 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        '': {  # Root logger
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+ """
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
@@ -153,6 +180,8 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
