@@ -1000,6 +1000,42 @@ def available_projects_view(request):
 
     return render(request, "project/available_projects.html", context)
 
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.db.models import Prefetch
+
+@login_required
+def teacher_view_project(request, project_id):
+    user = request.user
+    if not is_teacher(user):
+        return redirect("home")
+
+    project = get_object_or_404(
+        Project.objects.prefetch_related(
+            "student_memberships__student",
+            Prefetch("memberships", queryset=ProjectMembership.objects.select_related("user", "role")),
+        ),
+        pk=project_id
+    )
+
+    # Determine teacher's role in this project
+    my_membership = project.memberships.filter(user=user).first()
+    my_role = my_membership.role.name if my_membership else "N/A"
+
+    student_members = [m.student for m in project.student_memberships.all()]
+    teacher_members = [{
+        "name": m.user.username,
+        "role": m.role.name
+    } for m in project.memberships.exclude(user=user)]
+
+    context = {
+        "project": project,
+        "my_role": my_role,
+        "student_members": student_members,
+        "teacher_members": teacher_members,
+    }
+    return render(request, "project/teacher_view_project.html", context)
+
 
 class AvailableProjectActionView(APIView):
     permission_classes = [IsAuthenticated]

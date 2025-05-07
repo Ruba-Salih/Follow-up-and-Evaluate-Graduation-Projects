@@ -1,0 +1,81 @@
+/* ===== Container ===== */
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 25px;
+    background-color: #fdfdfd;
+    border-radius: 10px;
+}
+
+/* ===== Heading ===== */
+h2 {
+    text-align: center;
+    color: #333;
+    font-size: 2rem;
+    margin-bottom: 35px;
+}
+
+/* ===== Project Overview Card ===== */
+.project-card {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.07);
+    margin-bottom: 30px;
+    transition: transform 0.2s ease;
+    line-height: 1.6;
+}
+
+.project-card:hover {
+    transform: translateY(-2px);
+}
+
+/* ===== Project Title ===== */
+.project-card h4 {
+    font-size: 24px;
+    color: #a63026;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* ===== Basic Info Styling ===== */
+.project-card p {
+    margin: 10px 0;
+    font-size: 16px;
+    color: #444;
+}
+
+.project-card strong {
+    color: #333;
+}
+
+/* ===== Section Headings ===== */
+.project-card h5 {
+    margin-top: 30px;
+    font-size: 1.2rem;
+    color: #a63026;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 6px;
+}
+
+/* ===== Lists ===== */
+.project-card ul {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 15px;
+}
+
+.project-card ul li {
+    background-color: #f9f9f9;
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    border-left: 4px solid #a63026;
+    font-size: 15px;
+    text-align: left;
+}
+
+.project-card em {
+    font-style: italic;
+    color: #555;
+}

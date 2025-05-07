@@ -1,4 +1,29 @@
 document.addEventListener("DOMContentLoaded", () => {
+
+
+    const searchInput = document.getElementById("search-input");
+    const roleFilter = document.getElementById("role-filter");
+    const projectCards = document.querySelectorAll(".project-card");
+
+    function applyFilters() {
+        const query = searchInput.value.toLowerCase();
+        const role = roleFilter.value.toLowerCase();
+
+        projectCards.forEach(card => {
+            const name = card.dataset.name;
+            const myRole = card.dataset.role;
+
+            const matchesName = name.includes(query);
+            const matchesRole = role === "" || myRole.includes(role);
+
+            card.style.display = (matchesName && matchesRole) ? "" : "none";
+
+        });
+    }
+
+    searchInput.addEventListener("input", applyFilters);
+    roleFilter.addEventListener("change", applyFilters);
+
     // Handle "View" button click - redirect to tracking page
     document.querySelectorAll(".view-project-btn").forEach(button => {
         button.addEventListener("click", () => {

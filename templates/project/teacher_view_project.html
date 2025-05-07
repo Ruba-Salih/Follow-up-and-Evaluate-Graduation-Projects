@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}View Project{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/project/teacher_view_project.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container">
+    <h2>📁 Project Details</h2>
+
+    <div class="project-card">
+        <h4>{{ project.name }}</h4>
+        <p><strong>Field:</strong> {{ project.field.name }}</p>
+        <p><strong>Department:</strong> {{ project.department.name }}</p>
+        <p><strong>Your Role:</strong> {{ my_role }}</p>
+
+        <hr>
+
+        <h5>👥 Student Members</h5>
+        {% if student_members %}
+            <ul>
+                {% for student in student_members %}
+                    <li>{{ student.username }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No students assigned yet.</p>
+        {% endif %}
+
+        <h5>🎓 Other Teachers</h5>
+        {% if teacher_members %}
+            <ul>
+                {% for member in teacher_members %}
+                    <li>{{ member.name }} — <em>{{ member.role }}</em></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No other teachers assigned.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
