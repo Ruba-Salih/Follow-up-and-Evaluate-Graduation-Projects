@@ -3,6 +3,9 @@ from .models import (
     ProjectProposal,
     Project,
     ProjectPlan,
+    ProjectGoal,
+    ProjectTask,
+    ProjectLog,
     ProjectMembership,
     StudentProjectMembership,
     AnnualGrade,
@@ -27,9 +30,31 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(ProjectPlan)
 class ProjectPlanAdmin(admin.ModelAdmin):
-    list_display = ('project', 'duration')
-    list_filter = ('duration',)
+    list_display = ('project', 'completion_status')
+    list_filter = ('completion_status',)
     search_fields = ('project__name',)
+
+
+@admin.register(ProjectGoal)
+class ProjectGoalAdmin(admin.ModelAdmin):
+    list_display = ('goal', 'project', 'duration', 'created_at')
+    list_filter = ('project',)
+    search_fields = ('goal', 'project__name')
+    ordering = ('-created_at',)
+
+
+@admin.register(ProjectTask)
+class ProjectTaskAdmin(admin.ModelAdmin):
+    list_display = ('name', 'project', 'assign_to', 'remaining_tasks', 'task_status', 'deadline_days')
+    list_filter = ('task_status', 'project', 'assign_to')
+    search_fields = ('name', 'project__name', 'assign_to__username')
+
+
+@admin.register(ProjectLog)
+class ProjectLogAdmin(admin.ModelAdmin):
+    list_display = ('project', 'user', 'log_type', 'timestamp')
+    list_filter = ('log_type', 'timestamp', 'project')
+    search_fields = ('message', 'project__name', 'user__username')
 
 
 @admin.register(ProjectMembership)
@@ -42,7 +67,7 @@ class ProjectMembershipAdmin(admin.ModelAdmin):
 @admin.register(StudentProjectMembership)
 class StudentProjectMembershipAdmin(admin.ModelAdmin):
     list_display = ('student', 'project', 'group_id')
-    list_filter = ('project',)
+    list_filter = ('project', 'proposal')
     search_fields = ('student__username', 'project__name')
 
 

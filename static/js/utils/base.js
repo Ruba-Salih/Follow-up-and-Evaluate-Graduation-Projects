@@ -7,10 +7,11 @@ window.showAlert = function (message, type = "success", duration = 0, onClose = 
         console.warn("⚠️ Alert container not found.");
         return;
     }
+    // success  warning  error
 
     alertMessage.textContent = message;
 
-    alertBox.classList.remove("success", "error", "warning", "hidden");
+    alertBox.className = "custom-alert";
     alertBox.classList.add(type);
     alertBox.classList.remove("hidden");
 
@@ -31,8 +32,6 @@ window.showAlert = function (message, type = "success", duration = 0, onClose = 
         closeBtn.onclick = hideAlert;
     }
 };
-
-
 window.confirmAction = function (message) {
     return new Promise((resolve) => {
         const confirmBox = document.getElementById("global-confirm");
@@ -43,16 +42,20 @@ window.confirmAction = function (message) {
         confirmMessage.textContent = message;
         confirmBox.classList.remove("hidden");
 
-        // Cleanup old listeners
+        // Replace Yes button to remove old listeners
         const newYesBtn = yesBtn.cloneNode(true);
         yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+
+        // Replace No button too!
+        const newNoBtn = noBtn.cloneNode(true);
+        noBtn.parentNode.replaceChild(newNoBtn, noBtn);
 
         newYesBtn.addEventListener("click", () => {
             confirmBox.classList.add("hidden");
             resolve(true);
         });
 
-        noBtn.addEventListener("click", () => {
+        newNoBtn.addEventListener("click", () => {
             confirmBox.classList.add("hidden");
             resolve(false);
         });

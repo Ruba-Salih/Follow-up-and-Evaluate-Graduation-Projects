@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Manage Proposals{% endblock %}
+{% block title %}{% trans "Add Proposals" %}{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/project/add_proposals.css' %}">
@@ -11,8 +11,18 @@
 {% include "navbar.html" %}
 
 <div class="container">
-    <h2>📝 Manage Proposals</h2>
-    <button id="create-proposal-btn" class="btn btn-primary">+ New Proposal</button>
+    <h2>📝 {% trans "Manage Proposals" %}</h2>
+    <button id="create-proposal-btn" class="btn btn-primary">+ {% trans "New Proposal" %}</button>
+    <div class="search-bar">
+        <input type="text" id="search-input" placeholder="{% trans '🔍 Search by title, field, or date...' %}" style="flex: 1; padding: 10px; font-size: 1rem;">
+        
+        <select id="status-filter">
+            <option value="">{% trans "All Statuses" %}</option>
+            <option value="pending">{% trans "Pending" %}</option>
+            <option value="accepted">{% trans "Accepted" %}</option>
+            <option value="rejected">{% trans "Rejected" %}</option>
+        </select>
+    </div>
 
     <div id="proposal-list">
         {% for proposal in proposals %}
@@ -20,26 +30,33 @@
             <div class="proposal-header">
                 <h4>{{ proposal.title }}</h4>
                 <div class="status-group">
+                    {% if not is_teacher %}
                     <span class="status {{ proposal.teacher_status|default:"pending" }}">
-                        Teacher: {{ proposal.get_teacher_status_display }}
+                        {% blocktrans with status=proposal.get_teacher_status_display|default:"Pending" %}
+                            Teacher: {{ status }}
+                        {% endblocktrans %}
                     </span>
+                    {% endif %}
                     <span class="status {{ proposal.coordinator_status|default:"pending" }}">
-                        Coordinator: {{ proposal.get_coordinator_status_display }}
+                        {% blocktrans with status=proposal.get_coordinator_status_display|default:"Pending" %}
+                            Coordinator: {{ status }}
+                        {% endblocktrans %}
                     </span>
                 </div>
+                
             </div>
-            <p><strong>Field:</strong> {{ proposal.field }}</p>
-            <p><strong>Submitted:</strong> {{ proposal.created_at|date:"M d, Y" }}</p>
+            <p><strong>{% trans "Field" %}:</strong> {{ proposal.field }}</p>
+            <p><strong>{% trans "Submitted" %}:</strong> {{ proposal.created_at|date:"M d, Y" }}</p>
             {% if proposal.updated_at and proposal.updated_at != proposal.created_at %}
-                <p><strong>Updated:</strong> {{ proposal.updated_at|date:"M d, Y H:i" }}</p>
+                <p><strong>{% trans "Updated" %}:</strong> {{ proposal.updated_at|date:"M d, Y H:i" }}</p>
             {% endif %}
             <div class="card-buttons">
-                <button class="view-btn btn-edit" data-id="{{ proposal.id }}">🔍 View Details</button>
-                <button class="delete-btn btn-delete" data-id="{{ proposal.id }}">🗑️ Delete</button>
+                <button class="view-btn btn-edit" data-id="{{ proposal.id }}">🔍 {% trans "View Details" %}</button>
+                <button class="delete-btn btn-delete" data-id="{{ proposal.id }}">🗑️ {% trans "Delete" %}</button>
             </div>
         </div>
         {% empty %}
-            <p>No proposals submitted yet.</p>
+            <p>{% trans "No proposals submitted yet." %}</p>
         {% endfor %}
     </div>
 </div>
@@ -48,56 +65,61 @@
 <div id="proposal-modal" class="modal hidden">
     <div class="modal-content">
         <span class="close-btn">&times;</span>
-        <h3 id="modal-title">Proposal Details</h3>
+        <h3 id="modal-title">{% trans "Proposal Details" %}</h3>
 
         <form id="proposal-form" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" id="proposal-id">
 
-            <label>Title:</label>
+            <label>{% trans "Title" %}:</label>
             <input type="text" id="title" required>
 
-            <label>Field:</label>
+            <label>{% trans "Field" %}:</label>
             <input type="text" id="field" required>
 
-            <label>Description:</label>
+            <label>{% trans "Description" %}:</label>
             <textarea id="description" rows="4"></textarea>
 
-            <label>Team Members Count:</label>
+            <label>{% trans "Team Members Count" %}:</label>
             <input type="number" id="team_member_count">
 
+            <label for="duration">{% trans "Project Duration (weeks)" %}:</label>
+            <input type="number" name="duration" id="duration" required>
+
             {% if is_teacher %}
-            <label>Department:</label>
+            <label>{% trans "Department" %}:</label>
             <select id="department">
-                <option value="">-- Select Department --</option>
+                <option value="">{% trans "-- Select Department --" %}</option>
                 {% for dept in departments %}
                     <option value="{{ dept.id }}">{{ dept.name }}</option>
                 {% endfor %}
             </select>
             {% endif %}
 
-            <label>Proposed To (optional):</label>
+            {% if not is_teacher %}
+            <label>{% trans "Proposed To (optional)" %}:</label>
             <select id="proposed_to">
-                <option value="">-- Select Recipient --</option>
+                <option value="">{% trans "-- Select Recipient --" %}</option>
             </select>
+            {% endif %}
 
-            <label>Choose Team Members (optional):</label>
+            <label>{% trans "Choose Team Members (optional)" %}:</label>
             <div id="team-member-checkboxes" class="team-member-list"></div>
 
-            <label>Upload File (optional):</label>
+            <label>{% trans "Upload File (optional)" %}:</label>
             <input type="file" id="attached_file">
 
-            <label>Additional Comment (optional):</label>
+            <label>{% trans "Additional Comment (optional)" %}:</label>
             <textarea id="additional_comment" rows="3"></textarea>
 
             <!-- Feedback Display Section -->
             <div id="feedback-section" class="hidden" style="margin-top: 20px;">
-                <label><strong>Teacher Feedback:</strong></label>
+                <label><strong>{% trans "Teacher Feedback" %}:</strong></label>
                 <p id="feedback-content" style="margin-top: 5px; font-style: italic; color: #a63026;"></p>
             </div>
 
             <div class="form-buttons">
-                <button type="submit" class="btn save btn-primary">💾 Save</button>
+                <button type="submit" class="btn save btn-primary">💾 {% trans "Save" %}</button>
             </div>
         </form>
     </div>

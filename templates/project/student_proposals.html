@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Manage Student Proposals{% endblock %}
+{% block title %}{% trans "Manage Student Proposals" %}{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/project/student_proposals.css' %}">
@@ -11,7 +11,18 @@
 {% include "navbar.html" %}
 
 <div class="container">
-    <h2>📋 Student Proposals Sent to You</h2>
+    <h2>📋 {% trans "Student Proposals Sent to You" %}</h2>    
+
+    <div class="filter-search-bar">
+        <input type="text" id="search-input" placeholder="{% trans '🔍 Search by title, field, student, or date...' %}">
+    
+        <select id="status-filter">
+            <option value="">{% trans "All Statuses" %}</option>
+            <option value="pending">{% trans "Pending" %}</option>
+            <option value="accepted">{% trans "Accepted" %}</option>
+            <option value="rejected">{% trans "Rejected" %}</option>
+        </select>
+    </div>
 
     {% if student_proposals %}
         <div id="student-proposal-list">
@@ -20,25 +31,27 @@
                 <div class="proposal-header">
                     <h4>{{ proposal.title }}</h4>
                     <div class="status-group">
-                        <span class="status {{ proposal.teacher_status|default:"pending" }}">
-                            Teacher: {{ proposal.get_teacher_status_display }}
-                        </span>
                         <span class="status {{ proposal.coordinator_status|default:"pending" }}">
-                            Coordinator: {{ proposal.get_coordinator_status_display }}
+                            {% blocktrans with status=proposal.get_coordinator_status_display %}Coordinator: {{ status }}{% endblocktrans %}
                         </span>
+                        
+                        <span class="status {{ proposal.teacher_status|default:"pending" }}">
+                            {% blocktrans with status=proposal.get_teacher_status_display %}Teacher: {{ status }}{% endblocktrans %}
+                        </span>
+                        
                     </div>
                 </div>
-                <p><strong>Field:</strong> {{ proposal.field }}</p>
-                <p><strong>Submitted by:</strong> {{ proposal.submitted_by.username }}</p>
-                <p><strong>Date:</strong> {{ proposal.created_at|date:"M d, Y" }}</p>
+                <p><strong>{% trans "Field" %}:</strong> {{ proposal.field }}</p>
+                <p><strong>{% trans "Submitted by" %}:</strong> {{ proposal.submitted_by.username }}</p>
+                <p><strong>{% trans "Date" %}:</strong> {{ proposal.created_at|date:"M d, Y" }}</p>
                 <div class="card-buttons">
-                    <button class="view-btn btn-edit" data-id="{{ proposal.id }}">🔍 View Details</button>
+                    <button class="view-btn btn-edit" data-id="{{ proposal.id }}">🔍 {% trans "View Details" %}</button>
                 </div>
             </div>
             {% endfor %}
         </div>
     {% else %}
-        <p>No student proposals have been submitted to you yet.</p>
+        <p>{% trans "No student proposals have been submitted to you yet." %}</p>
     {% endif %}
 </div>
 
@@ -46,35 +59,33 @@
 <div id="view-modal" class="modal hidden">
     <div class="modal-content">
         <span class="close-btn">&times;</span>
-        <h3>Proposal Details</h3>
+        <h3>{% trans "Proposal Details" %}</h3>
 
-        <!-- ✅ Move modal-body inside the modal-content cleanly -->
         <div id="modal-body">
-            <p><strong>Title:</strong> <span id="modal-title-text"></span></p>
-            <p><strong>Field:</strong> <span id="modal-field"></span></p>
-            <p><strong>Description:</strong> <span id="modal-description"></span></p>
-            <p><strong>Team Members Count:</strong> <span id="modal-team-count"></span></p>
-            <p><strong>Team Members:</strong> <span id="modal-team-members"></span></p>
-            <p><strong>Attached File:</strong> <span id="modal-file"></span></p>
-            <p><strong>Additional Comment:</strong> <span id="modal-comment"></span></p>
+            <p><strong>{% trans "Title" %}:</strong> <span id="modal-title-text"></span></p>
+            <p><strong>{% trans "Field" %}:</strong> <span id="modal-field"></span></p>
+            <p><strong>{% trans "Description" %}:</strong> <span id="modal-description"></span></p>
+            <p><strong>{% trans "Duration (months)" %}:</strong> <span id="modal-duration"></span></p>
+            <p><strong>{% trans "Team Members Count" %}:</strong> <span id="modal-team-count"></span></p>
+            <p><strong>{% trans "Team Members" %}:</strong> <span id="modal-team-members"></span></p>
+            <p><strong>{% trans "Attached File" %}:</strong> <span id="modal-file"></span></p>
+            <p><strong>{% trans "Additional Comment" %}:</strong> <span id="modal-comment"></span></p>
         </div>
 
         <hr>
 
-        <!-- ✅ Make sure this section stays inside modal-content -->
         <div id="feedback-section" style="margin-top: 20px;">
-            <label for="feedback-text">✉️ Feedback (optional):</label>
+            <label for="feedback-text">✉️ {% trans "Feedback (optional)" %}:</label>
             <textarea id="feedback-text" rows="3" style="width: 100%;"></textarea>
         </div>
 
         <div class="status-buttons" style="margin-top: 15px;">
-            <button class="btn btn-primary" id="accept-btn"> Accept</button>
-            <button class="btn btn-edit" id="edit-btn"> Request Edit</button>
-            <button class="btn btn-delete" id="reject-btn"> Reject</button>
+            <button class="btn btn-primary" id="accept-btn">{% trans "Accept" %}</button>
+            <button class="btn btn-edit" id="edit-btn">{% trans "Request Edit" %}</button>
+            <button class="btn btn-delete" id="reject-btn">{% trans "Reject" %}</button>
         </div>
     </div>
 </div>
-
 
 <script src="{% static 'js/project/student_proposals.js' %}"></script>
 {% endblock %}

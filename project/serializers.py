@@ -1,11 +1,15 @@
 from rest_framework import serializers
+from datetime import datetime
 from users.serializers import StudentSerializer
-
 from .models import (
     ProjectProposal, Project, ProjectPlan, ProjectMembership,
-    StudentProjectMembership, AnnualGrade, FeedbackExchange
+    ProjectGoal, ProjectTask, StudentProjectMembership, AnnualGrade,
+    FeedbackExchange
 )
-from users.models import Student, Role
+from users.models import Supervisor, Student, Role
+from university.models import Department
+from university.serializers import DepartmentSerializer
+from .services import assign_project_memberships
 
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -50,16 +54,100 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             instance.team_members.set(team_members)
         return instance
 
+def get_academic_year():
+    now = datetime.now()
+    return f"{now.year}-{now.year + 1}" if now.month >= 8 else f"{now.year - 1}-{now.year}"
+
+
+class MembershipReadSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username')
+    role = serializers.CharField(source='role.name')
+
+    class Meta:
+        model = ProjectMembership
+        fields = ['user_id', 'username', 'role', 'group_id']
+
 
 class ProjectSerializer(serializers.ModelSerializer):
+    department = DepartmentSerializer(read_only=True)
+    department_id = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.all(),
+        source='department',
+        write_only=True
+    )
+
+    supervisor_id = serializers.PrimaryKeyRelatedField(
+        queryset=Supervisor.objects.all(),
+        source='supervisor',
+        write_only=True,
+        required=False
+    )
+    supervisor = serializers.StringRelatedField(read_only=True)
+
+    student_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
+        required=False
+    )
+
+    memberships = serializers.ListField(
+        child=serializers.DictField(),
+        write_only=True,
+        required=False
+    )
+
+    members = MembershipReadSerializer(source='projectmembership_set', many=True, read_only=True)
+
     class Meta:
         model = Project
         fields = '__all__'
+        read_only_fields = ['academic_year']
+
+    def create(self, validated_data):
+        student_ids = validated_data.pop('student_ids', [])
+        memberships = validated_data.pop('memberships', [])
+
+        validated_data.setdefault("academic_year", get_academic_year())
+        project = Project.objects.create(**validated_data)
+
+        for sid in student_ids:
+            Student.objects.filter(id=sid).exists() and StudentProjectMembership.objects.create(student_id=sid, project=project)
+
+        assign_project_memberships(project, memberships)
+
+        return project
+
+    def update(self, instance, validated_data):
+        student_ids = validated_data.pop('student_ids', None)
+        memberships = validated_data.pop('memberships', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if student_ids is not None:
+            StudentProjectMembership.objects.filter(project=instance).delete()
+            for sid in student_ids:
+                Student.objects.filter(id=sid).exists() and StudentProjectMembership.objects.create(student_id=sid, project=instance)
+
+        if memberships is not None:
+            ProjectMembership.objects.filter(project=instance).delete()
+            assign_project_memberships(instance, memberships)
+
+        return instance
 
 
-class ProjectPlanSerializer(serializers.ModelSerializer):
+class ProjectGoalSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ProjectPlan
+        model = ProjectGoal
+        fields = '__all__'
+
+
+class ProjectTaskSerializer(serializers.ModelSerializer):
+    assign_to = StudentSerializer(read_only=True)
+
+    class Meta:
+        model = ProjectTask
         fields = '__all__'
 
 

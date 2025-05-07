@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Manage Proposals{% endblock %}
+{% block title %}{% trans "Manage Proposals" %}{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/project/teacher_manage_proposals.css' %}">
@@ -11,11 +11,11 @@
 {% include "navbar.html" %}
 
 <div class="container text-center">
-    <h2 class="mt-4">Manage Proposals</h2>
+    <h2 class="mt-4">{% trans "Manage Proposals" %}</h2>
 
     <div class="entry-buttons">
-        <a href="{% url 'student-proposals' %}">📋 View Student Proposals</a>
-        <a href="{% url 'manage-proposals' %}">📝 Submit Proposal</a>
+        <a href="{% url 'student-proposals' %}">📋 {% trans "View Student Proposals" %}</a>
+        <a href="{% url 'manage-proposals' %}">📝 {% trans "Submit Proposal" %}</a>
     </div>
 </div>
 {% endblock %}
