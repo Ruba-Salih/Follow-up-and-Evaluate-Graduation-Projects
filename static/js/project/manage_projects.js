@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const readerWrapper = document.getElementById("reader-wrapper");
     const judgeContainer = document.getElementById("judge-checkboxes");
 
-    const ROLE = { SUPERVISOR: "Supervisor", READER: "Reader", JUDGE: "Judge" };
+    const ROLE = { SUPERVISOR: "Supervisor", READER: "Reader", JUDGE: "Judgement Committee" };
     let studentsList = [], teachersList = [];
     let supervisorSelect = null;  // 🔥 Make supervisorSelect global
     let readerSelect = null;      // 🔥 Make readerSelect global

@@ -21,8 +21,9 @@
                 <div class="form-card">
                     <h3>Title: {{ form.name }}</h3>
                     <div class="form-actions">
-                        <a href="{% url 'form:evaluation_form_detail' form.id %}" class="btn view-btn">🔍 View</a>
-                        <a href="{% url 'form:duplicate_evaluation_form' form.id %}" class="btn duplicate-btn">🔄 Duplicate</a>
+                        <a href="{% url 'form:evaluation_form_detail' form.id %}" class="btn view-btn btn-primary">🔍 View</a>
+                        <button class="btn duplicate-btn btn-edit" data-url="{% url 'form:duplicate_evaluation_form' form.id %}">🔄 Duplicate</button>
+
                     </div>
                 </div>
             {% endfor %}
@@ -33,4 +34,36 @@
 
     
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll('.duplicate-btn').forEach(button => {
+            button.addEventListener('click', async function () {
+                const url = this.dataset.url;
+    
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
+                        }
+                    });
+    
+                    const result = await response.json();
+    
+                    if (result.message) {
+                        alert("✅ Form duplicated successfully.");
+                        location.reload();  // Refresh to show the new form
+                    } else {
+                        alert("❌ Duplication failed.");
+                    }
+                } catch (error) {
+                    console.error("Duplication error:", error);
+                    alert("An error occurred. Please try again.");
+                }
+            });
+        });
+    });
+    </script>
+    
 {% endblock %}
