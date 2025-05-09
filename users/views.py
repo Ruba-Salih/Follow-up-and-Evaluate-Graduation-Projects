@@ -103,7 +103,7 @@ class UserLoginAPIView(APIView):
             login(request, user)
             request.session.save()
 
-            if hasattr(user, "admin"):
+            if  user.is_superuser and user.is_staff:
                 home_url = "/admin-home/home/"
             elif hasattr(user, "coordinator"):
                 home_url = "/coordinator/home/"

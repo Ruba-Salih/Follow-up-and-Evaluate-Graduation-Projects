@@ -93,7 +93,7 @@
             </div>
 
             <div class="meeting-section">
-                <h3>Meetings Related to Your Project</h3>
+                <h3>Incoming Meeting Requests</h3>
                 {% if received_meeting_requests %}
                     <ul class="meeting-list">
                         {% for meeting in received_meeting_requests %}
@@ -114,7 +114,7 @@
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <p>No meetings related to your project at the moment.</p>
+                    <p>No incoming meetings requests at the moment.</p>
                 {% endif %}
             </div>
         {% endif %}

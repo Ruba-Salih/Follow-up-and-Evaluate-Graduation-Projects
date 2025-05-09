@@ -16,7 +16,7 @@ input:focus, select:focus {
 /* Global button styles */
 :root {
     --button-color: #a63026; /* Default blue */
-    --button-hover-color: #4d8080; /* Hover effect */
+    --button-hover-color: #681e18; /* Hover effect */
     --button-text-color: white; /* Text color */
     --button-disabled-color: #cccccc; /* Disabled button */
 }
@@ -104,8 +104,8 @@ button:disabled {
     animation: fadeIn 0.3s ease;
 }
 
-.custom-alert.success { background-color: #28a745; }
-.custom-alert.error { background-color: #dc3545; }
+.custom-alert.success { background-color: #198754; }
+.custom-alert.error { background-color: #c9303f; }
 .custom-alert.warning { background-color: #fdc51d; color: #212529; }
 
 .custom-alert.hidden { display: none; }

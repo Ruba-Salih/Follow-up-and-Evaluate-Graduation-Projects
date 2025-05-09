@@ -243,6 +243,9 @@ class ProjectProposalView(APIView):
         data = request.data.copy()
 
         if hasattr(user, 'student'):
+            if StudentProjectMembership.objects.filter(student=user.student, project__isnull=False).exists():
+                return Response({'detail': 'You are already assigned to a project and cannot submit a new proposal.'}, status=400)
+    
             if user.student.department:
                 data['department'] = user.student.department.id
             else:
@@ -327,69 +330,68 @@ class ProjectProposalView(APIView):
         elif not is_owner and not is_recipient:
             return Response({'detail': 'Unauthorized.'}, status=403)
 
-        data = request.data.copy()
+        data = request.data
 
+        # ✅ Safely convert duration
         duration = data.get('duration')
         if duration:
             try:
-                data['duration'] = int(duration)
+                proposal.duration = int(duration)
             except ValueError:
                 return Response({'detail': 'Duration must be an integer.'}, status=400)
 
-        proposed_to_id = data.get('proposed_to')
+        # ✅ Update simple fields
+        proposal.title = data.get("title", proposal.title)
+        proposal.description = data.get("description", proposal.description)
+        proposal.field = data.get("field", proposal.field)
+        proposal.additional_comment = data.get("additional_comment", proposal.additional_comment)
+        proposal.team_member_count = data.get("team_member_count", proposal.team_member_count)
 
-        User = get_user_model()
-        proposed_user = None
+        # ✅ Handle recipient (proposed_to)
+        proposed_to_id = data.get("proposed_to")
         if proposed_to_id:
+            User = get_user_model()
             try:
                 proposed_user = User.objects.get(id=proposed_to_id)
+                proposal.proposed_to = proposed_user
             except User.DoesNotExist:
                 pass
 
-        data['submitted_by'] = proposal.submitted_by.id
-        data['department'] = proposal.department.id if proposal.department else None
-
-        update_fields = {}
-
+        # ✅ Handle status updates
         if is_teacher(user):
             teacher_status = data.get("teacher_status")
             if teacher_status in dict(ProjectProposal.STATUS_CHOICES):
-                update_fields["teacher_status"] = teacher_status
+                proposal.teacher_status = teacher_status
         elif hasattr(user, "coordinator"):
             coordinator_status = data.get("coordinator_status")
             if coordinator_status in dict(ProjectProposal.STATUS_CHOICES):
-                update_fields["coordinator_status"] = coordinator_status
-        elif hasattr(user, "student"):
-            data.pop("teacher_status", None)
-            data.pop("coordinator_status", None)
+                proposal.coordinator_status = coordinator_status
 
-        team_members_ids = request.data.getlist("team_members_ids")
+        # ✅ Handle team members
+        team_members_ids = data.getlist("team_members_ids")
         if team_members_ids:
             proposal.team_members.set(team_members_ids)
 
+        # ✅ Rebuild membership table
         StudentProjectMembership.objects.filter(proposal=proposal).delete()
-
         if hasattr(proposal.submitted_by, "student"):
             StudentProjectMembership.objects.create(student=proposal.submitted_by.student, proposal=proposal)
 
         for sid in team_members_ids:
-            if not StudentProjectMembership.objects.filter(student_id=sid, proposal=proposal).exists():
-                StudentProjectMembership.objects.create(student_id=sid, proposal=proposal)
+            StudentProjectMembership.objects.get_or_create(student_id=sid, proposal=proposal)
 
-        for field, value in update_fields.items():
-            setattr(proposal, field, value)
+        # ✅ Optional file upload support
+        if 'attached_file' in request.FILES:
+            proposal.attached_file = request.FILES['attached_file']
 
-        if proposed_user:
-            proposal.proposed_to = proposed_user
-
+        # ✅ Enforce team size validation
         try:
-            validate_student_limit(request.data, is_proposal=True)
+            validate_student_limit(data, is_proposal=True)
         except ValidationError as ve:
             return Response(ve.detail, status=400)
 
         proposal.save()
         return Response(ProjectProposalSerializer(proposal).data)
-
 
     def delete(self, request, pk):
         user = request.user
@@ -1051,7 +1053,7 @@ class AvailableProjectActionView(APIView):
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data)
 
-    def post(self, request, project_id =None):
+    def post(self, request, project_id=None):
         user = request.user
         role_name = request.data.get("role")
 
@@ -1065,17 +1067,24 @@ class AvailableProjectActionView(APIView):
 
         # ✅ Student joins
         if hasattr(user, "student"):
-            if StudentProjectMembership.objects.filter(student=user, project=project).exists():
+            # ❌ Already in *any* project
+            if StudentProjectMembership.objects.filter(student=user.student).exists():
+                return Response({"detail": "You are already assigned to another project."}, status=400)
+
+            # ❌ Already in this project
+            if StudentProjectMembership.objects.filter(student=user.student, project=project).exists():
                 return Response({"detail": "Already joined this project."}, status=400)
 
+            # ❌ Project full
             current_count = StudentProjectMembership.objects.filter(project=project).count()
             if current_count >= project.team_member_count > 0:
                 return Response({"detail": "Project team is full."}, status=400)
 
+            # ✅ Join
             StudentProjectMembership.objects.create(student=user.student, project=project)
             return Response({"detail": "Successfully joined the project."})
 
-        # ✅ Teacher joins as role
+        # ✅ Teacher joins with a role
         elif is_teacher(user):
             if not role_name:
                 return Response({"detail": "Missing role for teacher."}, status=400)

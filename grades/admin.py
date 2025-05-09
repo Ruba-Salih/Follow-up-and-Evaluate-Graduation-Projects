@@ -31,22 +31,23 @@ class GradingAdmin(admin.ModelAdmin):
     # Filter by grade and project
     list_filter = ("student", "project")
 
-
 @admin.register(MemberGrade)
 class MemberGradeAdmin(admin.ModelAdmin):
-    # Display key information about the MemberGrade model
-    list_display = ("member", "grade", "grade__id")
-    # Allow searching by member username and grade ID
+    list_display = ("member", "grade", "get_grade_id")
     search_fields = ("member__username", "grade__id")
-    # Filter by member and grade
     list_filter = ("member", "grade")
+
+    def get_grade_id(self, obj):
+        return obj.grade.id
+    get_grade_id.short_description = "Grade ID"
 
 
 @admin.register(MemberIndividualGrade)
 class MemberIndividualGradeAdmin(admin.ModelAdmin):
-    # Display key information about the MemberIndividualGrade model
-    list_display = ("member", "individual_grade", "individual_grade__id")
-    # Allow searching by member username and individual grade ID
+    list_display = ("member", "individual_grade", "get_individual_grade_id")
     search_fields = ("member__username", "individual_grade__id")
-    # Filter by member and individual grade
     list_filter = ("member", "individual_grade")
+
+    def get_individual_grade_id(self, obj):
+        return obj.individual_grade.id
+    get_individual_grade_id.short_description = "Individual Grade ID"
