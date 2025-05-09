@@ -122,6 +122,7 @@ class TeacherAvailableTimeAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
+        print("HIT TEACHER AVAILABILITY ENDPOINT")
         teacher_id = request.query_params.get('teacher_id')
         selected_date = request.query_params.get('date')
 
@@ -129,7 +130,7 @@ class TeacherAvailableTimeAPIView(APIView):
             return Response({'error': 'teacher_id and date are required.'}, status=400)
 
         try:
-            teacher = User.objects.get(id=teacher_id, is_staff=True)
+            teacher = User.objects.get(id=teacher_id)
         except User.DoesNotExist:
             return Response({'error': 'Teacher not found'}, status=404)
 
@@ -214,17 +215,16 @@ class TeacherMeetingRequestsAPIView(APIView):
 
 class ScheduleMeetingView(View):
     def get(self, request):
-        # Check if the user is a teacher or a student
-        if request.user.is_staff:  # Teacher
-            # Fetch teacher's college and available projects
+        if is_teacher(request.user):
             college = request.user.department.college
             projects = Project.objects.filter(department__college=college)
+            return render(request, 'meetings/schedule_meeting_teacher.html', {'projects': projects})
 
-            return render(request, 'meetings/schedule_meeting_teacher.html', {'projects': projects})  # Render teacher-specific template
-        elif hasattr(request.user, 'student'):  # Student (assuming the user has a related `student` model)
-            return render(request, 'meetings/schedule_meeting_student.html')  # Render student-specific template
+        elif hasattr(request.user, 'student'):
+            return render(request, 'meetings/schedule_meeting_student.html')
+
         else:
-            return render(request, 'home.html')  # For other cases, render a home page
+            return redirect('landing-page')
 
 
 class ScheduleMeetingAPIView(APIView):
@@ -285,13 +285,12 @@ class ScheduleMeetingAPIView(APIView):
             except Project.DoesNotExist:
                 return Response({'error': 'Project not found.'}, status=404)
         else:
-            try:
-                student_membership = StudentProjectMembership.objects.get(student=request.user)
-                project = student_membership.project
-            except StudentProjectMembership.DoesNotExist:
+            membership = StudentProjectMembership.objects.filter(student=request.user, project__isnull=False).first()
+            if not membership:
                 return Response({'error': 'Student is not part of any project.'}, status=404)
+            project = membership.project
 
-        # Create meeting
+       # Create meeting
         meeting = Meeting.objects.create(
             requested_by=request.user,
             teacher=teacher, 
@@ -382,8 +381,8 @@ class UpcomingMeetingsView(APIView):
             ).order_by('start_datetime')
         else:
             # User is a student, fetch meetings related to the student's projects
-            student_memberships = StudentProjectMembership.objects.filter(student=request.user)
-            project_ids = [membership.project.id for membership in student_memberships]
+            student_memberships = StudentProjectMembership.objects.filter(student=request.user, project__isnull=False)
+            project_ids = student_memberships.values_list("project__id", flat=True)
 
             upcoming_meetings = Meeting.objects.filter(
                 project__id__in=project_ids,  # Filter meetings for projects the student is part of
@@ -420,8 +419,9 @@ def meeting_requests_page(request):
         student_requests = Meeting.objects.filter(requested_by=request.user, status='pending').order_by('-created_at')
         # Student's meetings received (related to their project)
         try:
-            student_membership = StudentProjectMembership.objects.get(student=request.user)
-            project_related_meetings = Meeting.objects.filter(project=student_membership.project, status='pending').exclude(requested_by=request.user).order_by('-created_at')
+            memberships = StudentProjectMembership.objects.filter(student=request.user, project__isnull=False)
+            project_ids = memberships.values_list("project_id", flat=True)
+            project_related_meetings = Meeting.objects.filter(project_id__in=project_ids, status='pending').exclude(requested_by=request.user).order_by('-created_at')
         except StudentProjectMembership.DoesNotExist:
             project_related_meetings = []
         
@@ -443,13 +443,13 @@ def meeting_history_page(request):
     else:  # Student
         # Fetch all meetings where the student is a member of the project, status is 'canceled' or 'completed', and exclude their own requests
         try:
-            student_membership = StudentProjectMembership.objects.get(student=request.user)
-            meetings = Meeting.objects.filter(project=student_membership.project, status__in=['cancelled', 'completed']).order_by('-created_at')
+            memberships = StudentProjectMembership.objects.filter(student=request.user, project__isnull=False)
+            projects = [m.project for m in memberships]
+            meetings = Meeting.objects.filter(project__in=projects, status__in=['cancelled', 'completed']).order_by('-created_at')
         except StudentProjectMembership.DoesNotExist:
             # If the student is not part of any project, return an empty list
             meetings = []
 
-    
     # Fetch the files related to each meeting
     meeting_files = {}
     for meeting in meetings:
@@ -469,7 +469,8 @@ def meeting_history_page(request):
     return render(request, 'meetings/meeting_history.html', {
         'meetings': meetings,
         'meeting_participants': meeting_participants,
-        'meeting_files': meeting_files  # Pass the files to the template
+        'meeting_files': meeting_files,
+        'is_teacher': is_teacher(request.user),
     })
 
 
@@ -681,8 +682,8 @@ def delete_meeting(request, meeting_id):
 
     else:  # Student
         try:
-            student_membership = StudentProjectMembership.objects.get(student=request.user)
-            if meeting.project == student_membership.project and meeting.requested_by == request.user:
+            memberships = StudentProjectMembership.objects.filter(student=request.user, project=meeting.project)
+            if memberships.exists() and meeting.requested_by == request.user:
                 # Only allow deletion if the meeting is related to the student's project and the student created it
                 meeting.delete()
                 return redirect('meeting-requests-page')

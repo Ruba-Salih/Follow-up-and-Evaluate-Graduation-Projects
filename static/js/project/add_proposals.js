@@ -203,8 +203,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else {
             const error = await response.json();
             console.error("Error submitting proposal:", error);
-            showAlert("Something went wrong.", 'error');
+        
+            const message =
+                error.detail ||
+                error.message ||
+                Object.values(error)[0] || // first field if it's a serializer error
+                "Something went wrong.";
+        
+            showAlert(message, 'error');
         }
+        
     });
 
     document.querySelectorAll(".proposal-card").forEach(card => {

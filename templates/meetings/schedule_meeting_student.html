@@ -5,6 +5,33 @@
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/meeting/schedule_meeting_student.css' %}">
+<style>
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+.modal-content {
+    background: #fff;
+    padding: 25px;
+    width: 90%;
+    max-width: 600px;
+    border-radius: 8px;
+    position: relative;
+}
+.close-btn {
+    position: absolute;
+    top: 10px; right: 15px;
+    font-size: 24px;
+    color: #888;
+    cursor: pointer;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -14,197 +41,213 @@
     <h2>Schedule a Meeting</h2>
 
     <div class="meeting-options" style="margin-bottom: 20px;">
-    <a href="{% url 'meeting-requests-page' %}" class="btn btn-warning" style="margin-right: 10px;">📥 Meeting Requests</a>
-    <a href="{% url 'meeting-history-page' %}" class="btn btn-info">📜 Meeting History</a>
+        <a href="{% url 'meeting-requests-page' %}" class="btn btn-warning me-2">📥 Meeting Requests</a>
+        <a href="{% url 'meeting-history-page' %}" class="btn btn-info">📜 Meeting History</a>
     </div>
+
+    <button class="btn btn-primary mb-4" onclick="openModal()">+ Add Meeting</button>
 
     <h2>Upcoming Meetings</h2>
     <div id="upcoming-meetings" class="upcoming-meetings">
         <p>Loading upcoming meetings...</p>
     </div>
+</div>
 
-    <form id="schedule-meeting-form">
-    {% csrf_token %}
+<!-- Modal -->
+<div class="modal" id="meeting-modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h4>New Meeting Request</h4>
+        <form id="schedule-meeting-form">
+            {% csrf_token %}
 
-    <label for="teacher">Select a Teacher:</label>
-    <select id="teacher" name="teacher">
-        <option value="">-- Select a Teacher --</option>
-    </select>
-    <br><br>
+            <label for="teacher">Select a Teacher:</label>
+            <select id="teacher" name="teacher" class="form-control">
+                <option value="">-- Select a Teacher --</option>
+            </select>
 
-    <label for="meeting-date">Choose Meeting Date:</label>
-    <input type="date" id="meeting-date" name="meeting_date" disabled>
-    <br><br>
+            <label for="meeting-date" class="mt-3">Meeting Date:</label>
+            <input type="date" id="meeting-date" name="meeting_date" class="form-control" disabled>
 
-    <label for="available-block">Available Time Blocks:</label>
-    <select id="available-block" name="available_block">
-        <option value="">-- Select a Time Block --</option>
-    </select>
-    <br><br>
+            <label for="available-block" class="mt-3">Available Time Blocks:</label>
+            <select id="available-block" name="available_block" class="form-control">
+                <option value="">-- Select a Time Block --</option>
+            </select>
 
-    <label for="specific-start-time">Enter Meeting Start Time (HH:MM AM/PM):</label>
-    <input type="text" id="specific-start-time" name="specific_start_time" placeholder="e.g., 4:00 PM" >
-    <br><br>
+            <label for="specific-start-time" class="mt-3">Start Time (HH:MM AM/PM):</label>
+            <input type="text" id="specific-start-time" name="specific_start_time" placeholder="e.g., 4:00 PM" class="form-control">
 
-    <label for="specific-end-time">Enter Meeting End Time (HH:MM AM/PM):</label>
-    <input type="text" id="specific-end-time" name="specific_end_time" placeholder="e.g., 5:00 PM" >
-    <br><br>
+            <label for="specific-end-time" class="mt-3">End Time (HH:MM AM/PM):</label>
+            <input type="text" id="specific-end-time" name="specific_end_time" placeholder="e.g., 5:00 PM" class="form-control">
 
-    <label for="comment">Special Requests (optional):</label>
-    <textarea name="comment" id="comment"></textarea>
-    <br><br>
+            <label for="comment" class="mt-3">Special Requests:</label>
+            <textarea name="comment" id="comment" class="form-control" rows="3"></textarea>
 
-    <button type="submit">Request Meeting</button>
-    </form>
+            <div id="error-message" class="text-danger mt-2" style="display:none;"></div>
+
+            <button type="submit" class="btn btn-success mt-3">Submit Request</button>
+        </form>
+    </div>
 </div>
 
 <script>
-    let selectedTeacherId = null;
-    let selectedSlotStartTime = null;
-    let selectedSlotEndTime = null;
+let selectedTeacherId = null;
 
-    function convertTo24HourFormat(time) {
-        time = time.trim().toUpperCase();
-        const timePattern = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/;
-        const match = time.match(timePattern);
-        if (!match) {
-            return time;
-        }
-        let hours = parseInt(match[1], 10);
-        const minutes = match[2];
-        const period = match[3];
-        if (period === 'PM' && hours !== 12) {
-            hours += 12;
-        }
-        if (period === 'AM' && hours === 12) {
-            hours = 0;
-        }
-        return `${hours.toString().padStart(2, '0')}:${minutes}`;
-    }
+function openModal() {
+    document.getElementById('meeting-modal').style.display = 'flex';
+    document.body.style.overflow = "hidden";
+}
+function closeModal() {
+    document.getElementById('meeting-modal').style.display = 'none';
+    document.body.style.overflow = "";
+}
 
-    function loadUpcomingMeetings() {
-        fetch('/api/upcoming-meetings/')
-            .then(response => response.json())
-            .then(data => {
-                const upcomingDiv = document.getElementById('upcoming-meetings');
-                upcomingDiv.innerHTML = '';
+function convertTo24HourFormat(time) {
+    time = time.trim().toUpperCase();
+    const match = time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
+    if (!match) return time;
+    let hours = parseInt(match[1], 10);
+    const minutes = match[2];
+    const period = match[3];
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+}
 
-                if (data.length === 0) {
-                    upcomingDiv.innerHTML = '<p>No upcoming meetings scheduled.</p>';
-                } else {
-                    const ul = document.createElement('ul');
-                    data.forEach(meeting => {
-                        const li = document.createElement('li');
-                        li.textContent = `${meeting.project} - ${meeting.start_datetime} with ${meeting.teacher}`;
-                        ul.appendChild(li);
-                    });
-                    upcomingDiv.appendChild(ul);
-                }
-            })
-            .catch(() => {
-                document.getElementById('upcoming-meetings').innerHTML = '<p>Error loading meetings.</p>';
-            });
-    }
-
-    document.getElementById('teacher').addEventListener('change', function () {
-        selectedTeacherId = this.value;
-        const dateInput = document.getElementById('meeting-date');
-        dateInput.disabled = !selectedTeacherId;
-        document.getElementById('available-block').innerHTML = '<option value="">-- Select a Time Block --</option>';
-    });
-
-    document.getElementById('meeting-date').addEventListener('change', function () {
-        const date = this.value;
-        if (!selectedTeacherId || !date) return;
-
-        fetch(`/api/teacher-available-times/?teacher_id=${selectedTeacherId}&date=${date}`)
-            .then(response => response.json())
-            .then(data => {
-                const blockSelect = document.getElementById('available-block');
-                blockSelect.innerHTML = '<option value="">-- Select a Time Block --</option>';
-
-                if (data.length === 0) {
-                    const opt = document.createElement('option');
-                    opt.textContent = 'No available time on this date';
-                    opt.disabled = true;
-                    blockSelect.appendChild(opt);
-                } else {
-                    data.forEach(slot => {
-                        const opt = document.createElement('option');
-                        opt.value = `${slot.start_time},${slot.end_time}`;
-                        opt.textContent = `${slot.start_time} – ${slot.end_time}`;
-                        blockSelect.appendChild(opt);
-                    });
-                }
-            });
-    });
-
-    document.getElementById('available-block').addEventListener('change', function () {
-        const [start, end] = this.value.split(',');
-        selectedSlotStartTime = start;
-        selectedSlotEndTime = end;
-        document.getElementById('specific-start-time').value = start;
-        document.getElementById('specific-end-time').value = end;
-    });
-
-    document.getElementById('schedule-meeting-form').addEventListener('submit', function (event) {
-        event.preventDefault();
-
-        const teacherId = document.getElementById('teacher').value;
-        const meetingDate = document.getElementById('meeting-date').value;
-        const startTimeRaw = document.getElementById('specific-start-time').value;
-        const endTimeRaw = document.getElementById('specific-end-time').value;
-        const comment = document.getElementById('comment').value;
-
-        if (!teacherId || !meetingDate || !startTimeRaw || !endTimeRaw) {
-            alert('Please fill in all required fields.');
-            return;
-        }
-        const payload = {
-            teacher_id: teacherId,
-            meeting_date: meetingDate,
-            slot_start_time: convertTo24HourFormat(selectedSlotStartTime),
-            slot_end_time: convertTo24HourFormat(selectedSlotEndTime),
-            meeting_start_time: convertTo24HourFormat(startTimeRaw),
-            meeting_end_time: convertTo24HourFormat(endTimeRaw),
-            comment: comment
-        };
-        console.log("Payload to be sent:", payload);
-        fetch('/api/schedule-meeting/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.error || 'Unknown error') });
-            }
-            return response.json();
-        })
-        .then(() => {
-            alert('Meeting successfully requested!');
-            location.reload();   
-            loadUpcomingMeetings();
-        })
-        .catch(err => alert('Error: ' + err.message));
-    });
-
-    // Load teacher list
-    fetch('/api/teachers/')
-        .then(response => response.json())
+function loadUpcomingMeetings() {
+    fetch('/api/upcoming-meetings/')
+        .then(res => res.json())
         .then(data => {
-            const select = document.getElementById('teacher');
-            data.results.forEach(teacher => {
-                const opt = document.createElement('option');
-                opt.value = teacher.id;
-                opt.textContent = teacher.name;
-                select.appendChild(opt);
+            const container = document.getElementById('upcoming-meetings');
+            container.innerHTML = '';
+
+            if (!data.length) {
+                container.innerHTML = '<p>No upcoming meetings scheduled.</p>';
+                return;
+            }
+
+            data.forEach(meeting => {
+                const start = new Date(meeting.start_datetime);
+                const end = new Date(meeting.end_datetime);
+
+                const dateStr = start.toLocaleDateString(undefined, {
+                    year: 'numeric', month: 'short', day: 'numeric'
+                });
+                const startTime = start.toLocaleTimeString(undefined, {
+                    hour: '2-digit', minute: '2-digit'
+                });
+                const endTime = end.toLocaleTimeString(undefined, {
+                    hour: '2-digit', minute: '2-digit'
+                });
+
+                const card = document.createElement('div');
+                card.className = 'meeting-card';
+                card.innerHTML = `
+                    <h5><strong>📁 Project:</strong> ${meeting.project}</h5>
+                    <p><strong>👨‍🏫 Teacher:</strong> ${meeting.teacher}</p>
+                    <p><strong>📅 Date:</strong> ${dateStr}</p>
+                    <p><strong>🕒 Time:</strong> ${startTime} → ${endTime}</p>
+                `;
+                container.appendChild(card);
             });
         });
+}
 
-    loadUpcomingMeetings();
+document.getElementById('teacher').addEventListener('change', function () {
+    selectedTeacherId = this.value;
+    document.getElementById('meeting-date').disabled = !selectedTeacherId;
+    document.getElementById('available-block').innerHTML = '<option value="">-- Select a Time Block --</option>';
+});
+
+document.getElementById('meeting-date').addEventListener('change', function () {
+    const date = this.value;
+    if (!selectedTeacherId || !date) return;
+
+    fetch(`/api/teacher-available-times/?teacher_id=${selectedTeacherId}&date=${date}`)
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById('available-block');
+            select.innerHTML = '<option value="">-- Select a Time Block --</option>';
+            if (!data.length) {
+                const opt = document.createElement('option');
+                opt.textContent = 'No available time on this date';
+                opt.disabled = true;
+                select.appendChild(opt);
+            } else {
+                data.forEach(slot => {
+                    const opt = document.createElement('option');
+                    opt.value = `${slot.start_time},${slot.end_time}`;
+                    opt.textContent = `${slot.start_time} – ${slot.end_time}`;
+                    select.appendChild(opt);
+                });
+            }
+        });
+});
+
+document.getElementById('available-block').addEventListener('change', function () {
+    const [start, end] = this.value.split(',');
+    document.getElementById('specific-start-time').value = start;
+    document.getElementById('specific-end-time').value = end;
+});
+
+document.getElementById('schedule-meeting-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const teacherId = document.getElementById('teacher').value;
+    const meetingDate = document.getElementById('meeting-date').value;
+    const startTimeRaw = document.getElementById('specific-start-time').value;
+    const endTimeRaw = document.getElementById('specific-end-time').value;
+    const comment = document.getElementById('comment').value;
+
+    if (!teacherId || !meetingDate || !startTimeRaw || !endTimeRaw) {
+        document.getElementById('error-message').style.display = 'block';
+        document.getElementById('error-message').innerText = 'Please fill all required fields.';
+        return;
+    }
+
+    const payload = {
+        teacher_id: teacherId,
+        meeting_date: meetingDate,
+        slot_start_time: convertTo24HourFormat(startTimeRaw),
+        slot_end_time: convertTo24HourFormat(endTimeRaw),
+        meeting_start_time: convertTo24HourFormat(startTimeRaw),
+        meeting_end_time: convertTo24HourFormat(endTimeRaw),
+        comment: comment
+    };
+
+    fetch('/api/schedule-meeting/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => {
+        if (!res.ok) return res.json().then(err => { throw new Error(err.error || "Unknown error"); });
+        return res.json();
+    })
+    .then(() => {
+        alert('Meeting requested!');
+        closeModal();
+        loadUpcomingMeetings();
+    })
+    .catch(err => alert('Error: ' + err.message));
+});
+
+// Load teachers on page load
+fetch('/api/teachers/')
+    .then(res => res.json())
+    .then(data => {
+        const select = document.getElementById('teacher');
+        data.results.forEach(teacher => {
+            const opt = document.createElement('option');
+            opt.value = teacher.id;
+            opt.textContent = teacher.name;
+            select.appendChild(opt);
+        });
+    });
+
+loadUpcomingMeetings();
 </script>
 {% endblock %}
