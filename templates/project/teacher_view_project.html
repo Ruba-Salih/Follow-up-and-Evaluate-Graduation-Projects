@@ -43,5 +43,28 @@
             <p>No other teachers assigned.</p>
         {% endif %}
     </div>
+
+    <div class="pro_buttons">
+        <h2>📌 Actions</h2>
+
+        <div class="role-buttons">
+            <!-- Project Progress Button -->
+            <a href="{% url 'project_progress' project.id %}" class="role-button btn btn-primary">
+                📊 View Project Progress
+            </a>
+
+            <!-- Assessment Form Button -->
+            <a href="{% url 'grade_form' project.id %}" class="role-button btn btn-warning">
+                📝 Assessment Form
+            </a>
+
+            <!-- View Grades Button (already present) -->
+            <a href="{% url 'view_grades' project_id=project.id %}" 
+               class="btn btn-secondary {% if not assessment_submitted %}disabled{% endif %}"
+               {% if not assessment_submitted %}onclick="event.preventDefault();" {% endif %}>
+               🧾 View Assessment Grades
+            </a>
+        </div>
+    </div>
 </div>
 {% endblock %}

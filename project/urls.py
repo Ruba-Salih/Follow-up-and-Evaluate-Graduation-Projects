@@ -37,6 +37,6 @@ urlpatterns = [
     path("projects/available/action/", views.AvailableProjectActionView.as_view(), name="available-project-action"),
     path("available/<int:project_id>/", views.AvailableProjectActionView.as_view(), name="available-project-action-item"),
     path("project/view/<int:project_id>/", views.teacher_view_project, name="project-detail"),
-
+    path('project/<int:project_id>/progress/', views.project_progress_view, name='project_progress'),
 
 ]
