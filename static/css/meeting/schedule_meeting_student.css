@@ -1,31 +1,56 @@
-body {
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #f2f2f2;
-    color: #333;
-    margin: 0;
-    padding: 0;
-}
-
-/* === Navbar stays full width === */
-/* (No restriction in width – handled in HTML layout) */
-
 /* === Outer Wrapper acts like a centered card === */
 .outer-wrapper {
-    max-width: 1000px;
+    max-width: 800px;
     margin: 40px auto;
     padding: 30px;
     background: #ffffff;
-    border: 4px solid #e0e0e0; /* soft white-gray border */
+    border: 4px; /* soft white-gray border */
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 /* === Main Inner Container === */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    text-align: center;
+
+
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none; /* Hidden by default */
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    padding: 20px; /* Allows inner box to breathe on mobile */
+    overflow-y: auto; /* Handles scroll on small screens */
+}
+
+.modal-content {
+    background: #fff;
+    width: 100%;
+    max-width: 600px;
+    border-radius: 10px;
+    position: relative;
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    margin: auto;
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+}
+
+.close-btn {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    z-index: 10000;
 }
 
 /* === Heading Centered === */
@@ -55,6 +80,24 @@ h2 {
 
 .meeting-options a:hover {
     background-color: #8e251d;
+}
+
+.meeting-card {
+    background-color: #f9f9f9;
+    border-left: 5px solid #a63026;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+.meeting-card h5 {
+    margin-top: 0;
+    color: #333;
+}
+.meeting-card p {
+    margin: 5px 0;
+    color: #555;
+    font-size: 14px;
 }
 
 /* === Form Styling === */
@@ -122,6 +165,7 @@ button[type="submit"]:hover {
     font-size: 15px;
 }
 
+
 /* === Responsive === */
 @media (max-width: 768px) {
     .outer-wrapper {
@@ -140,7 +184,9 @@ button[type="submit"]:hover {
         font-size: 14px;
     }
 
-    button {
+    form button {
         width: 100%;
     }
+
 }
+

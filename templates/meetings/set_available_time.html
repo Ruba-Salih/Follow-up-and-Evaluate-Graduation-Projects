@@ -1,7 +1,7 @@
 <!-- set available time -->
 {% extends 'base.html' %}
-{% load static %}
-{% block title %}Set Available Times{% endblock %}
+{% load static i18n %}
+{% block title %}{% trans "Set Available Times" %}{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/meeting/set_availabilty.css' %}">
 {% endblock %}
@@ -9,18 +9,20 @@
 {% block content %}
 
 {% include "navbar.html" %}
-<div id="availability-container">
-  <div id="alert-success">✅ Successfully saved!</div>
 
-  <h2 style="text-align: center; margin-bottom: 30px;">⏳ Set Your Available Times</h2>
+<div id="availability-container">
+  <div id="alert-success">{% trans "✅ Successfully saved!" %}</div>
+
+  <h2 style="text-align: center; margin-bottom: 30px;">⏳ {% trans "Set Your Available Times" %}</h2>
 
   <!-- Day blocks dynamically populated below -->
   <div id="days-container">
     <!-- Each day will be populated here dynamically -->
   </div>
 
-  <button type="button" class="save-button" onclick="saveAvailability()">💾 Save All</button>
+  <button type="button" class="save-button btn-primary" onclick="saveAvailability()">💾 {% trans "Save All" %}</button>
 </div>
+
 <script>
   // CSRF Token Helper
   function getCSRFToken() {
@@ -37,8 +39,13 @@
   }
 
   const dayMap = {
-    mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday',
-    thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday'
+    mon: gettext('Monday'),
+    tue: gettext('Tuesday'),
+    wed: gettext('Wednesday'),
+    thu: gettext('Thursday'),
+    fri: gettext('Friday'),
+    sat: gettext('Saturday'),
+    sun: gettext('Sunday'),
   };
 
   function showSuccess(message, color = '#198754') {
@@ -51,7 +58,6 @@
     }, 2500);
   }
 
-  // Fetch existing available times for teacher
   function fetchAvailability() {
     fetch('/api/set-available-time/')
       .then(res => res.json())
@@ -72,7 +78,6 @@
       });
   }
 
-  // Create day block with slots
   function createDayBlock(dayCode, dayName, slots) {
     const dayBlock = document.createElement('div');
     dayBlock.classList.add('day-block');
@@ -90,7 +95,7 @@
     if (slots.length === 0) {
       const noSlotsMessage = document.createElement('p');
       noSlotsMessage.classList.add('no-slots');
-      noSlotsMessage.textContent = 'Not available';
+      noSlotsMessage.textContent = gettext('Not available');
       timeSlotsContainer.appendChild(noSlotsMessage);
     } else {
       slots.forEach(slot => {
@@ -99,14 +104,13 @@
     }
 
     const addSlotButton = document.createElement('button');
-    addSlotButton.textContent = '+ Add Time Slot';
+    addSlotButton.textContent = '+ ' + gettext('Add Time Slot');
     addSlotButton.onclick = () => addTimeSlot(dayCode);
     dayBlock.appendChild(addSlotButton);
 
     return dayBlock;
   }
 
-  // Create time slot row for a given day
   function createTimeSlotRow(start, end, dayCode, saved = false) {
     const row = document.createElement('div');
     row.classList.add('slot-row');
@@ -115,19 +119,18 @@
 
     row.innerHTML = `
       ${createTimeDropdown('start', start)}
-      <span>to</span>
+      <span>${gettext('to')}</span>
       ${createTimeDropdown('end', end)}
-      <button type="button" class="delete-slot-btn">❌</button>
+      <button type="button" class="delete-slot-btn btn-delete">🗑️ ${gettext('Remove')}</button>
     `;
 
     row.querySelector('.delete-slot-btn').addEventListener('click', function () {
-      const confirmed = window.confirm("Are you sure you want to delete this time slot?");
+      const confirmed = window.confirm(gettext("Are you sure you want to delete this time slot?"));
       if (!confirmed) return;
 
-      // Remove unsaved slot from DOM directly
       if (row.dataset.saved !== 'true') {
         row.remove();
-        showSuccess('🗑️ time slot removed!');
+        showSuccess('🗑️ ' + gettext('Time slot removed!'));
         return;
       }
 
@@ -159,9 +162,9 @@
       .then(res => {
         if (res.ok) {
           row.remove();
-          showSuccess('✅ Time slot deleted!');
+          showSuccess('✅ ' + gettext('Time slot deleted!'));
         } else {
-          alert('❌ Error deleting time slot.');
+          alert('❌ ' + gettext('Error deleting time slot.'));
         }
       })
       .catch(error => console.error("Error deleting time slot:", error));
@@ -170,7 +173,6 @@
     return row;
   }
 
-  // Create time dropdown (start or end)
   function createTimeDropdown(type, time) {
     let hour = '';
     let minute = '00';
@@ -203,7 +205,6 @@
     `;
   }
 
-  // Add new time slot to a day
   function addTimeSlot(dayCode) {
     const container = document.querySelector(`#slots-${dayCode}`);
     const noSlot = container.querySelector('.no-slots');
@@ -211,7 +212,6 @@
     container.appendChild(createTimeSlotRow('', '', dayCode, false));
   }
 
-  // Convert time to 24-hour format
   function convertTo24Hour(hour, minute, ampm) {
     hour = parseInt(hour);
     minute = minute.toString().padStart(2, '0');
@@ -225,81 +225,69 @@
   }
 
   function saveAvailability() {
-  const payload = []; // Clear the payload each time
-  const slotSet = new Set(); // To track duplicates of new slots
-  let duplicateFound = false;
+    const payload = [];
+    const slotSet = new Set();
+    let duplicateFound = false;
 
-  // Loop over all day blocks to gather the slots
-  document.querySelectorAll('.day-block').forEach(dayBlock => {
-    const day = dayBlock.dataset.day;
-    
-    // Loop over the slots in each day block
-    dayBlock.querySelectorAll('.slot-row').forEach(row => {
-      // Skip saved slots that were previously loaded
-      if (row.dataset.saved === 'true') return;
+    document.querySelectorAll('.day-block').forEach(dayBlock => {
+      const day = dayBlock.dataset.day;
 
-      // Get start and end times
-      const startHour = row.querySelector('.start-hour').value;
-      const startMinute = row.querySelector('.start-minute').value;
-      const startAmPm = row.querySelector('.start-ampm').value;
+      dayBlock.querySelectorAll('.slot-row').forEach(row => {
+        if (row.dataset.saved === 'true') return;
 
-      const endHour = row.querySelector('.end-hour').value;
-      const endMinute = row.querySelector('.end-minute').value;
-      const endAmPm = row.querySelector('.end-ampm').value;
+        const startHour = row.querySelector('.start-hour').value;
+        const startMinute = row.querySelector('.start-minute').value;
+        const startAmPm = row.querySelector('.start-ampm').value;
 
-      // Convert times to 24-hour format
-      const start = convertTo24Hour(startHour, startMinute, startAmPm);
-      const end = convertTo24Hour(endHour, endMinute, endAmPm);
+        const endHour = row.querySelector('.end-hour').value;
+        const endMinute = row.querySelector('.end-minute').value;
+        const endAmPm = row.querySelector('.end-ampm').value;
 
-      // Create a unique key for the time slot (to prevent duplicates)
-      const slotKey = `${day}-${start}-${end}`;
+        const start = convertTo24Hour(startHour, startMinute, startAmPm);
+        const end = convertTo24Hour(endHour, endMinute, endAmPm);
 
-      // If this slot is already added, skip it
-      if (slotSet.has(slotKey)) {
-        duplicateFound = true;
-      } else {
-        slotSet.add(slotKey); // Track this slot
-        if (start && end) {
-          payload.push({ day, start_time: start, end_time: end });
+        const slotKey = `${day}-${start}-${end}`;
+        if (slotSet.has(slotKey)) {
+          duplicateFound = true;
+        } else {
+          slotSet.add(slotKey);
+          if (start && end) {
+            payload.push({ day, start_time: start, end_time: end });
+          }
         }
-      }
+      });
     });
-  });
 
-  if (duplicateFound) {
-    showSuccess('⚠️ Duplicate time slot!', '#fd7e14');
-    return;
-  }
-
-  if (payload.length === 0) {
-    showSuccess('⚠️ No new time slots to save.', '#fd7e14');
-    return;
-  }
-
-  console.log("Submitting payload:", payload);
-
-  fetch('/api/set-available-time/', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': getCSRFToken()
-    },
-    body: JSON.stringify(payload)
-  })
-  .then(res => {
-    if (res.ok) {
-      fetchAvailability(); // Refresh the displayed availability
-      showSuccess('✅ Times saved!');
-    } else {
-      alert('❌ Error saving!');
+    if (duplicateFound) {
+      showSuccess('⚠️ ' + gettext('Duplicate time slot!'), '#fdc51d');
+      return;
     }
-  })
-  .catch(error => console.error("Error saving times:", error));
-}
 
+    if (payload.length === 0) {
+      showSuccess('⚠️ ' + gettext('No new time slots to save.'), '#fdc51d');
+      return;
+    }
+
+    fetch('/api/set-available-time/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken()
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(res => {
+      if (res.ok) {
+        fetchAvailability();
+        showSuccess('✅ ' + gettext('Times saved!'));
+      } else {
+        alert('❌ ' + gettext('Error saving!'));
+      }
+    })
+    .catch(error => console.error("Error saving times:", error));
+  }
 
   document.addEventListener('DOMContentLoaded', fetchAvailability);
 </script>
-
 
 {% endblock %}
