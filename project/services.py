@@ -25,7 +25,7 @@ def get_role_name_from_id(role_id):
     return {
         1: "Supervisor",
         2: "Reader",
-        3: "Judge",
+        3: "Judgement Committee",
         4: "Coordinator"
     }.get(role_id)
 
@@ -45,10 +45,10 @@ def assign_project_memberships(project, members):
         if isinstance(role_value, int):
             role_name = get_role_name_from_id(role_value)
         else:
-            role_name = str(role_value).capitalize()
+            role_name = str(role_value).strip().capitalize()
 
         if not role_name:
-            print(f"⚠️ Invalid role ID '{role_value}', skipping.")
+            print(f"⚠️ Invalid role ID or name: '{role_value}', skipping.")
             continue
 
         # Check role exists in DB

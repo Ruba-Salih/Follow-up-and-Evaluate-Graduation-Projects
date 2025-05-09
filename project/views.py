@@ -1,6 +1,6 @@
 from django.shortcuts import redirect, render, get_object_or_404
 from django.db import transaction
-from django.db.models import Q, OuterRef, Subquery, Exists, Count, F
+from django.db.models import Prefetch, Q, OuterRef, Subquery, Exists, Count, F
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from rest_framework.views import APIView
@@ -16,6 +16,7 @@ from users.serializers import StudentSerializer
 from university.models import College, Department
 from users.models import Role, Student, Supervisor, Coordinator
 from users.services import is_teacher
+from form.models import EvaluationForm
 
 
 @login_required
@@ -1002,9 +1003,6 @@ def available_projects_view(request):
 
     return render(request, "project/available_projects.html", context)
 
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.db.models import Prefetch
 
 @login_required
 def teacher_view_project(request, project_id):
@@ -1030,14 +1028,22 @@ def teacher_view_project(request, project_id):
         "role": m.role.name
     } for m in project.memberships.exclude(user=user)]
 
+    form_available = EvaluationForm.objects.filter(target_role=my_membership.role).exists() if my_membership else False
+
     context = {
         "project": project,
         "my_role": my_role,
         "student_members": student_members,
         "teacher_members": teacher_members,
+        "assessment_submitted": form_available,
     }
     return render(request, "project/teacher_view_project.html", context)
 
+@login_required
+def project_progress_view(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    
+    return render(request, 'project/progress_view.html', {"project": project})
 
 class AvailableProjectActionView(APIView):
     permission_classes = [IsAuthenticated]
