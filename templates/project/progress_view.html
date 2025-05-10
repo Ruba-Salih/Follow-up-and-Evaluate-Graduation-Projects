@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Project Progress{% endblock %}
+{% block title %}{% trans "Project Progress" %}{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/project/progress_view.css' %}">
@@ -9,59 +9,47 @@
 
 {% block content %}
 {% include "navbar.html" %}
-
+<!-- Hidden CSRF token for JS -->
+<form style="display: none;">
+    {% csrf_token %}
+  </form>
+  
 <div class="container">
-    <h2>📈 Project Progress: {{ project.name }}</h2>
+  <h2>📈 {% trans "Project Progress" %}: {{ project.name }}</h2>
 
-    <div class="task-section">
-        <h3>📝 Tasks</h3>
-        {% if project.plan and project.plan.tasks.all %}
-            {% for task in project.plan.tasks.all %}
-                <div class="task-card">
-                    <h4>{{ task.name }}</h4>
-                    <p><strong>Status:</strong> {{ task.task_status|title }}</p>
-                    <p><strong>Goal:</strong> {{ task.goals }}</p>
-                    <p><strong>Outputs:</strong> {{ task.outputs }}</p>
-                    <p><strong>Deadline:</strong> {{ task.deadline_days }} days</p>
-                    <p><strong>Assigned To:</strong> {{ task.assign_to.username }}</p>
-                    {% if task.deliverable_text %}
-                        <p><strong>Deliverable Text:</strong> {{ task.deliverable_text }}</p>
-                    {% endif %}
-                    {% if task.deliverable_file %}
-                        <p><strong>File:</strong> <a href="{{ task.deliverable_file.url }}" target="_blank">Download</a></p>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>No tasks defined yet for this project.</p>
-        {% endif %}
+  <div class="filter-search-bar">
+    <select id="filter-goal" class="form-control">
+      <option value="">{% trans "🎯 All Goals" %}</option>
+    </select>
+  
+    <select id="filter-status" class="form-control">
+      <option value="">{% trans "📌 All Statuses" %}</option>
+      <option value="to do">{% trans "To Do" %}</option>
+      <option value="in progress">{% trans "In Progress" %}</option>
+      <option value="done">{% trans "Done" %}</option>
+    </select>
+  
+    <select id="filter-student" class="form-control">
+      <option value="">{% trans "🧑‍🎓 All Students" %}</option>
+    </select>
+  </div>
+
+  <div id="task-list">
+    <!-- JS will insert task cards here -->
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="task-modal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close-btn">&times;</span>
+    <h3>{% trans "Task Details" %}</h3>
+
+    <div id="task-detail-content">
+      <!-- JS will fill this in -->
     </div>
-
-    <div class="feedback-section">
-        <h3>💬 Feedback</h3>
-        <form id="feedback-form" method="POST" action="/api/project/feedback/">
-            {% csrf_token %}
-            <input type="hidden" name="project" value="{{ project.id }}">
-            <textarea name="feedback_text" placeholder="Write your feedback here..." required></textarea>
-            <button type="submit" class="btn btn-primary">Send Feedback</button>
-        </form>
-
-        <div class="feedback-list">
-            {% for fb in feedbacks %}
-                <div class="feedback-entry">
-                    <p><strong>{{ fb.sender.username }}:</strong> {{ fb.feedback_text }}</p>
-                    <p class="timestamp">🕒 {{ fb.created_at }}</p>
-                    {% if fb.feedback_file %}
-                        <p><a href="{{ fb.feedback_file.url }}" target="_blank">📎 Attached File</a></p>
-                    {% endif %}
-                </div>
-            {% empty %}
-                <p>No feedback yet.</p>
-            {% endfor %}
-        </div>
-    </div>
+  </div>
 </div>
 
 <script src="{% static 'js/project/progress_view.js' %}"></script>
-
 {% endblock %}

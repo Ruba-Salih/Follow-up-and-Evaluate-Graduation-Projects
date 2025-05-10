@@ -46,25 +46,65 @@
 
     <div class="pro_buttons">
         <h2>📌 Actions</h2>
-
         <div class="role-buttons">
-            <!-- Project Progress Button -->
-            <a href="{% url 'project_progress' project.id %}" class="role-button btn btn-primary">
-                📊 View Project Progress
-            </a>
+            {% if my_role == "Supervisor" %}
+    <a href="{% url 'project_progress' project.id %}" class="role-button btn btn-primary">
+        📊 View Project Progress
+    </a>
+{% endif %}
 
-            <!-- Assessment Form Button -->
-            <a href="{% url 'grade_form' project.id %}" class="role-button btn btn-warning">
+
+            <!-- Trigger modal via Bootstrap -->
+            <button id="openModalBtn" type="button" class="btn btn-primary btn-research">
+                📖 Research
+              </button>              
+
+            <a href="{% url 'grade_form' project.id %}" class="role-button btn btn-primary">
                 📝 Assessment Form
             </a>
 
-            <!-- View Grades Button (already present) -->
             <a href="{% url 'view_grades' project_id=project.id %}" 
-               class="btn btn-secondary {% if not assessment_submitted %}disabled{% endif %}"
+               class="btn btn-primary {% if not assessment_submitted %}disabled{% endif %}"
                {% if not assessment_submitted %}onclick="event.preventDefault();" {% endif %}>
                🧾 View Assessment Grades
             </a>
         </div>
     </div>
 </div>
+<!-- Custom Modal Structure -->
+<div id="customModalOverlay" class="custom-modal-overlay">
+    <div class="custom-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="custom-modal-header">
+        <h3 id="modalTitle">📂 Research File & Feedback</h3>
+        <button class="close-modal" aria-label="Close modal">&times;</button>
+      </div>
+  
+      <div class="custom-modal-body">
+        {% if project.research_file %}
+          <p><strong>Download:</strong>
+            <a href="{{ project.research_file.url }}" target="_blank" class="btn btn-outline-primary">
+              ⬇️ Download Research File
+            </a>
+          </p>
+        {% else %}
+          <p>No research file uploaded.</p>
+        {% endif %}
+        <hr>
+        {% if my_role != "Supervisor" %}
+  <form id="feedback-form" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="project" value="{{ project.id }}">
+    <div class="mb-3">
+      <label for="feedback_text" class="form-label">💬 Feedback</label>
+      <textarea name="feedback_text" id="feedback_text" class="form-control" rows="4" placeholder="Enter your feedback here..."></textarea>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">✅ Submit Feedback</button>
+  </form>
+  {% endif %}
+      </div>
+    </div>
+  </div>
+  
+<script src="{% static 'js/project/teacher_view_project.js' %}"></script>
 {% endblock %}

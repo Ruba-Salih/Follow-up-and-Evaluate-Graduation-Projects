@@ -11,7 +11,7 @@
 {% include "navbar.html" %}
 
 <div class="container">
-    <h2>🎓 {% trans "My Project Overview" %}</h2>
+    <h2>🎓 {% trans "Project Overview" %}</h2>
 
     <div class="project-overview card">
         <h3 id="project-title" class="project-name">{% trans "Loading..." %}</h3>
@@ -40,6 +40,9 @@
         <button class="btn btn-primary action-btn" data-target="#goalsModal">🎯 {% trans "Project Goals" %}</button>
         <button class="btn btn-primary action-btn" data-target="#weeklyReportModal">📝 {% trans "Weekly Report" %}</button>
         <button class="btn btn-primary action-btn" data-target="#progressModal">📈 {% trans "Progress" %}</button>
+        <button id="research-btn" class="btn btn-primary action-btn" data-project-id="{{ project.id }}" data-target="#researchUploadModal">
+            📤 {% trans "Upload Research File" %}
+        </button>        
         <a href="{% url 'project-tasks-page' %}" class="btn btn-primary action-btn" style="text-decoration: none;">🧩 {% trans "Manage Tasks" %}</a>
     </div>
 
@@ -118,16 +121,37 @@
         </div>
     </div>
 
-    <!-- Feedback Modal -->
-    <div class="modal" id="feedbackModal">
+    <!-- Research Upload & Feedback Modal -->
+    <div class="modal" id="researchUploadModal">
         <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h3>💬 {% trans "Supervisor Feedback" %}</h3>
-            <div id="feedback-list">
-                <p>{% trans "No feedback yet." %}</p>
-            </div>
+          <span class="close-btn">&times;</span>
+          <h3>{% trans "Upload Research File" %}</h3>
+      
+          <!-- File upload form -->
+          <form id="research-upload-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="research_file" class="form-control" required>
+            <button type="submit" class="btn btn-primary" style="margin-top: 15px;">
+              {% trans "Submit File" %}
+            </button>
+          </form>
+
+          <div id="research-file-link" style="margin-bottom: 10px;">
+            <!-- JS will insert file link here -->
+          </div>
+      
+          <hr>
+           <!-- Existing feedback list -->
+           <h4>{% trans "Previous Feedback" %}</h4>
+           <div id="research-feedback-list">
+            
+           </div>
+      
         </div>
-    </div>
+      </div>
+      
+    
+
 
 <script src="{% static 'js/project/student_project.js' %}"></script>
 

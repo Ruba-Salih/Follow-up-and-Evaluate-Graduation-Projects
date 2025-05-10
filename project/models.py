@@ -36,6 +36,8 @@ class Project(models.Model):
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, blank=True, null=True)
     duration = models.IntegerField(blank=True, null=True)
     proposal = models.OneToOneField(ProjectProposal, on_delete=models.SET_NULL, blank=True, null=True, related_name='accepted_project')
+    research_file = models.FileField(upload_to='research_files/', blank=True, null=True)
+    show_research_to_students = models.BooleanField(default=False)
     supervisor = models.ForeignKey('users.Supervisor', on_delete=models.SET_NULL, null=True, blank=True, related_name='projects')
     coordinator = models.ForeignKey('users.Coordinator', on_delete=models.SET_NULL, null=True, blank=True, related_name='projects')
     
@@ -121,6 +123,7 @@ class AnnualGrade(models.Model):
 class FeedbackExchange(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True, blank=True, related_name='feedback_exchanges')
     proposal = models.ForeignKey(ProjectProposal, on_delete=models.CASCADE, null=True, blank=True, related_name='feedback_exchanges')
+    task = models.ForeignKey('ProjectTask', on_delete=models.CASCADE, null=True, blank=True, related_name='feedback_exchanges')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_feedbacks')
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='feedback_received')
     feedback_text = models.TextField(blank=True, null=True)

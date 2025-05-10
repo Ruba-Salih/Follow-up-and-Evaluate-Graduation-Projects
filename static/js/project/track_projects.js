@@ -106,9 +106,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     const students = detail.students || [];
                     modalTeamMembers.textContent = students.length > 0 ? students.map(s => s.username).join(", ") : "N/A";
 
-                    modalSupervisor.textContent = members.find(m => m.role.toLowerCase() === "supervisor")?.username || "N/A";
-                    modalReader.textContent = members.find(m => m.role.toLowerCase() === "reader")?.username || "N/A";
-                    modalJudges.textContent = members.filter(m => m.role.toLowerCase() === "judge").map(j => j.username).join(", ") || "N/A";
+                    modalSupervisor.textContent = members.find(m => m.role.toLowerCase() === "Supervisor")?.username || "N/A";
+                    modalReader.textContent = members.find(m => m.role.toLowerCase() === "Reader")?.username || "N/A";
+                    modalJudges.textContent = members.filter(m => m.role.toLowerCase() === "Judgement Committee").map(j => j.username).join(", ") || "N/A";
 
                     modalFile.innerHTML = projectData.file ? `<a href="${projectData.file}" target="_blank">📄 View File</a>` : "No file attached.";
                     modalCompletion.textContent = completionStatus !== null ? completionStatus : "N/A";

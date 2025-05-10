@@ -81,6 +81,6 @@ class AnnualGradeAdmin(admin.ModelAdmin):
 @admin.register(FeedbackExchange)
 class FeedbackExchangeAdmin(admin.ModelAdmin):
     list_display = ('project', 'sender', 'receiver', 'created_at')
-    list_filter = ('project', 'created_at')
+    list_filter = ('project', 'task', 'created_at')
     search_fields = ('project__name', 'sender__username', 'receiver__username')
     ordering = ('-created_at',)

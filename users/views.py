@@ -271,6 +271,8 @@ class ManageAccountsView(APIView):
 
         data = request.data
         username = data.get("username")
+        first_name = data.get("first_name", "")
+        last_name = data.get("last_name", "")
         email = data.get("email", "")
         phone_number = data.get("phone_number", "")
         password = data.get("password")
@@ -301,6 +303,8 @@ class ManageAccountsView(APIView):
             # Step 1: Create user with temporary coord_id value
             new_user = Coordinator.objects.create_user(
                 username=username,
+                first_name=first_name,
+                last_name=last_name,
                 email=email,
                 password=password,
                 phone_number=phone_number,
@@ -345,6 +349,8 @@ class ManageAccountsView(APIView):
 
             new_user = Student.objects.create_user(
                 username=username,
+                first_name=first_name,
+                last_name=last_name,
                 email=email,
                 password=password,
                 phone_number=phone_number,
@@ -356,6 +362,8 @@ class ManageAccountsView(APIView):
         elif role == "user":
             new_user = User.objects.create_user(
                 username=username,
+                first_name=first_name,
+                last_name=last_name,
                 email=email,
                 password=password,
                 phone_number=phone_number,
@@ -379,6 +387,8 @@ class ManageAccountsView(APIView):
             return Response({"error": "Unauthorized"}, status=403)
 
         target.username = data.get("username", target.username)
+        target.first_name = data.get("first_name", target.first_name)
+        target.last_name = data.get("last_name", target.last_name)
         target.email = data.get("email", target.email)
         target.phone_number = data.get("phone_number", target.phone_number)
         if data.get("password"):

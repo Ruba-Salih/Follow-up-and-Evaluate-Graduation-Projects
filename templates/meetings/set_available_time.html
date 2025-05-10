@@ -1,13 +1,14 @@
-<!-- set available time -->
 {% extends 'base.html' %}
-{% load static i18n %}
+{% load static %}
+{% load i18n %}
+
 {% block title %}{% trans "Set Available Times" %}{% endblock %}
+
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/meeting/set_availabilty.css' %}">
 {% endblock %}
 
 {% block content %}
-
 {% include "navbar.html" %}
 
 <div id="availability-container">
@@ -15,47 +16,63 @@
 
   <h2 style="text-align: center; margin-bottom: 30px;">⏳ {% trans "Set Your Available Times" %}</h2>
 
-  <!-- Day blocks dynamically populated below -->
   <div id="days-container">
-    <!-- Each day will be populated here dynamically -->
+    <!-- JS will populate days here -->
   </div>
 
   <button type="button" class="save-button btn-primary" onclick="saveAvailability()">💾 {% trans "Save All" %}</button>
 </div>
 
 <script>
-  // CSRF Token Helper
-  function getCSRFToken() {
-    let cookieValue = null;
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.startsWith('csrftoken=')) {
-        cookieValue = decodeURIComponent(cookie.substring('csrftoken='.length));
-        break;
-      }
-    }
-    return cookieValue;
-  }
+  const i18n = {
+    monday: "{% trans 'Monday' %}",
+    tuesday: "{% trans 'Tuesday' %}",
+    wednesday: "{% trans 'Wednesday' %}",
+    thursday: "{% trans 'Thursday' %}",
+    friday: "{% trans 'Friday' %}",
+    saturday: "{% trans 'Saturday' %}",
+    sunday: "{% trans 'Sunday' %}",
+    notAvailable: "{% trans 'Not available' %}",
+    addSlot: "{% trans 'Add Time Slot' %}",
+    to: "{% trans 'to' %}",
+    remove: "{% trans 'Remove' %}",
+    confirmDelete: "{% trans 'Are you sure you want to delete this time slot?' %}",
+    deleted: "{% trans 'Time slot deleted!' %}",
+    removed: "{% trans 'Time slot removed!' %}",
+    duplicate: "{% trans 'Duplicate time slot!' %}",
+    noneToSave: "{% trans 'No new time slots to save.' %}",
+    saved: "{% trans 'Times saved!' %}",
+    errorSave: "{% trans 'Error saving!' %}",
+    errorDelete: "{% trans 'Error deleting time slot.' %}"
+  };
 
   const dayMap = {
-    mon: gettext('Monday'),
-    tue: gettext('Tuesday'),
-    wed: gettext('Wednesday'),
-    thu: gettext('Thursday'),
-    fri: gettext('Friday'),
-    sat: gettext('Saturday'),
-    sun: gettext('Sunday'),
+    mon: i18n.monday,
+    tue: i18n.tuesday,
+    wed: i18n.wednesday,
+    thu: i18n.thursday,
+    fri: i18n.friday,
+    sat: i18n.saturday,
+    sun: i18n.sunday
   };
+
+  function getCSRFToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith('csrftoken=')) {
+        return decodeURIComponent(cookie.slice('csrftoken='.length));
+      }
+    }
+    return null;
+  }
 
   function showSuccess(message, color = '#198754') {
     const alert = document.getElementById('alert-success');
     alert.textContent = message;
     alert.style.backgroundColor = color;
     alert.style.display = 'block';
-    setTimeout(() => {
-      alert.style.display = 'none';
-    }, 2500);
+    setTimeout(() => { alert.style.display = 'none'; }, 2500);
   }
 
   function fetchAvailability() {
@@ -68,84 +85,80 @@
           grouped[entry.day].push(entry);
         });
 
-        const daysContainer = document.getElementById('days-container');
-        daysContainer.innerHTML = ''; // Clear existing days
-
-        Object.entries(dayMap).forEach(([dayCode, dayName]) => {
-          const dayBlock = createDayBlock(dayCode, dayName, grouped[dayCode] || []);
-          daysContainer.appendChild(dayBlock);
+        const container = document.getElementById('days-container');
+        container.innerHTML = '';
+        Object.entries(dayMap).forEach(([code, name]) => {
+          container.appendChild(createDayBlock(code, name, grouped[code] || []));
         });
       });
   }
 
   function createDayBlock(dayCode, dayName, slots) {
-    const dayBlock = document.createElement('div');
-    dayBlock.classList.add('day-block');
-    dayBlock.dataset.day = dayCode;
+    const block = document.createElement('div');
+    block.classList.add('day-block');
+    block.dataset.day = dayCode;
 
-    const dayHeader = document.createElement('h3');
-    dayHeader.textContent = dayName;
-    dayBlock.appendChild(dayHeader);
+    const header = document.createElement('h3');
+    header.textContent = dayName;
+    block.appendChild(header);
 
-    const timeSlotsContainer = document.createElement('div');
-    timeSlotsContainer.classList.add('time-slots');
-    timeSlotsContainer.id = 'slots-' + dayCode;
-    dayBlock.appendChild(timeSlotsContainer);
+    const slotContainer = document.createElement('div');
+    slotContainer.className = 'time-slots';
+    slotContainer.id = 'slots-' + dayCode;
+    block.appendChild(slotContainer);
 
     if (slots.length === 0) {
-      const noSlotsMessage = document.createElement('p');
-      noSlotsMessage.classList.add('no-slots');
-      noSlotsMessage.textContent = gettext('Not available');
-      timeSlotsContainer.appendChild(noSlotsMessage);
+      const p = document.createElement('p');
+      p.className = 'no-slots';
+      p.textContent = i18n.notAvailable;
+      slotContainer.appendChild(p);
     } else {
       slots.forEach(slot => {
-        timeSlotsContainer.appendChild(createTimeSlotRow(slot.start_time, slot.end_time, dayCode, true));
+        slotContainer.appendChild(createTimeSlotRow(slot.start_time, slot.end_time, dayCode, true));
       });
     }
 
-    const addSlotButton = document.createElement('button');
-    addSlotButton.textContent = '+ ' + gettext('Add Time Slot');
-    addSlotButton.onclick = () => addTimeSlot(dayCode);
-    dayBlock.appendChild(addSlotButton);
+    const btn = document.createElement('button');
+    btn.textContent = '+ ' + i18n.addSlot;
+    btn.onclick = () => addTimeSlot(dayCode);
+    block.appendChild(btn);
 
-    return dayBlock;
+    return block;
   }
 
   function createTimeSlotRow(start, end, dayCode, saved = false) {
     const row = document.createElement('div');
-    row.classList.add('slot-row');
+    row.className = 'slot-row';
     row.dataset.day = dayCode;
-    row.dataset.saved = saved ? 'true' : 'false';
+    row.dataset.saved = saved;
 
     row.innerHTML = `
       ${createTimeDropdown('start', start)}
-      <span>${gettext('to')}</span>
+      <span>${i18n.to}</span>
       ${createTimeDropdown('end', end)}
-      <button type="button" class="delete-slot-btn btn-delete">🗑️ ${gettext('Remove')}</button>
+      <button type="button" class="delete-slot-btn btn-delete">🗑️ ${i18n.remove}</button>
     `;
 
-    row.querySelector('.delete-slot-btn').addEventListener('click', function () {
-      const confirmed = window.confirm(gettext("Are you sure you want to delete this time slot?"));
-      if (!confirmed) return;
+    row.querySelector('.delete-slot-btn').onclick = () => {
+      if (!confirm(i18n.confirmDelete)) return;
 
       if (row.dataset.saved !== 'true') {
         row.remove();
-        showSuccess('🗑️ ' + gettext('Time slot removed!'));
+        showSuccess('🗑️ ' + i18n.removed);
         return;
       }
 
-      const startHour = row.querySelector('.start-hour').value;
-      const startMinute = row.querySelector('.start-minute').value;
-      const startAmPm = row.querySelector('.start-ampm').value;
+      const start = convertTo24Hour(
+        row.querySelector('.start-hour').value,
+        row.querySelector('.start-minute').value,
+        row.querySelector('.start-ampm').value
+      );
 
-      const endHour = row.querySelector('.end-hour').value;
-      const endMinute = row.querySelector('.end-minute').value;
-      const endAmPm = row.querySelector('.end-ampm').value;
-
-      const start = convertTo24Hour(startHour, startMinute, startAmPm);
-      const end = convertTo24Hour(endHour, endMinute, endAmPm);
-
-      const day = row.dataset.day;
+      const end = convertTo24Hour(
+        row.querySelector('.end-hour').value,
+        row.querySelector('.end-minute').value,
+        row.querySelector('.end-ampm').value
+      );
 
       fetch('/api/delete-available-time/', {
         method: 'POST',
@@ -153,60 +166,52 @@
           'Content-Type': 'application/json',
           'X-CSRFToken': getCSRFToken()
         },
-        body: JSON.stringify({
-          day: day,
-          start_time: start,
-          end_time: end
-        })
-      })
-      .then(res => {
+        body: JSON.stringify({ day: row.dataset.day, start_time: start, end_time: end })
+      }).then(res => {
         if (res.ok) {
           row.remove();
-          showSuccess('✅ ' + gettext('Time slot deleted!'));
+          showSuccess('✅ ' + i18n.deleted);
         } else {
-          alert('❌ ' + gettext('Error deleting time slot.'));
+          alert('❌ ' + i18n.errorDelete);
         }
-      })
-      .catch(error => console.error("Error deleting time slot:", error));
-    });
+      });
+    };
 
     return row;
   }
 
   function createTimeDropdown(type, time) {
-    let hour = '';
-    let minute = '00';
-    let ampm = 'AM';
+    let hour = '', minute = '00', ampm = 'AM';
 
     if (time) {
-      const [h, m] = time.split(':');
-      let hourInt = parseInt(h);
+      let [h, m] = time.split(':');
+      h = parseInt(h);
       minute = m;
-      if (hourInt >= 12) {
+      if (h >= 12) {
         ampm = 'PM';
-        if (hourInt > 12) hourInt -= 12;
+        if (h > 12) h -= 12;
       }
-      if (hourInt == 0) hourInt = 12;
-      hour = hourInt.toString().padStart(2, '0');
+      if (h === 0) h = 12;
+      hour = h.toString().padStart(2, '0');
     }
 
     const hours = [...Array(12).keys()].map(i => {
-      const val = (i + 1).toString().padStart(2, '0');
-      return `<option value="${val}" ${val == hour ? 'selected' : ''}>${val}</option>`;
+      const val = String(i + 1).padStart(2, '0');
+      return `<option value="${val}" ${val === hour ? 'selected' : ''}>${val}</option>`;
     }).join('');
 
     return `
-      <select class="${type}-hour">${hours}</select>
-      <input type="number" min="0" max="59" value="${minute}" class="${type}-minute" style="width:50px;" />
-      <select class="${type}-ampm">
-        <option value="AM" ${ampm == 'AM' ? 'selected' : ''}>AM</option>
-        <option value="PM" ${ampm == 'PM' ? 'selected' : ''}>PM</option>
+      <select class="${type}-hour start-hour">${hours}</select>
+      <input type="number" min="0" max="59" value="${minute}" class="${type}-minute start-minute" style="width:50px;" />
+      <select class="${type}-ampm start-ampm">
+        <option value="AM" ${ampm === 'AM' ? 'selected' : ''}>AM</option>
+        <option value="PM" ${ampm === 'PM' ? 'selected' : ''}>PM</option>
       </select>
     `;
   }
 
   function addTimeSlot(dayCode) {
-    const container = document.querySelector(`#slots-${dayCode}`);
+    const container = document.getElementById('slots-' + dayCode);
     const noSlot = container.querySelector('.no-slots');
     if (noSlot) noSlot.remove();
     container.appendChild(createTimeSlotRow('', '', dayCode, false));
@@ -214,14 +219,9 @@
 
   function convertTo24Hour(hour, minute, ampm) {
     hour = parseInt(hour);
-    minute = minute.toString().padStart(2, '0');
-    if (ampm === 'PM' && hour !== 12) {
-      hour += 12;
-    }
-    if (ampm === 'AM' && hour === 12) {
-      hour = 0;
-    }
-    return `${hour.toString().padStart(2, '0')}:${minute}`;
+    if (ampm === 'PM' && hour !== 12) hour += 12;
+    if (ampm === 'AM' && hour === 12) hour = 0;
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
   }
 
   function saveAvailability() {
@@ -229,42 +229,37 @@
     const slotSet = new Set();
     let duplicateFound = false;
 
-    document.querySelectorAll('.day-block').forEach(dayBlock => {
-      const day = dayBlock.dataset.day;
+    document.querySelectorAll('.slot-row').forEach(row => {
+      if (row.dataset.saved === 'true') return;
 
-      dayBlock.querySelectorAll('.slot-row').forEach(row => {
-        if (row.dataset.saved === 'true') return;
+      const start = convertTo24Hour(
+        row.querySelector('.start-hour').value,
+        row.querySelector('.start-minute').value,
+        row.querySelector('.start-ampm').value
+      );
 
-        const startHour = row.querySelector('.start-hour').value;
-        const startMinute = row.querySelector('.start-minute').value;
-        const startAmPm = row.querySelector('.start-ampm').value;
+      const end = convertTo24Hour(
+        row.querySelector('.end-hour').value,
+        row.querySelector('.end-minute').value,
+        row.querySelector('.end-ampm').value
+      );
 
-        const endHour = row.querySelector('.end-hour').value;
-        const endMinute = row.querySelector('.end-minute').value;
-        const endAmPm = row.querySelector('.end-ampm').value;
-
-        const start = convertTo24Hour(startHour, startMinute, startAmPm);
-        const end = convertTo24Hour(endHour, endMinute, endAmPm);
-
-        const slotKey = `${day}-${start}-${end}`;
-        if (slotSet.has(slotKey)) {
-          duplicateFound = true;
-        } else {
-          slotSet.add(slotKey);
-          if (start && end) {
-            payload.push({ day, start_time: start, end_time: end });
-          }
-        }
-      });
+      const key = `${row.dataset.day}-${start}-${end}`;
+      if (slotSet.has(key)) {
+        duplicateFound = true;
+      } else {
+        slotSet.add(key);
+        payload.push({ day: row.dataset.day, start_time: start, end_time: end });
+      }
     });
 
     if (duplicateFound) {
-      showSuccess('⚠️ ' + gettext('Duplicate time slot!'), '#fdc51d');
+      showSuccess('⚠️ ' + i18n.duplicate, '#fdc51d');
       return;
     }
 
     if (payload.length === 0) {
-      showSuccess('⚠️ ' + gettext('No new time slots to save.'), '#fdc51d');
+      showSuccess('⚠️ ' + i18n.noneToSave, '#fdc51d');
       return;
     }
 
@@ -275,19 +270,17 @@
         'X-CSRFToken': getCSRFToken()
       },
       body: JSON.stringify(payload)
-    })
-    .then(res => {
+    }).then(res => {
       if (res.ok) {
         fetchAvailability();
-        showSuccess('✅ ' + gettext('Times saved!'));
+        showSuccess('✅ ' + i18n.saved);
       } else {
-        alert('❌ ' + gettext('Error saving!'));
+        alert('❌ ' + i18n.errorSave);
       }
-    })
-    .catch(error => console.error("Error saving times:", error));
+    });
   }
 
-  document.addEventListener('DOMContentLoaded', fetchAvailability);
+  fetchAvailability();
 </script>
 
 {% endblock %}
