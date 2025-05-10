@@ -15,22 +15,33 @@ def create_user_account(username, password, role, created_by, **extra_fields):
         raise ValueError("student_id and sitting_number are required when creating a Student.")
 
     hashed_password = make_password(password)
-
-    user = User.objects.create(username=username, password=hashed_password, **extra_fields)
+    first_name = extra_fields.pop("first_name", "")
+    last_name = extra_fields.pop("last_name", "")
 
     if role == "student":
-        student_id = extra_fields.get("student_id")
-        sitting_number = extra_fields.get("sitting_number")
+        student_id = extra_fields.pop("student_id", None)
+        sitting_number = extra_fields.pop("sitting_number", None)
+        if not student_id or not sitting_number:
+            raise ValueError("student_id and sitting_number are required when creating a Student.")
         student = Student.objects.create(
-            username=user.username,
-            email=user.email,
-            phone_number=user.phone_number,
-            password=user.password,
+            username=username,
+            password=hashed_password,
+            first_name=first_name,
+            last_name=last_name,
             department=user.department,
             student_id=student_id,
-            sitting_number=sitting_number
+            sitting_number=sitting_number,
+            **extra_fields
         )
         return student
+    # Default to User
+    user = User.objects.create(
+        username=username,
+        password=hashed_password,
+        first_name=first_name,
+        last_name=last_name,
+        **extra_fields
+    )
 
     return user
 

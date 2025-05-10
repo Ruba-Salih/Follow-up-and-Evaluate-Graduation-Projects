@@ -1,55 +1,24 @@
-/* ===== Container ===== */
+/* Container styling */
 .container {
-    max-width: 1000px;
-    margin: 40px auto;
-    padding: 25px;
-    background-color: #fdfdfd;
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
     border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* ===== Heading ===== */
-h2 {
+/* Headings */
+h2, h4, h5 {
     text-align: center;
-    color: #333;
-    font-size: 2rem;
-    margin-bottom: 35px;
+    margin-bottom: 20px;
 }
-
-/* ===== Project Overview Card ===== */
-.project-card {
-    background-color: #fff;
-    border-radius: 12px;
-    padding: 25px;
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.07);
-    margin-bottom: 30px;
-    transition: transform 0.2s ease;
-    line-height: 1.6;
-}
-
-.project-card:hover {
-    transform: translateY(-2px);
-}
-
-/* ===== Project Title ===== */
 .project-card h4 {
     font-size: 24px;
     color: #a63026;
     margin-bottom: 20px;
     text-align: center;
 }
-
-/* ===== Basic Info Styling ===== */
-.project-card p {
-    margin: 10px 0;
-    font-size: 16px;
-    color: #444;
-}
-
-.project-card strong {
-    color: #333;
-}
-
-/* ===== Section Headings ===== */
 .project-card h5 {
     margin-top: 30px;
     font-size: 1.2rem;
@@ -57,12 +26,27 @@ h2 {
     border-bottom: 1px solid #ddd;
     padding-bottom: 6px;
 }
+.project-card {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.07);
+    margin-bottom: 30px;
+    transition: transform 0.2s ease;
+}
 
-/* ===== Lists ===== */
+.project-card:hover {
+    transform: translateY(-2px);
+}
+
+.project-card hr {
+    margin: 20px 0;
+    border-color: #eee;
+}
+
 .project-card ul {
-    list-style: none;
+    list-style-type: none;
     padding-left: 0;
-    margin-top: 15px;
 }
 
 .project-card ul li {
@@ -75,7 +59,118 @@ h2 {
     text-align: left;
 }
 
-.project-card em {
-    font-style: italic;
+.role-buttons {
+    display: flex;
+    justify-content: center;  /* center horizontally */
+    align-items: center;      /* center vertically */
+    gap: 20px;                /* gap between buttons */
+    flex-wrap: wrap;          /* wrap on smaller screens */
+}
+
+/* Default style for all buttons except Research */
+.role-buttons .btn, 
+.role-buttons .role-button {
+    padding: 10px 16px;
+    font-weight: bold;
+    font-size: 16px;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    text-decoration: none;
+}
+
+
+/* Modal Styles */
+.custom-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    visibility: hidden; /* Add this */
+    opacity: 0; /* Add this */
+    transition: visibility 0.3s ease, opacity 0.3s ease; /* Smooth transition */
+}
+
+.custom-modal-overlay.show {
+    visibility: visible; /* Add this */
+    opacity: 1; /* Add this */
+}
+
+.custom-modal {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    padding: 30px 20px;
+}
+
+.custom-modal-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.close-modal {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.6rem;
+    cursor: pointer;
     color: #555;
+    background: none;      /* No background */
+    border: none;          /* No border */
+    padding: 0;            /* Remove default padding */
+    text-align: center;
+}
+
+
+form input[type="text"],
+form textarea,
+form input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+form input[type="file"]::file-selector-button {
+    padding: 5px 8px;
+    border: none;
+    border-radius: 4px;
+    background-color: #a63026;
+    color: white;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+form input[type="file"]::file-selector-button:hover {
+    background-color: #851d1a;
+}
+
+form button[type="submit"] {
+    margin-top: 15px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    .custom-modal {
+        width: 95%;
+    }
+
+
 }

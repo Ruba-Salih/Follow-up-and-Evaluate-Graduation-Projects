@@ -58,6 +58,9 @@ document.addEventListener("DOMContentLoaded", function () {
             student_id: document.getElementById("student-id").value,
             sitting_number: document.getElementById("sitting-number").value,
             department_id: getDepartmentValue("student-department"),
+            first_name: document.getElementById("student-first-name").value,
+            last_name: document.getElementById("student-last-name").value,
+
         };
         await submitUser(userData);
     });
@@ -71,6 +74,9 @@ document.addEventListener("DOMContentLoaded", function () {
             password: document.getElementById("user-password").value,
             role: "user",
             department_id: getDepartmentValue("user-department"),
+            first_name: document.getElementById("user-first-name").value,
+            last_name: document.getElementById("user-last-name").value,
+
         };
         await submitUser(userData);
     });
@@ -85,6 +91,9 @@ document.addEventListener("DOMContentLoaded", function () {
             //coord_id: document.getElementById("coord-id").value,
             role: "coordinator",
             department_id: getDepartmentValue("coord-department"),
+            first_name: document.getElementById("coord-first-name").value,
+            last_name: document.getElementById("coord-last-name").value,
+
         };
         await submitUser(userData);
     });
@@ -128,6 +137,8 @@ document.addEventListener("DOMContentLoaded", function () {
             editingUserId = this.dataset.id;
 
             const username = this.dataset.username;
+            const firstName = this.dataset.first_name || "";
+            const lastName = this.dataset.last_name || "";
             const email = this.dataset.email;
             const phone = this.dataset.phone;
             const departmentId = this.dataset.department;
@@ -143,6 +154,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (role === "student") {
                 document.getElementById("student-name").value = username;
+                document.getElementById("student-first-name").value = firstName;
+                document.getElementById("student-last-name").value = lastName;
                 document.getElementById("student-email").value = email;
                 document.getElementById("student-phone").value = phone;
                 document.getElementById("student-department").value = departmentId;
@@ -150,11 +163,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("sitting-number").value = sittingNumber;
             } else if (role === "user") {
                 document.getElementById("user-name").value = username;
+                document.getElementById("user-first-name").value = firstName;
+                document.getElementById("user-last-name").value = lastName;
                 document.getElementById("user-email").value = email;
                 document.getElementById("user-phone").value = phone;
                 document.getElementById("user-department").value = departmentId;
             } else if (role === "coordinator") {
                 document.getElementById("coord-name").value = username;
+                document.getElementById("coord-first-name").value = firstName;
+                document.getElementById("coord-last-name").value = lastName;
                 document.getElementById("coord-email").value = email;
                 document.getElementById("coord-phone").value = phone;
                 document.getElementById("coord-id").value = coordId;

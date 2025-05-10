@@ -32,7 +32,6 @@
 
     <button id="download-btn" class="btn-download">⬇️ {% trans "Download List" %}</button>
 </div>
-
     <table>
         <thead>
             <tr>
@@ -55,6 +54,8 @@
                         data-id="{{ user.id }}"
                         data-role="{% if user.student %}student{% elif user.coordinator %}{% if user.coordinator.is_super %}coordinator{% else %}coordinator{% endif %}{% else %}user{% endif %}"
                         data-username="{{ user.username }}" 
+                        data-first_name="{{ user.first_name }}"
+                        data-last_name="{{ user.last_name }}"
                         data-email="{{ user.email }}" 
                         data-phone="{{ user.phone_number }}" 
                         data-department="{{ user.department.id }}"
@@ -97,8 +98,14 @@
         <!-- ✅ Student Form -->
         <form id="student-form">
             <h4>👨‍🎓 {% trans "Student Details" %}</h4>
-            <label for="student-name">{% trans "Name" %}:</label>
+            <label for="student-name">{% trans "Username" %}:</label>
             <input type="text" id="student-name" required>
+
+            <label for="student-first-name">{% trans "First Name" %}:</label>
+            <input type="text" id="student-first-name" required>
+
+            <label for="student-last-name">{% trans "Last Name" %}:</label>
+            <input type="text" id="student-last-name" required>
 
             <label for="student-id">{% trans "University Number" %}:</label>
             <input type="text" id="student-id" required>
@@ -133,8 +140,14 @@
         <!-- ✅ Teacher Form -->
         <form id="user-form" class="hidden">
             <h4>👤 {% trans "Teacher Details" %}</h4>
-            <label for="user-name">{% trans "Name" %}:</label>
+            <label for="user-name">{% trans "Username" %}:</label>
             <input type="text" id="user-name" required>
+
+            <label for="user-first-name">{% trans "First Name" %}:</label>
+            <input type="text" id="user-first-name" required>
+
+            <label for="user-last-name">{% trans "Last Name" %}:</label>
+            <input type="text" id="user-last-name" required>
 
             <label for="user-email">{% trans "Email (optional)" %}:</label>
             <input type="email" id="user-email">
@@ -163,8 +176,14 @@
         <!-- ✅ Coordinator Form -->
         <form id="coordinator-form" class="hidden">
             <h4>👥 {% trans "Coordinator Details" %}</h4>
-            <label for="coord-name">{% trans "Name" %}:</label>
+            <label for="coord-name">{% trans "Username" %}:</label>
             <input type="text" id="coord-name" required>
+
+            <label for="coord-first-name">{% trans "First Name" %}:</label>
+            <input type="text" id="coord-first-name" required>
+
+            <label for="coord-last-name">{% trans "Last Name" %}:</label>
+            <input type="text" id="coord-last-name" required>
 
             <label for="coord-email">{% trans "Email (optional)" %}:</label>
             <input type="email" id="coord-email">

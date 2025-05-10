@@ -33,11 +33,14 @@
                 <h4>{{ project.name }}</h4>
                 <p><strong>Field:</strong> {{ project.field }}</p>
 
-                {% if entry.supervisor %}
-                    <p><strong>Supervisor:</strong> {{ entry.supervisor.username }}</p>
-                {% endif %}
-
                 {% if student %}
+                    <p><strong>Supervisor:</strong> 
+                        {% if entry.supervisor %}
+                            {{ entry.supervisor.first_name }} {{ entry.supervisor.last_name }}
+                        {% else %}
+                            Not Yet Assigned
+                        {% endif %}
+                    </p>
                     <p><strong>Team Members:</strong> {{ project.student_memberships.count }}/{{ project.team_member_count }}</p>
                     <div class="action-buttons">
                         {% if project.id in joined_project_ids %}
@@ -51,7 +54,6 @@
                                 <button class="btn btn-primary">🔗 Request to Join</button>
                             </form>
                         {% endif %}
-
                         <button class="btn btn-edit view-project-btn"
                                 data-name="{{ project.name }}"
                                 data-description="{{ project.description }}"
@@ -67,25 +69,34 @@
                         <p class="full-notice">🔒 This project is full</p>
                     {% endif %}
 
-                {% elif teacher_roles %}
-                    {% if entry.reader %}
-                        <p><strong>Reader:</strong> {{ entry.reader.username }}</p>
-                    {% endif %}
-                    <p><strong>Committee:</strong>
+                {% elif not student %}
+                    <p><strong>Supervisor:</strong> 
+                        {% if entry.supervisor %}
+                            {{ entry.supervisor.first_name }} {{ entry.supervisor.last_name }}
+                        {% else %}
+                            Not Yet Assigned
+                        {% endif %}
+                    </p>
+
+                    <p><strong>Reader:</strong> 
+                        {% if entry.reader %}
+                            {{ entry.reader.first_name }} {{ entry.reader.last_name }}
+                        {% else %}
+                            Not Yet Assigned
+                        {% endif %}
+                    </p>
+
+                    <p><strong>Committee:</strong> 
                         {% if entry.judges %}
                             {{ entry.judges|join:", " }}
                         {% else %}
-                            N/A
+                            Not Yet Assigned
                         {% endif %}
                     </p>
 
                     <div class="action-buttons">
                         {% if project.id in joined_teacher_project_ids %}
-                            {% for pid, role in teacher_roles.items %}
-                                {% if pid == project.id %}
-                                    <p><strong>Your Role:</strong> {{ role }}</p>
-                                {% endif %}
-                            {% endfor %}
+                            
                             <form class="project-action-form" data-project-id="{{ project.id }}" data-action="leave">
                                 {% csrf_token %}
                                 <button class="btn btn-delete">❌ Remove My Role</button>
@@ -93,17 +104,16 @@
                         {% elif not entry.is_full %}
                             <form class="project-action-form" data-project-id="{{ project.id }}" data-action="join">
                                 {% csrf_token %}
-                                <label><strong>Select Role:</strong></label>
+                                <!--<label><strong>Select Role:</strong></label>-->
                                 <select name="role" class="form-control" required>
-                                    <option value="">-- Choose Role --</option>
-                                    <option value="Supervisor">Supervisor</option>
-                                    <option value="Reader">Reader</option>
-                                    <option value="Judge">Committee Member</option>
+                                    <option value="">-- Select Role --</option>
+                                    {% if not entry.supervisor %}<option value="Supervisor">Supervisor</option>{% endif %}
+                                    {% if not entry.reader %}<option value="Reader">Reader</option>{% endif %}
+                                    <option value="Judgement Committee">Committee Member</option>
                                 </select>
-                                <button class="btn btn-primary" style="margin-top: 10px;">➕ Join as Selected Role</button>
+                                <button class="btn btn-primary" style="margin-top: 10px;">+ Join as Selected Role</button>
                             </form>
                         {% endif %}
-
                         <button class="btn btn-edit view-project-btn"
                                 data-name="{{ project.name }}"
                                 data-description="{{ project.description }}"

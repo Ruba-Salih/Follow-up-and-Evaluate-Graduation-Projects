@@ -1,99 +1,110 @@
-/* Container for the whole form */
+/* Main Form Container */
 .form-container {
-    max-width: 850px;
-    margin: 30px auto;
-    padding: 20px;
+    width: 800px; /* Set width to 80% or whatever you want */
+    padding: 30px;
     background-color: #fff;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin: 0 auto; /* Center the form horizontally */
+    margin-top: 70px;
 }
 
-/* Header section */
+/* Form Header Styles */
 .form-header {
     text-align: center;
     margin-bottom: 25px;
 }
 
-.form-header h2 {
-    margin-bottom: 10px;
-    color: #a63026;
-    font-size: 1.8em;
+.form-header h1, .form-header h2, .form-header h3 {
+    margin: 0;
+    color: #2a3d47;
 }
 
 .form-header p {
-    font-size: 1em;
-    color: #444;
-    margin: 2px 0;
+    font-size: 1.2em;
+    margin: 5px 0;
+    color: #555;
 }
 
-/* Each main grading category */
+/* Main Category */
 .main-category {
     background-color: #fef7f7;
     margin-bottom: 30px;
-    padding: 20px 25px;
     border-left: 5px solid #a63026;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-/* Title of the grading category */
+/* Category Header */
 .category-header h3 {
-    color: #222;
-    margin-bottom: 12px;
-    font-size: 1.3em;
-}
-
-/* Subcategory descriptors */
-.subcategory-slider {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    color: black; /* Set main category color to black */
     margin-bottom: 10px;
 }
 
+/* Subcategory Slider inside Main Category */
+.subcategory-slider {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 15px; /* Adjusted space between subcategories and slider */
+    font-size: 0.9em; /* Smaller font size for subcategories */
+    width: 100%;  /* Take full width of the container */
+}
+
+/* Make subcategory labels smaller */
 .subcategory {
-    background: #eee;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 0.9em;
-    font-weight: 500;
-    color: #444;
+    min-width: 80px;
+    text-align: center;
+    font-weight: bold;
+    color: black; /* Set subcategory color to black */
+    font-size: 0.9em; /* Reduce the font size of subcategories */
 }
 
-/* Student-specific grading blocks */
+/* Grading Section */
+.grade-section {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #fafafa;
+    position: relative;  /* Keep the subcategories inside the grading section */
+}
+
+/* Individual Grading */
 .individual-grade {
-    margin-top: 10px;
+    margin-top: 20px;
 }
 
-.individual-student-grade {
-    margin-bottom: 15px;
+h4 {
+    font-size: 1.2em;
+    color: #333;
+    margin-bottom: 10px;
 }
 
-.individual-student-grade label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 500;
-}
 
-/* Group grading block */
+/* Group Grading */
 .group-grade {
-    margin-top: 10px;
+    margin-top: 20px;
 }
 
-/* Slider and its label */
+/* Slider Container */
 .slider-container {
     display: flex;
     align-items: center;
     gap: 20px;
+    margin-bottom: 15px;
 }
 
 input[type="range"] {
     width: 80%;
     height: 8px;
-    background-color: #ddd;
     border-radius: 4px;
+    background: linear-gradient(to right, #a63026 0%, #a63026 50%, #ddd 50%, #ddd 100%);
     appearance: none;
     cursor: pointer;
+    outline: none;
+    transition: background 0.3s ease;
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -102,7 +113,9 @@ input[type="range"]::-webkit-slider-thumb {
     height: 14px;
     background-color: #a63026;
     border-radius: 50%;
+    cursor: pointer;
 }
+
 
 input[type="range"].group-slider {
     width: 90%;
@@ -111,100 +124,94 @@ input[type="range"].group-slider {
 span {
     font-size: 1.1em;
     color: #a63026;
-    font-weight: bold;
 }
 
-/* Submit button */
+/* Submit Button */
 .submit-btn {
-    margin-top: 30px;
-    padding: 15px;
+    display: block;
     width: 100%;
+    padding: 15px;
+    margin-top: 30px;
     background-color: #a63026;
     color: white;
     font-size: 1.2em;
     border: none;
-    border-radius: 6px;
+    border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s;
 }
 
 .submit-btn:hover {
-    background-color: #8b2a22;
+    background-color: #852521;
 }
 
-/* Date info */
+/* Form Footer */
 .form-footer {
     text-align: right;
     margin-top: 30px;
-    font-size: 1em;
-    color: #777;
+    font-size: 1.1em;
+    color: #555;
 }
 
-/* Success popup overlay */
+/* Popup Overlay (darkens the background) */
 .popup-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: none;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none; /* Initially hidden */
     justify-content: center;
     align-items: center;
-    z-index: 9999;
+    z-index: 9999; /* Ensure it appears above other content */
+    overflow: hidden; /* Prevents scrolling when popup is visible */
 }
 
-/* Box inside popup */
+/* Popup Box */
 .popup-box {
-    background: white;
-    padding: 25px;
-    border-radius: 10px;
+    background-color: white; /* White background */
+    padding: 20px;
+    border-radius: 8px;
     text-align: center;
-    width: 90%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     max-width: 400px;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    z-index: 10000; /* Ensure it appears above the overlay */
 }
 
-.popup-box h2 {
-    color: #2a3d47;
-    margin-bottom: 10px;
-}
-
-.popup-box p {
-    color: #444;
-    margin-bottom: 20px;
-}
-
+/* Close Button */
 .popup-box button {
     background-color: #a63026;
     color: white;
     border: none;
-    padding: 10px 18px;
-    border-radius: 4px;
+    padding: 10px 20px;
     cursor: pointer;
+    border-radius: 4px;
 }
 
 .popup-box button:hover {
     background-color: #8b2a22;
 }
 
-/* Responsive design for smaller screens */
+/* Responsive Design */
 @media (max-width: 768px) {
     .form-container {
-        width: 95%;
+        width: 90%;
         padding: 20px;
     }
 
-    .slider-container {
+    .subcategory-slider {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    input[type="range"] {
-        width: 100%;
+    .subcategory {
+        min-width: 100%;
+        text-align: left;
     }
 
-    .subcategory-slider {
+    .slider-container {
         flex-direction: column;
         align-items: flex-start;
     }
