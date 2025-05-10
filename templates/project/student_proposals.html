@@ -42,7 +42,8 @@
                     </div>
                 </div>
                 <p><strong>{% trans "Field" %}:</strong> {{ proposal.field }}</p>
-                <p><strong>{% trans "Submitted by" %}:</strong> {{ proposal.submitted_by.username }}</p>
+                <p><strong>{% trans "Submitted by" %}:</strong> {{ proposal.submitted_by.first_name }} {{ proposal.submitted_by.last_name }}</p>
+
                 <p><strong>{% trans "Date" %}:</strong> {{ proposal.created_at|date:"M d, Y" }}</p>
                 <div class="card-buttons">
                     <button class="view-btn btn-edit" data-id="{{ proposal.id }}">🔍 {% trans "View Details" %}</button>

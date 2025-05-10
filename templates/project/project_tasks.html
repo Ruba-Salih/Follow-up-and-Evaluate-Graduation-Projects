@@ -75,6 +75,22 @@
         <button class="btn btn-delete" id="delete-task-btn">{% trans "Delete Task" %}</button>
       </div>
     </div>
+
+    <hr>
+    <h4>💬 {% trans "Feedback Thread" %}</h4>
+    <div id="feedback-list" class="feedback-list">
+      <!-- Populated by JS -->
+    </div>
+    <hr>
+
+    <h4 style="margin-top: 20px;">✍️ {% trans "Reply / Add Feedback" %}</h4>
+    <form id="student-feedback-form">
+      {% csrf_token %}
+      <textarea name="feedback_text" id="feedback-textarea" class="form-control" placeholder="{% trans 'Write a feedback...' %}" required></textarea>
+      <button type="submit" class="btn btn-primary" style="margin-top: 10px;">{% trans "Send" %}</button>
+      <p id="feedback-message"></p>
+    </form>
+
   </div>
 </div>
 

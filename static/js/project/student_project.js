@@ -38,6 +38,127 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
     });
+
+const researchBtn = document.getElementById("research-btn");
+const researchModal = document.getElementById("researchUploadModal");
+const researchFeedbackList = document.getElementById("research-feedback-list");
+const researchFeedbackForm = document.getElementById("research-feedback-form");
+const researchUploadForm = document.getElementById("research-upload-form");
+
+researchUploadForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const fileInput = researchUploadForm.querySelector("input[type='file']");
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("⚠️ Please select a file to upload.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("research_file", file);
+
+    const res = await fetch(`/api/project/projects/${projectId}/`, {
+        method: "PUT",
+        headers: {
+            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+        },
+        body: formData
+    });
+
+    if (res.ok) {
+        alert("✅ Research file uploaded successfully!");
+        researchModal.classList.remove("show");
+        window.location.reload();
+    } else {
+        alert("❌ Failed to upload research file.");
+    }
+});
+
+researchBtn?.addEventListener("click", async () => {
+    researchModal.classList.add("show");
+
+    projectId = researchBtn.dataset.projectId || projectId; // se
+
+    const res = await fetch(`/api/project/project/track/${projectId}/`);
+    const data = await res.json();
+
+    const researchFileContainer = document.getElementById("research-file-link");
+    if (researchFileContainer) {
+        if (data.research_file) {
+            researchFileContainer.innerHTML = `
+                <p><strong>📄 Existing File:</strong> 
+                    <a href="${data.research_file}" target="_blank">View Uploaded File</a>
+                </p>`;
+        } else {
+            researchFileContainer.innerHTML = "<p>No research file uploaded yet.</p>";
+        }
+    }
+
+    // 🔁 Show feedbacks (from teachers/committee only)
+    researchFeedbackList.innerHTML = "";
+    const allowedRoles = ["Reader", "Judgement Committee"];
+    const visibleFeedbacks = (data.feedbacks || []).filter(fb => allowedRoles.includes(fb.sender_role));
+
+    if (visibleFeedbacks.length > 0) {
+        visibleFeedbacks.forEach(fb => {
+            const fbDiv = document.createElement("div");
+            fbDiv.classList.add("feedback-entry");
+            fbDiv.innerHTML = `
+                <p><strong>${fb.sender} (${fb.sender_role}):</strong> ${fb.feedback_text}</p>
+                <p class="timestamp">🕒 ${fb.created_at}</p>
+                ${fb.feedback_file ? `<p><a href="${fb.feedback_file}" target="_blank">📎 File</a></p>` : ""}
+                <hr>
+            `;
+            researchFeedbackList.appendChild(fbDiv);
+        });
+    } else {
+        researchFeedbackList.innerHTML = "<p>No feedback yet.</p>";
+    }
+
+    // ❌ Hide feedback form if user is student
+    const isStudent = data.role === "Student";
+    const feedbackForm = document.getElementById("research-feedback-form");
+    if (feedbackForm) {
+        feedbackForm.style.display = isStudent ? "none" : "block";
+    }
+});
+
+researchFeedbackForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const comment = document.getElementById("research-feedback-text")?.value.trim();
+    const file = document.getElementById("research-feedback-file")?.files[0];
+
+    if (!comment && !file) {
+        alert("Please write feedback or upload a file.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("project", projectId);
+    formData.append("feedback_text", comment);
+    if (file) {
+        formData.append("feedback_file", file);
+    }
+
+    const res = await fetch(`/api/project/feedback/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+        },
+        body: formData
+    });
+
+    if (res.ok) {
+        alert("✅ Feedback submitted!");
+        researchModal.classList.remove("show");
+        window.location.reload();
+    } else {
+        alert("❌ Failed to submit feedback.");
+    }
+});
+
     
     async function loadProject() {
         try {
@@ -50,8 +171,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 projectId = project.id;
 
                 if (projectTitle) projectTitle.textContent = project.name || "Unnamed Project";
-                if (projectField) projectField.textContent = project.field || "N/A";
-                if (projectSupervisor) projectSupervisor.textContent = project.supervisor?.username || "N/A";
+                if (projectField) projectField.textContent = project.field || "—";
+                if (projectSupervisor) projectSupervisor.textContent = data.supervisor_name || "—";
                 if (projectDuration) projectDuration.textContent = project.duration ? `${project.duration} months` : "N/A";
                 // Fetch the full project using the projectId to get the completion_status
                 const detailedRes = await fetch(`${BASE_URL}/${project.id}/`);

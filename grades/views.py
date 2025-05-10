@@ -57,7 +57,7 @@ def grade_form(request, project_id):
         'main_categories': main_categories,
         'students': students,
         'form_name': form.name,
-        'supervisor_name': supervisor.get_full_name,
+        'supervisor_name': supervisor.get_full_name(),
         'project_name': project.name,
         'evaluation_form_id': form.id,
     }

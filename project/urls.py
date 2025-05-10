@@ -32,6 +32,7 @@ urlpatterns = [
     path("project/teacher/", views.teacher_projects_page, name="teacher_projects"),
 
     path('project/tasks/', views.project_tasks_page, name='project-tasks-page'),
+    path("tasks/<int:task_id>/", views.get_task_detail, name="task-detail"),
 
     path("available-projects/", views.available_projects_view, name="available-projects"),
     path("projects/available/action/", views.AvailableProjectActionView.as_view(), name="available-project-action"),

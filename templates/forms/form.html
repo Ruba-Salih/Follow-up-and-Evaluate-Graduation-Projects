@@ -128,5 +128,24 @@ document.getElementById('evaluationForm').addEventListener('submit', function(ev
     });
 });
 </script>
+<script>
+    document.querySelectorAll('input[type="range"]').forEach(slider => {
+        function updateSliderBackground(slider) {
+            const min = slider.min || 0;
+            const max = slider.max || 10;
+            const val = slider.value;
+            const percent = ((val - min) / (max - min)) * 100;
+    
+            slider.style.background = `linear-gradient(to right, #a63026 0%, #a63026 ${percent}%, #ddd ${percent}%, #ddd 100%)`;
+        }
+    
+        // Initialize
+        updateSliderBackground(slider);
+    
+        // Update on input
+        slider.addEventListener('input', () => updateSliderBackground(slider));
+    });
+    </script>
+    
 
 {% endblock %}

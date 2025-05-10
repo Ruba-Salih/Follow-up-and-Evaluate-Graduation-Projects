@@ -97,6 +97,8 @@ class ProjectSerializer(serializers.ModelSerializer):
     )
 
     members = MembershipReadSerializer(source='projectmembership_set', many=True, read_only=True)
+    research_file = serializers.FileField(required=False, allow_null=True)
+
 
     class Meta:
         model = Project

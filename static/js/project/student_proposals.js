@@ -61,11 +61,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("modal-team-count").textContent = data.team_member_count || 0;
 
                 if (data.student_memberships) {
-                    const names = data.student_memberships.map(sm => sm.username).join(", ");
+                    const names = data.student_memberships.map(sm => {
+                        return sm.first_name || sm.last_name
+                            ? `${sm.first_name || ''} ${sm.last_name || ''}`.trim()
+                            : sm.username;
+                    }).join(", ");
                     document.getElementById("modal-team-members").textContent = names || 'None';
                 } else {
                     document.getElementById("modal-team-members").textContent = 'None';
                 }
+                
 
                 document.getElementById("modal-file").innerHTML = data.attached_file ? `<a href="${data.attached_file}" target="_blank">Download</a>` : 'None';
                 document.getElementById("modal-comment").textContent = data.additional_comment || 'None';

@@ -153,6 +153,66 @@ h2 {
     color: #444;
 }
 
+/* Feedback Section */
+.feedback-list {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-left: 4px solid #a63026;
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .feedback-entry {
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid #a63026;
+    border-radius: 4px;
+    font-size: 0.95rem;
+  }
+  
+  .feedback-entry .timestamp {
+    color: #777;
+    font-size: 0.8rem;
+    margin-top: 4px;
+  }
+  
+  #student-feedback-form {
+    margin-top: 20px;
+  }
+  
+  #student-feedback-form textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    resize: vertical;
+    margin-bottom: 10px;
+  }
+  
+  #student-feedback-form button {
+    background-color: #a63026;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  #student-feedback-form button:hover {
+    background-color: #8c261f;
+  }
+  
+  #feedback-message {
+    margin-top: 8px;
+    font-size: 0.9rem;
+  }
+  
+
 /* Action buttons */
 .status-buttons {
     display: flex;

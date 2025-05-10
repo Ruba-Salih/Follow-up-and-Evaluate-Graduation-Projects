@@ -15,6 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "id", "username", "email", "password", "phone_number",
+            "first_name", "last_name",  
             "role", "student_id", "sitting_number", "coord_id", "department_id"
         ]
         extra_kwargs = {"password": {"write_only": True}}
@@ -25,6 +26,8 @@ class UserSerializer(serializers.ModelSerializer):
         sitting_number = validated_data.pop("sitting_number", None)
         department_id = validated_data.pop("department_id", None)
         coord_id = validated_data.pop("coord_id", None)
+        first_name = validated_data.pop("first_name", "")
+        last_name = validated_data.pop("last_name", "")
 
         if department_id:
             department = Department.objects.get(id=department_id)
@@ -36,25 +39,29 @@ class UserSerializer(serializers.ModelSerializer):
                     "Error": "Student ID and Sitting Number are required for students."
                 })
             user = Student.objects.create_user(**validated_data)
+            user.first_name = first_name
+            user.last_name = last_name
             user.student_id = student_id
             user.sitting_number = sitting_number
             user.save()
             return user
 
         if coord_id:
-            from users.models import Coordinator
             if Coordinator.objects.filter(coord_id=coord_id).exists():
                 raise serializers.ValidationError({"Error": "This Coordinator ID is already in use."})
-
-        if coord_id:
-            if Coordinator.objects.filter(coord_id=coord_id).exists():
-                raise serializers.ValidationError({"Error": "This Coordinator ID is already in use."})
-
-            user = Coordinator.objects.create_user(coord_id=coord_id, **validated_data)
+            user = Coordinator.objects.create_user(
+                coord_id=coord_id,
+                **validated_data
+            )
+            user.first_name = first_name
+            user.last_name = last_name
             user.is_super = True
-        else:
-            user = User.objects.create_user(**validated_data)
+            user.save()
+            return user
 
+        user = User.objects.create_user(**validated_data)
+        user.first_name = first_name
+        user.last_name = last_name
         user.save()
         return user
 
@@ -62,6 +69,9 @@ class UserSerializer(serializers.ModelSerializer):
         instance.username = validated_data.get("username", instance.username)
         instance.email = validated_data.get("email", instance.email)
         instance.phone_number = validated_data.get("phone_number", instance.phone_number)
+        instance.first_name = validated_data.get("first_name", instance.first_name)
+        instance.last_name = validated_data.get("last_name", instance.last_name)
+
 
         if validated_data.get("password"):
             instance.set_password(validated_data.get("password"))

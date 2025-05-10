@@ -37,7 +37,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         items.forEach(item => {
             const option = document.createElement("option");
             option.value = item.id;
-            option.textContent = item.username || item.name || "";
+            const fullName = [item.first_name, item.last_name].filter(Boolean).join(" ");
+            option.textContent = fullName || item.username || item.name || "";
+
             if (selectedIds.includes(item.id)) {
                 option.selected = true;
             }
@@ -66,33 +68,39 @@ document.addEventListener("DOMContentLoaded", async () => {
                 checkbox.type = "checkbox";
                 checkbox.name = "team_members";
                 checkbox.value = student.id;
-    
+        
                 const label = document.createElement("label");
-    
+        
                 const isSelected = selectedIds.includes(student.id);
-    
+                const fullName = [student.first_name, student.last_name].filter(Boolean).join(" ") || student.username;
+        
                 if (student.already_assigned && !isSelected) {
                     checkbox.disabled = true;
                     label.style.opacity = "0.6";
                     label.title = "Already assigned to another project.";
                     label.appendChild(checkbox);
-                    label.append(` ${student.username} (Assigned)`);
+                    label.append(` ${fullName} (Assigned)`);
                 } else {
                     checkbox.checked = isSelected;
                     label.appendChild(checkbox);
-                    label.append(` ${student.username}`);
+                    label.append(` ${fullName}`);
                 }
-    
+        
                 wrapper.appendChild(label);
                 checkboxContainer.appendChild(wrapper);
             });
         }
+        
     
         displayList(list);
     
         searchInput.addEventListener("input", () => {
             const query = searchInput.value.toLowerCase();
-            const filtered = list.filter(s => s.username.toLowerCase().includes(query));
+            const filtered = list.filter(s => {
+                const fullName = [s.first_name, s.last_name].filter(Boolean).join(" ").toLowerCase();
+                return fullName.includes(query) || s.username.toLowerCase().includes(query);
+            });
+            
             displayList(filtered);
         });
     }    
@@ -251,6 +259,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const selectedTeamMemberIds = data.team_members?.map(s => s.id) || [];
             renderCheckboxes(studentsList, selectedTeamMemberIds);
+            // 🧩 Show team members as full names in the modal
+            const teamMembersSpan = document.getElementById("modal-team-members");
+            if (teamMembersSpan) {
+                const fullNames = data.team_members?.map(member => {
+                    return [member.first_name, member.last_name].filter(Boolean).join(" ") || member.username;
+                }).join(", ") || "None";
+                
+                teamMembersSpan.textContent = fullNames;
+            }
+
 
             if (!isTeacher && proposedToSelect) {
                 populateSelect(proposedToSelect, teachersList, false, [data.proposed_to]);

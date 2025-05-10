@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    function openModal(taskId) {
+    async function openModal(taskId) {
         currentTask = tasks.find(t => t.id == taskId);
         if (!currentTask) return;
 
@@ -111,13 +111,55 @@ document.addEventListener("DOMContentLoaded", async () => {
             fileDiv.innerHTML = `<em>No file uploaded</em>`;
         }
 
-        // Make fields read-only
         document.querySelectorAll("#task-update-form input, #task-update-form select, #task-update-form textarea").forEach(el => {
             el.setAttribute("disabled", true);
         });
 
+        const feedbackContainer = document.getElementById("feedback-list");
+        const feedbackRes = await fetch(`/api/project/tasks/${taskId}/`);
+        const feedbackData = await feedbackRes.json();
+
+        const sortedFeedbacks = (feedbackData.feedbacks || []).sort((a, b) =>
+            new Date(a.created_at) - new Date(b.created_at)
+        );
+        
+        feedbackContainer.innerHTML = sortedFeedbacks.length
+          ? sortedFeedbacks.map(fb => `
+              <div class="feedback-entry">
+                <p><strong>${fb.sender} (${fb.sender_role}):</strong> ${fb.feedback_text}</p>
+                <p class="timestamp">🕒 ${new Date(fb.created_at).toLocaleString()}</p>
+                ${fb.feedback_file ? `<p><a href="${fb.feedback_file}" target="_blank">📎 File</a></p>` : ""}
+              </div>
+            `).join("")
+          : "<p>No feedback yet.</p>";
+    
         modal.classList.remove("hidden");
     }
+
+    const feedbackForm = document.getElementById("student-feedback-form");
+    feedbackForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(feedbackForm);
+        formData.append("project", projectId);
+        formData.append("task_id", currentTask.id);
+
+        const res = await fetch("/api/project/feedback/", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+            },
+            body: formData
+        });
+
+        if (res.ok) {
+            showAlert("✅ Reply sent!", "success");
+            feedbackForm.reset();
+            await openModal(currentTask.id); // Refresh feedback
+        } else {
+            showAlert("❌ Failed to send reply.", "error");
+        }
+        
+    };
 
     async function handleDelete(taskId) {
         if (!confirm("Are you sure you want to delete this task?")) return;

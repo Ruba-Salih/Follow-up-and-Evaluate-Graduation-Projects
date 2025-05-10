@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
@@ -133,7 +134,7 @@ class ProjectProposalView(APIView):
                 response_data["student_memberships"] = [
                     {
                         "id": sm.student.id,
-                        "username": sm.student.username
+                        "username": sm.student.username,
                     }
                     for sm in student_memberships
                     if sm.student
@@ -369,17 +370,23 @@ class ProjectProposalView(APIView):
                 proposal.coordinator_status = coordinator_status
 
         # ✅ Handle team members
-        team_members_ids = data.getlist("team_members_ids")
-        if team_members_ids:
-            proposal.team_members.set(team_members_ids)
+        if "team_members_ids" in request.data:
+            current_ids = set(
+                StudentProjectMembership.objects.filter(proposal=proposal).values_list("student_id", flat=True)
+            )
+            new_ids = set(request.data.getlist("team_members_ids"))
 
-        # ✅ Rebuild membership table
-        StudentProjectMembership.objects.filter(proposal=proposal).delete()
-        if hasattr(proposal.submitted_by, "student"):
-            StudentProjectMembership.objects.create(student=proposal.submitted_by.student, proposal=proposal)
+            if hasattr(proposal.submitted_by, "student"):
+                submitter_id = proposal.submitted_by.student.id
+                new_ids.add(submitter_id)
 
-        for sid in team_members_ids:
-            StudentProjectMembership.objects.get_or_create(student_id=sid, proposal=proposal)
+            for sid in new_ids - current_ids:
+                StudentProjectMembership.objects.create(student_id=sid, proposal=proposal)
+
+            StudentProjectMembership.objects.filter(
+                proposal=proposal,
+                student_id__in=(current_ids - new_ids)
+            ).exclude(student_id=submitter_id).delete()
 
         # ✅ Optional file upload support
         if 'attached_file' in request.FILES:
@@ -427,21 +434,27 @@ class FeedbackExchangeView(APIView):
 
     def post(self, request):
         user = request.user
-
-        if not (is_teacher(user) or hasattr(user, "coordinator")):
-            return Response({"detail": "Only teachers and coordinators can send feedback."}, status=403)
-
         data = request.data.copy()
         data["sender"] = user.id
 
         proposal_id = data.get("proposal")
         project_id = data.get("project")
+        task_id = data.get("task_id")
 
         if not proposal_id and not project_id:
             return Response({"detail": "Either proposal or project must be specified."}, status=400)
 
         if proposal_id and project_id:
             return Response({"detail": "Only one of proposal or project should be specified."}, status=400)
+
+        if task_id:
+            try:
+                task = ProjectTask.objects.get(id=task_id)
+                if project_id and str(task.project.id) != str(project_id):
+                    return Response({"detail": "Task does not belong to the specified project."}, status=400)
+                data["task"] = task.id
+            except ProjectTask.DoesNotExist:
+                return Response({"detail": "Task not found."}, status=400)
 
         serializer = FeedbackExchangeSerializer(data=data)
         if serializer.is_valid():
@@ -642,9 +655,20 @@ class ProjectView(APIView):
         if serializer.is_valid():
             updated_project = serializer.save()
 
-            StudentProjectMembership.objects.filter(project=updated_project).delete()
-            for sid in student_ids:
-                StudentProjectMembership.objects.create(student_id=sid, project=updated_project)
+            if 'research_file' in request.FILES:
+                updated_project.research_file = request.FILES['research_file']
+                updated_project.save(update_fields=['research_file'])
+
+            if "student_ids" in request.data:
+                current_ids = set(StudentProjectMembership.objects.filter(project=updated_project).values_list("student_id", flat=True))
+                new_ids = set(student_ids)
+
+                # Add new students
+                for sid in new_ids - current_ids:
+                    StudentProjectMembership.objects.create(student_id=sid, project=updated_project)
+
+                # Remove students not in the new list
+                StudentProjectMembership.objects.filter(project=updated_project, student_id__in=(current_ids - new_ids)).delete()
 
             ProjectMembership.objects.filter(project=updated_project).delete()
             print("📦 memberships payload:", memberships)
@@ -752,9 +776,11 @@ class TrackProjectView(APIView):
 
                 for t in task_serialized:
                     task_obj = goal_tasks.get(id=t["id"])
-                    if task_obj.assign_to and task_obj.assign_to:
+                    if task_obj.assign_to:
+                        t["assign_to"] = task_obj.assign_to.id  # <-- This is the key fix
                         t["assign_to_name"] = task_obj.assign_to.username
                     else:
+                        t["assign_to"] = None
                         t["assign_to_name"] = None
 
                 goals_data.append({
@@ -769,8 +795,43 @@ class TrackProjectView(APIView):
             completion = round(calculate_completion_by_tasks(project), 2)
             print(f"🧮 Completion Status for project {project.id}: {completion}")
 
+            # ✅ Include feedbacks from all teaching roles
+            feedbacks = FeedbackExchange.objects.filter(project=project).order_by("-created_at")
+            print("🔁 Total Feedbacks Found:", feedbacks.count())
+            for fb in feedbacks:
+                print("📝 Feedback:", {
+                    "sender": fb.sender.username,
+                    "sender_role": (
+                        "Coordinator" if hasattr(fb.sender, "coordinator")
+                        else "Teacher" if is_teacher(fb.sender)
+                        else "Reader" if fb.sender.projectmembership_set.filter(project=project, role__name="Reader").exists()
+                        else "Judgement Committee" if fb.sender.projectmembership_set.filter(project=project, role__name="Judgement Committee").exists()
+                        else "Other"
+                    ),
+                    "text": fb.feedback_text,
+                    "file": fb.feedback_file.url if fb.feedback_file else None,
+                    "created": fb.created_at
+                })
+            visible_feedbacks = [
+                {
+                    "sender": fb.sender.username,
+                    "sender_role": (
+                        "Reader" if fb.sender.projectmembership_set.filter(project=project, role__name="Reader").exists()
+                        else "Judgement Committee" if fb.sender.projectmembership_set.filter(project=project, role__name="Judgement Committee").exists()
+                        else "Other"
+                    ),
+                    "feedback_text": fb.feedback_text,
+                    "created_at": fb.created_at.strftime("%Y-%m-%d %H:%M"),
+                    "feedback_file": fb.feedback_file.url if fb.feedback_file else None
+                }
+                for fb in feedbacks
+                if fb.sender.projectmembership_set.filter(project=project, role__name__in=["Reader", "Judgement Committee"]).exists()
+            ]
+
+
             return Response({
                 "project": project_data,
+                "supervisor_name": project.supervisor.get_full_name() if project.supervisor else None,
                 "students": [
                     {"id": s.student.id, "username": s.student.username}
                     for s in students
@@ -778,8 +839,9 @@ class TrackProjectView(APIView):
                 "completion_status": completion,
                 "goals": goals_data,
                 "tasks": tasks_data,
+                "research_file": project.research_file.url if project.research_file else None,
                 "logs": [],
-                "feedbacks": [],
+                "feedbacks": visible_feedbacks,
             })
         else:
             print("📜 Listing projects (coordinator or student view)")
@@ -873,6 +935,7 @@ class TrackProjectView(APIView):
             FeedbackExchange.objects.create(
                 project=project,
                 sender=user,
+                task_id=request.data.get('task_id'),
                 feedback_text=request.data.get('feedback_text'),
                 feedback_file=request.FILES.get('feedback_file')
             )
@@ -902,26 +965,39 @@ class TrackProjectView(APIView):
 
         user = request.user
 
-        if 'task_id' in request.data:
-            task_id = request.data.get('task_id')
+        # ✅ Check if task update is intended
+        task_id = request.data.get('task_id')
+        if task_id:
             try:
                 task = ProjectTask.objects.get(id=task_id, project=project)
 
-                # Editable fields
-                task.name = request.data.get('name', task.name)
-                task.task_status = request.data.get('task_status', task.task_status)
-                task.deliverable_text = request.data.get('deliverable_text', task.deliverable_text)
-                task.outputs = request.data.get('outputs', task.outputs)
-                task.deadline_days = request.data.get('deadline_days', task.deadline_days)
-                task.goals = request.data.get('task_goal_text', task.goals)  # This is the editable text goal
+                # ✅ Update basic editable fields only if present
+                if 'name' in request.data:
+                    task.name = request.data['name']
 
-                # Foreign key updates
+                if 'task_status' in request.data:
+                    task.task_status = request.data['task_status']
+
+                if 'deliverable_text' in request.data:
+                    task.deliverable_text = request.data['deliverable_text']
+
+                if 'outputs' in request.data:
+                    task.outputs = request.data['outputs']
+
+                if 'deadline_days' in request.data:
+                    task.deadline_days = request.data['deadline_days']
+
+                if 'task_goal_text' in request.data:
+                    task.goals = request.data['task_goal_text']
+
+                # ✅ Update foreign keys if provided
                 if 'goal_id' in request.data:
-                    task.goal_id = request.data.get('goal_id')
-                if 'assign_to' in request.data:
-                    task.assign_to_id = request.data.get('assign_to')
+                    task.goal_id = request.data['goal_id']
 
-                # File upload
+                if 'assign_to' in request.data:
+                    task.assign_to_id = request.data['assign_to']
+
+                # ✅ Handle file upload safely
                 if 'deliverable_file' in request.FILES:
                     task.deliverable_file = request.FILES['deliverable_file']
 
@@ -966,17 +1042,22 @@ def available_projects_view(request):
         assigned_count = project.student_memberships.count()
         is_full = (project.team_member_count > 0 and assigned_count >= project.team_member_count)
 
-        assigned_students = [m.student.username for m in project.student_memberships.all()]
+        assigned_students = [
+            f"{m.student.first_name} {m.student.last_name}".strip()
+            if m.student.first_name or m.student.last_name
+            else m.student.username
+            for m in project.student_memberships.all()
+        ]
         supervisor = next((m.user for m in project.memberships.all() if m.role.name == "Supervisor"), None)
         reader = next((m.user for m in project.memberships.all() if m.role.name == "Reader"), None)
-        judges = [m.user.username for m in project.memberships.all() if m.role.name == "Judge"]
+        judges = [m.user for m in project.memberships.all() if m.role.name == "Judgement Committee"]
 
         projects_data.append({
             "project": project,
             "assigned_students": assigned_students,
             "supervisor": supervisor,
             "reader": reader,
-            "judges": judges,
+            "judges": [f"{j.first_name} {j.last_name}".strip() for j in judges],
             "is_full": is_full,
         })
 
@@ -1042,8 +1123,12 @@ def teacher_view_project(request, project_id):
 @login_required
 def project_progress_view(request, project_id):
     project = get_object_or_404(Project, id=project_id)
-    
-    return render(request, 'project/progress_view.html', {"project": project})
+    tasks = ProjectTask.objects.filter(project=project).select_related("assign_to")
+
+    return render(request, 'project/progress_view.html', {
+        "project": project,
+        "project_tasks": tasks
+    })
 
 class AvailableProjectActionView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1135,3 +1220,53 @@ class AvailableProjectActionView(APIView):
 
         return Response({"detail": "Only students or teachers can leave projects."}, status=403)
     
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_task_detail(request, task_id):
+    print(f"🔍 get_task_detail called with task_id: {task_id}") 
+    try:
+        task = ProjectTask.objects.select_related('goal', 'assign_to', 'project').get(pk=task_id)
+        print(f"✅ Task found: {task.name} (ID: {task.id})")
+
+        task_data = {
+            "id": task.id,
+            "name": task.name,
+            "task_status": task.task_status,
+            "goals": task.goals,
+            "goal": {
+                "id": task.goal.id,
+                "goal": task.goal.goal
+            } if task.goal else None,
+            "outputs": task.outputs,
+            "assign_to": task.assign_to.id if task.assign_to else None,
+            "assign_to_name": task.assign_to.username if task.assign_to else None,
+            "deadline_days": task.deadline_days,
+            "deliverable_text": task.deliverable_text,
+            "deliverable_file": task.deliverable_file.url if task.deliverable_file else None,
+            "created_at": task.created_at.strftime("%Y-%m-%d"),
+            "updated_at": task.updated_at.strftime("%Y-%m-%d"),
+            "project": task.project.id,
+        }
+
+        # Now attach feedbacks
+        task_data["feedbacks"] = [
+            {
+                "sender": fb.sender.username,
+                "sender_role": (
+                    "Coordinator" if hasattr(fb.sender, "coordinator")
+                    else "Teacher" if is_teacher(fb.sender)
+                    else "Student" if hasattr(fb.sender, "student")
+                    else "Unknown"
+                ),
+                "feedback_text": fb.feedback_text,
+                "created_at": fb.created_at.strftime("%Y-%m-%d %H:%M"),
+                "feedback_file": fb.feedback_file.url if fb.feedback_file else None
+            }
+            for fb in FeedbackExchange.objects.filter(task=task).order_by("-created_at")
+        ]
+
+        print("📦 Returning task data:", task_data)
+        return Response(task_data)
+
+    except ProjectTask.DoesNotExist:
+        return Response({"detail": "Task not found."}, status=404)
