@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const reportForm = document.getElementById("weekly-report-form");
     const progressForm = document.getElementById("progress-form");
     
-    const feedbackList = document.getElementById("feedback-list");
+
 
     let projectId = null;
     let taskCounter = 0;
@@ -195,7 +195,7 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
                 await loadGoals();
                 await loadReports();
                 await loadTasks();
-                await loadFeedbacks();
+                
             }
         } catch (error) {
             console.error("Error loading project:", error);
@@ -370,26 +370,6 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
         });
     }
 
-    async function loadFeedbacks() {
-        try {
-            const res = await fetch(`${BASE_URL}/${projectId}/`);
-            if (!res.ok) throw new Error("Failed to load feedbacks.");
-            const data = await res.json();
-
-            feedbackList.innerHTML = "";
-            (data.feedbacks || []).forEach(fb => {
-                const p = document.createElement("p");
-                p.textContent = `${fb.sender}: ${fb.feedback_text}`;
-                feedbackList.appendChild(p);
-            });
-
-            if (!data.feedbacks || data.feedbacks.length === 0) {
-                feedbackList.innerHTML = "<p>No feedback yet.</p>";
-            }
-        } catch (error) {
-            console.error("Error loading feedbacks:", error);
-        }
-    }
 
     addGoalBtn?.addEventListener("click", async () => {
     if (!projectId) {
