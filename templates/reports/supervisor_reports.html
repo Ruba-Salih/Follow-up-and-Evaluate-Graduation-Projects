@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Supervisor Project Reports" %}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/reports/supervisor_reports.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+<div class="container">
+    <h2>{% trans "📝 Project Reports for" %} {{ project_name }}</h2>
+
+    <!-- ➕ Add Report Button -->
+    <div class="text-center mb-4">
+        <button id="openReportModal" class="btn btn-success">+ {% trans "Add Report" %}</button>
+    </div>
+
+    <!-- 📋 Reports List -->
+    <div id="report-list">
+        {% for report in reports %}
+        <div class="report-card">
+            <h5>{{ report.report_date }}</h5>
+            <div class="btn-group mt-2">
+                <button class="btn  btn-view btn-edit" data-report-id="{{ report.id }}">🔍 {% trans "View" %}</button>
+                <button class="btn  btn-delete" data-report-id="{{ report.id }}">🗑️ {% trans "Delete" %}</button>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center text-muted">{% trans "No reports submitted yet." %}</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 📝 Add Report Modal -->
+<div id="reportModal" class="custom-modal-overlay">
+    <div class="custom-modal">
+      <div class="custom-modal-header">
+        <h4>{% trans "Submit New Report" %}</h4>
+        <button class="close-modal" aria-label="Close modal">&times;</button>
+      </div>
+      <form id="report-form" data-project-id="{{ project_id }}">
+        {% csrf_token %}
+        <input type="hidden" id="report_date" name="report_date">
+  
+        <div class="form-group">
+          <label for="progress">{% trans "Overall Progress :" %}</label>
+          <textarea id="progress" name="progress" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="work_done">{% trans "Work Done :" %}</label>
+          <textarea id="work_done" name="work_done" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="work_remaining">{% trans "Work Remaining :" %}</label>
+          <textarea id="work_remaining" name="work_remaining" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="challenges">{% trans "Challenges :" %}</label>
+          <textarea id="challenges" name="challenges" class="form-control" rows="3"></textarea>
+        </div>
+  
+        <h5>{% trans "Team Member Statuses" %}</h5>
+        <div id="team-status-section"></div>
+        <button type="submit" class="btn btn-primary mt-4">{% trans "Submit Report" %}</button>
+    </div>
+  </div>  
+
+<!-- 👁️ View Report Modal -->
+<div id="reportDetailModal" class="custom-modal-overlay">
+    <div class="custom-modal">
+        <div class="custom-modal-header">
+            <h4>{% trans "Report Details" %}</h4>
+            <button class="close-modal" aria-label="Close modal">&times;</button>
+        </div>
+        <div id="report-detail-body" class="modal-body">
+            <!-- JavaScript will populate this -->
+        </div>
+
+        <hr>
+        <h4>💬 {% trans "Feedback Thread" %}</h4>
+        <div id="feedback-list" class="feedback-list">
+          <!-- JS will populate feedback messages here -->
+        </div>
+        <hr>
+  
+        <h4 style="margin-top: 20px;">✍️ {% trans "Reply / Add Feedback" %}</h4>
+        <form id="feedback-form">
+          {% csrf_token %}
+          <textarea name="feedback_text" id="feedback-textarea" class="form-control" placeholder="Write a feedback..."></textarea>
+
+          <button type="submit" class="btn btn-primary mt-2">{% trans "Send" %}</button>
+          <p id="feedback-message" class="text-muted mt-1"></p>
+        </form>
+      </form>
+    </div>
+</div>
+
+<script src="{% static 'js/reports/supervisor_report.js' %}"></script>
+{% endblock %}

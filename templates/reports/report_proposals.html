@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>📝 {% trans "List of Proposals" %}</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>{% trans "Title" %}</th>
+                <th>{% trans "Submitted By" %}</th>
+                <th>{% trans "Department" %}</th>
+                <th>{% trans "Coordinator Status" %}</th>
+                <th>{% trans "Teacher Status" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proposal in proposals %}
+            <tr>
+                <td>{{ proposal.title }}</td>
+                <td>{{ proposal.submitted_by.username }}</td>
+                <td>{{ proposal.department.name }}</td>
+                <td>{{ proposal.coordinator_status }}</td>
+                <td>{{ proposal.teacher_status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
