@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/reports/report_projects.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+<div class="container mt-5">
+    <h2>📌 {% trans "Projects by Coordinators" %}</h2>
+    <!-- 🔍 Filters -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" id="coord-search" class="form-control" placeholder="Search by Coordinator Name">
+        </div>
+        <div class="col-md-4">
+            <select id="dept-filter" class="form-control">
+                <option value="">All Departments</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button id="download-btn" class="btn btn-download w-100">⬇️ Download CSV</button>
+        </div>
+    </div>
+    
+
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>{% trans "Coordinator" %}</th>
+                <th>{% trans "Project" %}</th>
+                <th>{% trans "Department" %}</th>
+            </tr>
+        </thead>
+        <tbody id="coordinator-table-body">
+            <!-- Rows will be injected via JS -->
+        </tbody>
+        
+    </table>
+</div>
+<script src="{% static 'js/reports/report_projects_by_coordinator.js' %}"></script>
+{% endblock %}

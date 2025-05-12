@@ -21,8 +21,8 @@ urlpatterns = [
     path("projects/<int:pk>/", views.ProjectView.as_view(), name="project-detail"),
 
     # Track Project
-    path("project/track/page/", views.track_projects_landing_view, name="track-project-page"),
-    path("project/track/page/<int:pk>/", views.track_project_view, name="track-project-page-pk"),
+    #path("project/track/page/", views.track_projects_landing_view, name="track-project-page"),
+    #path("project/track/page/<int:pk>/", views.track_project_view, name="track-project-page-pk"),
 
     path("project/track/", views.TrackProjectView.as_view(), name="track-project-list"),
     path("project/track/<int:pk>/", views.TrackProjectView.as_view(), name="track-project-detail"),

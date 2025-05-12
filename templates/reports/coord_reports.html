@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}Reports page{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/reports/coord_reports.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+<div class="container" style="max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"> 
+    <h2 style="text-align: center; margin-bottom: 40px;">📊 {% trans "Manege Reports" %}</h2>
+    <a href="{% url 'report-projects' %}" class="btn btn-primary btn-block" style="margin-bottom: 12px;">📁 {% trans "List of Projects" %}</a>
+    <a href="{% url 'report-unassigned-students' %}" class="btn btn-primary btn-block" style="margin-bottom: 12px;">👥 {% trans "Non-Assigned Students" %}</a>
+    <a href="{% url 'report-teacher-roles' %}" class="btn btn-primary btn-block" style="margin-bottom: 12px;">👩‍🏫 {% trans "Teacher Roles" %}</a>
+    <a href="{% url 'report-projects-by-coord' %}" class="btn btn-primary btn-block">📌 {% trans "Projects by Coordinators" %}</a>
+</div>
+{% endblock %}

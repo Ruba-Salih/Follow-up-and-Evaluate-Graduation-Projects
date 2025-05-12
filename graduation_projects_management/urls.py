@@ -49,6 +49,10 @@ urlpatterns = [
 
     #feedbacks urls
     path('feedbacks/', include('feedbacks.urls')),
+
+    #reports urls
+    path("api/report/", include("report.urls")),
+
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

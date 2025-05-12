@@ -1,0 +1,200 @@
+/* Main Container Styling */
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 25px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Headings */
+h2 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+h3 {
+    color: #a63026;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+h4 {
+    margin-top: 40px;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+    color: #333;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+/* Form Fields */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+
+textarea.form-control {
+    resize: vertical;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+    font-size: 15px;
+}
+
+/* Project name display */
+#project-name {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-top: 10px;
+    color: #a63026;
+}
+
+/* Team status section styling */
+#team-status-section .form-group {
+    border-left: 4px solid #a63026;
+    background: #f9f9f9;
+    padding: 10px 16px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+/* Submit Button */
+button[type="submit"] {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    transition: background 0.3s ease;
+}
+
+
+/* Add Report Button */
+#openReportModal {
+    display: block;
+    margin: 0 auto 30px auto;
+    background-color: #a63026;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#openReportModal:hover {
+    background-color: #851d1a;
+}
+
+/* ✅ Modal Overlay (hidden by default) */
+.custom-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none; /* hidden by default */
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.custom-modal-overlay.show {
+    display: flex;
+}
+
+/* 🧩 Modal Content */
+.custom-modal {
+    background: white;
+    border-radius: 12px;
+    width: 95%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 30px;
+    position: relative;
+}
+
+.custom-modal .close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 22px;
+    font-weight: bold;
+    background: none;
+    border: none;
+    color: #555;
+    cursor: pointer;
+}
+
+/* Report Card */
+.report-card {
+    border-left: 4px solid #a63026;
+    background: #fff3f3;
+    padding: 20px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.report-card h5 {
+    margin: 0 0 10px 0;
+    font-size: 1.1rem;
+    
+}
+
+.report-card .btn-group {
+    display: flex;
+    gap: 10px;
+    text-align: center;
+    justify-content: center;
+}
+
+.report-card .btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+}
+
+
+
+/* 📄 View Report Detail Modal Body */
+#report-detail-body p {
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+#report-detail-body h5 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+/* 📱 Responsive */
+@media (max-width: 768px) {
+    h2 { font-size: 1.5rem; }
+    h4 { font-size: 1.1rem; }
+    .form-control, .btn { font-size: 14px; }
+    button[type="submit"] { font-size: 15px; }
+}

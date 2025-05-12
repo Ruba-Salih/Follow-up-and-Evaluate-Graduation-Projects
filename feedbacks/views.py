@@ -11,6 +11,73 @@ from django.db.models import F
 from users.models import Coordinator
 User = get_user_model()
 
+from django.views.decorators.http import require_GET
+from django.utils.timezone import localtime
+
+@login_required
+@require_GET
+def get_project_feedbacks(request):
+    project_id = request.GET.get('project_id')
+
+    if not project_id:
+        return JsonResponse({'error': 'Missing project_id'}, status=400)
+
+    try:
+        project = Project.objects.get(id=project_id)
+    except Project.DoesNotExist:
+        return JsonResponse({'error': 'Project not found'}, status=404)
+
+    feedbacks = ProjectFeedback.objects.filter(project=project).order_by('-created_at')
+
+    results = []
+    for fb in feedbacks:
+        results.append({
+            'id': fb.id,
+            'sender_name': fb.sender.get_full_name() or fb.sender.username,
+            'message': fb.message,
+            'created_at': localtime(fb.created_at).isoformat(),
+            'reply': {
+                'message': fb.reply.message,
+                'created_at': localtime(fb.reply.created_at).isoformat()
+            } if hasattr(fb, 'reply') else None
+        })
+
+    return JsonResponse(results, safe=False)
+
+@require_POST
+@login_required
+def submit_feedback_json(request):
+    import json
+    from django.views.decorators.csrf import csrf_exempt
+
+    try:
+        data = json.loads(request.body)
+        project_id = data.get("project_id")
+        message = data.get("message")
+
+        if not project_id or not message:
+            return JsonResponse({"error": "Missing project_id or message"}, status=400)
+
+        project = Project.objects.get(id=project_id)
+
+        feedback = ProjectFeedback.objects.create(
+            project=project,
+            sender=request.user,
+            teacher=request.user,  # or use logic to set teacher properly
+            title="",
+            message=message
+        )
+
+        return JsonResponse({
+            "success": True,
+            "id": feedback.id,
+            "message": feedback.message,
+            "created_at": feedback.created_at.isoformat(),
+            "sender_name": request.user.get_full_name() or request.user.username
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 @login_required
 def review_exchanges(request):

@@ -48,12 +48,14 @@
         <h2>📌 Actions</h2>
         <div class="role-buttons">
             {% if my_role == "Supervisor" %}
-    <a href="{% url 'project_progress' project.id %}" class="role-button btn btn-primary">
-        📊 View Project Progress
-    </a>
-{% endif %}
-
-
+              <a href="{% url 'project_progress' project.id %}" class="role-button btn btn-primary">
+                📊 View Project Progress
+              </a>
+              <a href="{% url 'supervisor-reports-page' project.id %}" class="role-button btn btn-primary">
+                📋 Submit Project Report
+              </a>
+            {% endif %}
+  
             <!-- Trigger modal via Bootstrap -->
             <button id="openModalBtn" type="button" class="btn btn-primary btn-research">
                 📖 Research

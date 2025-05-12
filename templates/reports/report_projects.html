@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/reports/report_projects.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container mt-5">
+  <h2>📁 {% trans "List of Projects" %}</h2>
+
+  <!-- 🔍 Filters -->
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <input type="text" id="project-search" class="form-control" placeholder="{% trans '🔍 Search by project name...' %}">
+    </div>
+    <div class="col-md-4">
+      <select id="filter-department" class="form-control">
+        <option value="">{% trans "All Departments" %}</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <select id="filter-supervisor" class="form-control">
+        <option value="">{% trans "All Supervisors" %}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 📥 Column Toggle -->
+  <div class="mb-3">
+    <label>{% trans "Hide Columns:" %}</label>
+    <label><input type="checkbox" class="col-toggle" data-col="1"> {% trans "Field" %}</label>
+    <label><input type="checkbox" class="col-toggle" data-col="2"> {% trans "Department" %}</label>
+    <label><input type="checkbox" class="col-toggle" data-col="3"> {% trans "Supervisor" %}</label>
+    <label><input type="checkbox" class="col-toggle" data-col="4"> {% trans "Team Members" %}</label>
+    <button id="download-btn" class="btn btn-sm btn-download float-right">⬇️ {% trans "Download CSV" %}</button>
+  </div>
+
+  <!-- 📊 Table -->
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>{% trans "Project Name" %}</th>
+        <th>{% trans "Field" %}</th>
+        <th>{% trans "Department" %}</th>
+        <th>{% trans "Supervisor" %}</th>
+        <th>{% trans "Team Members" %}</th>
+      </tr>
+    </thead>
+    <tbody id="projects-table-body">
+      <!-- Populated via JS -->
+    </tbody>
+  </table>
+</div>
+
+<script src="{% static 'js/reports/report_projects.js' %}"></script>
+{% endblock %}

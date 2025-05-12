@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/reports/report_projects.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container mt-5">
+    <h2>👩‍🏫 {% trans "Teacher Roles in Projects" %}</h2>
+
+    <!-- 🔽 Filter -->
+    <!-- 🔽 Filter and Download -->
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+      <select id="role-filter" class="form-control w-100">
+        <option value="">{% trans "All Roles" %}</option>
+        <option value="Supervisor">{% trans "Supervisor" %}</option>
+        <option value="Reader">{% trans "Reader" %}</option>
+        <option value="Judge Committee">{% trans "Judge Committee" %}</option>
+        <option value="—">{% trans "Not Assigned" %}</option>
+      </select>
+    </div>
+    <div class="col-md-6 text-right">
+      <button id="download-btn" class="btn btn-download">⬇️ {% trans "Download CSV" %}</button>
+    </div>
+  </div>
+  
+
+    <!-- 📋 Table -->
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>{% trans "Teacher" %}</th>
+                <th>{% trans "Project" %}</th>
+                <th>{% trans "Role" %}</th>
+            </tr>
+        </thead>
+        <tbody id="teacher-table-body">
+            <!-- Rows will be loaded by JS -->
+        </tbody>
+        
+    </table>
+</div>
+<script src="{% static 'js/reports/report_teacher_roles.js' %}"></script>
+{% endblock %}
