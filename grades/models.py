@@ -1,61 +1,124 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from form.models import EvaluationForm, MainCategory
-from users.models import Student, User  # Assuming 'users' is the app managing user roles
-from project.models import Project  # Import Project model for the new 1:N relationship
+from users.models import Student, User
+from project.models import Project
+
 
 class Grade(models.Model):
-    grade = models.FloatField()  # Raw grade before applying weight
-    final_grade = models.FloatField()  # Grade after applying weight
-    evaluation_form = models.ForeignKey(EvaluationForm, on_delete=models.CASCADE, related_name="grades")  # N:1
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="grades")  # 1:N
-    main_category = models.ForeignKey(MainCategory, on_delete=models.CASCADE, related_name="grades")  # 1:N
+    grade = models.FloatField(_("Raw Grade"))  # Raw grade before applying weight
+    final_grade = models.FloatField(_("Final Grade"))  # Grade after applying weight
+    evaluation_form = models.ForeignKey(
+        EvaluationForm,
+        on_delete=models.CASCADE,
+        related_name="grades",
+        verbose_name=_("Evaluation Form")
+    )
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="grades",
+        verbose_name=_("Project")
+    )
+    main_category = models.ForeignKey(
+        MainCategory,
+        on_delete=models.CASCADE,
+        related_name="grades",
+        verbose_name=_("Main Category")
+    )
 
     def __str__(self):
-        return f"Grade for {self.project} - {self.main_category}"
-
+        return f"{_('Grade for')} {self.project} - {self.main_category}"
 
 
 class IndividualGrade(models.Model):
-    evaluation_form = models.ForeignKey(EvaluationForm, on_delete=models.CASCADE, related_name="individual_grades")  # 1:N
-    grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name="individual_grades")  # 1:N
-    final_grade = models.FloatField() # Weighted grade
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="individual_grades")  # 1:N
-    #grading = models.ForeignKey("Grading", on_delete=models.CASCADE, related_name="individual_grades", null=True)  # 1:N
+    evaluation_form = models.ForeignKey(
+        EvaluationForm,
+        on_delete=models.CASCADE,
+        related_name="individual_grades",
+        verbose_name=_("Evaluation Form")
+    )
+    grade = models.ForeignKey(
+        Grade,
+        on_delete=models.CASCADE,
+        related_name="individual_grades",
+        verbose_name=_("Overall Grade")
+    )
+    final_grade = models.FloatField(_("Final Individual Grade"))
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        related_name="individual_grades",
+        verbose_name=_("Student")
+    )
 
     def __str__(self):
-        return f"Individual Grade for {self.student} - {self.final_grade}"
+        return f"{_('Individual Grade for')} {self.student} - {self.final_grade}"
 
 
 class Grading(models.Model):
-    final_grade = models.FloatField()
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="gradings")  # 1:N
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="gradings", null=False, default=1)
-    is_sent = models.BooleanField(default=False)
+    final_grade = models.FloatField(_("Final Grade"))
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        related_name="gradings",
+        verbose_name=_("Student")
+    )
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="gradings",
+        null=False,
+        default=1,
+        verbose_name=_("Project")
+    )
+    is_sent = models.BooleanField(_("Is Sent"), default=False)
 
     def __str__(self):
-        return f"Final Grading for {self.student} in {self.project}"
+        return f"{_('Final Grading for')} {self.student} {_('in')} {self.project}"
 
 
-# M:N between Members and Grade (Members include Supervisor, Judging Committee, and Reader)
 class MemberGrade(models.Model):
-    member = models.ForeignKey(User, on_delete=models.CASCADE, related_name="graded_projects")  # M:N
-    grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name="members")
-
+    member = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="graded_projects",
+        verbose_name=_("Member")
+    )
+    grade = models.ForeignKey(
+        Grade,
+        on_delete=models.CASCADE,
+        related_name="members",
+        verbose_name=_("Grade")
+    )
 
     class Meta:
-        unique_together = ('member', 'grade')  # prevent duplicate grades from same use
+        unique_together = ('member', 'grade')
+        verbose_name = _("Member Grade")
+        verbose_name_plural = _("Member Grades")
 
     def __str__(self):
-        return f"{self.member.username} graded project for {self.grade.project.name}"
+        return f"{self.member.username} {_('graded project for')} {self.grade.project.name}"
 
 
-# 1:N between Members and Individual Grade
 class MemberIndividualGrade(models.Model):
-    member = models.ForeignKey(User, on_delete=models.CASCADE, related_name="individual_graded_projects")  # 1:N
-    individual_grade = models.ForeignKey(IndividualGrade, on_delete=models.CASCADE, related_name="evaluators")
+    member = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="individual_graded_projects",
+        verbose_name=_("Member")
+    )
+    individual_grade = models.ForeignKey(
+        IndividualGrade,
+        on_delete=models.CASCADE,
+        related_name="evaluators",
+        verbose_name=_("Individual Grade")
+    )
 
     class Meta:
         unique_together = ('member', 'individual_grade')
+        verbose_name = _("Member Individual Grade")
+        verbose_name_plural = _("Member Individual Grades")
 
     def __str__(self):
-        return f"{self.member.username} graded {self.individual_grade.student}"
+        return f"{self.member.username} {_('graded')} {self.individual_grade.student}"
