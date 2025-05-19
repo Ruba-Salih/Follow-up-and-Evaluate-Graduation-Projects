@@ -818,7 +818,14 @@ class TrackProjectView(APIView):
             except Project.DoesNotExist:
                 return Response({"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
 
+            from .serializers import MembershipReadSerializer  # make sure it's imported
+
             project_data = ProjectSerializer(project).data
+            project_data["members"] = MembershipReadSerializer(
+                ProjectMembership.objects.filter(project=project).select_related("user", "role"), 
+                many=True
+            ).data
+
             students = StudentProjectMembership.objects.filter(project=project).select_related('student')
             tasks = ProjectTask.objects.filter(project=project)
             goals = ProjectGoal.objects.filter(project=project)
@@ -855,7 +862,7 @@ class TrackProjectView(APIView):
             print("🔁 Total Feedbacks Found:", feedbacks.count())
             for fb in feedbacks:
                 print("📝 Feedback:", {
-                    "sender": fb.sender.username,
+                    "sender": f"{fb.sender.first_name} {fb.sender.last_name}".strip(),
                     "sender_role": (
                         "Coordinator" if hasattr(fb.sender, "coordinator")
                         else "Teacher" if is_teacher(fb.sender)
@@ -867,9 +874,11 @@ class TrackProjectView(APIView):
                     "file": fb.feedback_file.url if fb.feedback_file else None,
                     "created": fb.created_at
                 })
+    
             visible_feedbacks = [
                 {
-                    "sender": fb.sender.username,
+                    "sender": f"{fb.sender.first_name} {fb.sender.last_name}".strip(),
+
                     "sender_role": (
                         "Reader" if fb.sender.projectmembership_set.filter(project=project, role__name="Reader").exists()
                         else "Judgement Committee" if fb.sender.projectmembership_set.filter(project=project, role__name="Judgement Committee").exists()
@@ -883,14 +892,21 @@ class TrackProjectView(APIView):
                 if fb.sender.projectmembership_set.filter(project=project, role__name__in=["Reader", "Judgement Committee"]).exists()
             ]
 
-
             return Response({
                 "project": project_data,
                 "supervisor_name": project.supervisor.get_full_name() if project.supervisor else None,
                 "students": [
-                    {"id": s.student.id, "username": s.student.username}
+                    {
+                        "id": s.student.id,
+                        "username": s.student.username,
+                        "first_name": s.student.first_name,
+                        "last_name": s.student.last_name,
+                        "email": s.student.email,
+                        "phone": getattr(s.student, "phone_number", "N/A"),
+                    }
                     for s in students
                 ],
+
                 "completion_status": completion,
                 "goals": goals_data,
                 "tasks": tasks_data,
@@ -924,9 +940,17 @@ class TrackProjectView(APIView):
                 "projects": projects_data,
                 "departments": departments_data,
                 "students": [
-                    {"id": s.student.id, "username": s.student.username}
+                    {
+                        "id": s.student.id,
+                        "username": s.student.username,
+                        "first_name": s.student.first_name,
+                        "last_name": s.student.last_name,
+                        "email": s.student.email,
+                        "phone": getattr(s.student, "phone_number", "N/A"),
+                    }
                     for s in students
                 ],
+
             })
 
     def post(self, request, pk):
@@ -1160,7 +1184,7 @@ def teacher_view_project(request, project_id):
 
     student_members = [m.student for m in project.student_memberships.all()]
     teacher_members = [{
-        "name": m.user.username,
+        "name": f"{m.user.first_name} {m.user.last_name}".strip() or m.user.username,
         "role": m.role.name
     } for m in project.memberships.exclude(user=user)]
 
@@ -1306,7 +1330,7 @@ def get_task_detail(request, task_id):
         # Now attach feedbacks
         task_data["feedbacks"] = [
             {
-                "sender": fb.sender.username,
+                "sender": f"{fb.sender.first_name} {fb.sender.last_name}".strip(),
                 "sender_role": (
                     "Coordinator" if hasattr(fb.sender, "coordinator")
                     else "Teacher" if is_teacher(fb.sender)
