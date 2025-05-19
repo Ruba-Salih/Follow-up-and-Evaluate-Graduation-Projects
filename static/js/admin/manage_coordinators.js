@@ -9,9 +9,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const usernameInput = document.getElementById("coord-username");
     const emailInput = document.getElementById("coord-email");
     const passwordInput = document.getElementById("coord-pass");
-    const coordIdInput = document.getElementById("coord-code");
+    
     const deptSelect = document.getElementById("coord-dept");
     const idHiddenInput = document.getElementById("coord-id-hidden");
+    const firstNameInput = document.getElementById("coord-firstname");
+const lastNameInput = document.getElementById("coord-lastname");
 
     const searchInput = document.getElementById("search-input");
     const downloadBtn = document.getElementById("download-btn");
@@ -45,10 +47,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const payload = {
             username: usernameInput.value,
+            first_name: firstNameInput.value,
+            last_name: lastNameInput.value,
             email: emailInput.value,
-            coord_id: coordIdInput.value,
             department_id: deptSelect.value,
+            
         };
+        //payload.is_super = true;
         if (passwordInput.value.trim()) {
             payload.password = passwordInput.value;
         }
@@ -97,8 +102,10 @@ document.addEventListener("DOMContentLoaded", function () {
             idHiddenInput.value = btn.dataset.id;
             usernameInput.value = btn.dataset.username;
             emailInput.value = btn.dataset.email;
-            coordIdInput.value = btn.dataset.coord_id;
             deptSelect.value = btn.dataset.department;
+            firstNameInput.value = btn.dataset.first_name || "";
+            lastNameInput.value = btn.dataset.last_name || "";
+
             passwordInput.value = "";
 
             document.getElementById("modal-title").textContent = "Edit Coordinator";
@@ -148,7 +155,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
 
     downloadBtn.addEventListener("click", () => {
-        const headers = ["Username", "Email", "Coordinator ID", "Department", "College"];
+        const headers = ["Username", "Name", "Email", "Coordinator ID", "Department", "College"];
         const visibleRows = Array.from(tableRows).filter(row => row.style.display !== "none");
 
         const csv = [

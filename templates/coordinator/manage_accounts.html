@@ -35,7 +35,9 @@
     <table>
         <thead>
             <tr>
+                <th>{% trans "No." %}</th>
                 <th>{% trans "Username" %}</th>
+                <th>{% trans "Full Name" %}</th>
                 <th>{% trans "Email" %}</th>
                 <th>{% trans "Phone" %}</th>
                 <th>{% trans "Department" %}</th>
@@ -45,7 +47,9 @@
         <tbody>
             {% for user in users %}
             <tr>
+                <td class="user-index"></td>
                 <td>{{ user.username }}</td>
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
                 <td>{{ user.email }}</td>
                 <td>{{ user.phone_number }}</td>
                 <td>{{ user.department.name }}</td>
