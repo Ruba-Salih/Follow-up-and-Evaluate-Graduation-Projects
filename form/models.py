@@ -1,70 +1,79 @@
 from django.db import models
-# Import Coordinator from your users app
+from django.utils.translation import gettext_lazy as _
 from users.models import Coordinator  
-# Import Role from your project app (adjust the path as needed)
 from project.models import Role  
 from django.utils.timezone import now
+
 
 class EvaluationForm(models.Model):
     """
     Represents an Evaluation Form.
-    - Coordinators (via a ManyToManyField) are allowed to create and edit forms.
-    - target_role associates the form with a specific user role (from your Role model).
     """
-    name = models.CharField(max_length=255)
-    coordinators = models.ManyToManyField(Coordinator, blank=True, related_name='evaluation_forms')
-    target_role = models.ForeignKey(
-        Role, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+    name = models.CharField(_("Form Name"), max_length=255)
+    coordinators = models.ManyToManyField(
+        Coordinator,
         blank=True,
-        help_text="The role of users for whom this evaluation form is intended."
+        related_name='evaluation_forms',
+        verbose_name=_("Coordinators")
     )
-    form_weight = models.FloatField(null=False, help_text="The weight of the entire evaluation form.")
-    created_at = models.DateTimeField(default=now)
+    target_role = models.ForeignKey(
+        Role,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text=_("The role of users for whom this evaluation form is intended."),
+        verbose_name=_("Target Role")
+    )
+    form_weight = models.FloatField(
+        null=False,
+        help_text=_("The weight of the entire evaluation form."),
+        verbose_name=_("Form Weight")
+    )
+    created_at = models.DateTimeField(_("Created At"), default=now)
 
     def __str__(self):
-        return f"Form {self.id}: {self.name}"
+        return f"{_('Form')} {self.id}: {self.name}"
 
 
 class MainCategory(models.Model):
     """
     A main category belongs to a specific EvaluationForm.
-    - number: an integer representing the order or label.
-    - text: the main category description.
-    - weight: a float representing the category’s weight.
-    - grade_type: a choice field for 'individual' or 'group' grading.
     """
     GRADE_TYPE_CHOICES = (
-        ('individual', 'Individual Grade'),
-        ('group', 'Group Grade'),
+        ('individual', _('Individual Grade')),
+        ('group', _('Group Grade')),
     )
 
     evaluation_form = models.ForeignKey(
-        EvaluationForm, 
-        on_delete=models.CASCADE, 
-        related_name='main_categories'
+        EvaluationForm,
+        on_delete=models.CASCADE,
+        related_name='main_categories',
+        verbose_name=_("Evaluation Form")
     )
-    number = models.PositiveIntegerField()
-    text = models.TextField()
-    weight = models.FloatField()
-    grade_type = models.CharField(max_length=20, choices=GRADE_TYPE_CHOICES)
+    number = models.PositiveIntegerField(_("Number"))
+    text = models.TextField(_("Category Text"))
+    weight = models.FloatField(_("Category Weight"))
+    grade_type = models.CharField(
+        _("Grade Type"),
+        max_length=20,
+        choices=GRADE_TYPE_CHOICES
+    )
 
     def __str__(self):
-        return f"Main Category {self.number} (Form {self.evaluation_form.id})"
+        return f"{_('Main Category')} {self.number} ({_('Form')} {self.evaluation_form.id})"
 
 
 class SubCategory(models.Model):
     """
     A subcategory belongs to a specific MainCategory.
-    Only the text is stored.
     """
     main_category = models.ForeignKey(
-        MainCategory, 
-        on_delete=models.CASCADE, 
-        related_name='sub_categories'
+        MainCategory,
+        on_delete=models.CASCADE,
+        related_name='sub_categories',
+        verbose_name=_("Main Category")
     )
-    text = models.TextField()
+    text = models.TextField(_("Subcategory Text"))
 
     def __str__(self):
-        return f"SubCategory for MainCategory {self.main_category.number}"
+        return f"{_('SubCategory for MainCategory')} {self.main_category.number}"

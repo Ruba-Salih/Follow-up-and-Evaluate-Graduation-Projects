@@ -62,10 +62,14 @@ def get_academic_year():
 class MembershipReadSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username')
     role = serializers.CharField(source='role.name')
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+    email = serializers.EmailField(source='user.email')
+    phone_number = serializers.CharField(source='user.phone_number', default="N/A")
 
     class Meta:
         model = ProjectMembership
-        fields = ['user_id', 'username', 'role', 'group_id']
+        fields = ['user_id', 'username', 'first_name', 'last_name', 'email', 'phone_number', 'role', 'group_id']
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -90,6 +94,9 @@ class ProjectSerializer(serializers.ModelSerializer):
         required=False
     )
 
+    assigned_students = serializers.SerializerMethodField()
+
+
     memberships = serializers.ListField(
         child=serializers.DictField(),
         write_only=True,
@@ -105,6 +112,10 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['academic_year']
 
+    def get_assigned_students(self, obj):
+        return list(
+            obj.student_memberships.values_list("student_id", flat=True)
+        )
     def create(self, validated_data):
         student_ids = validated_data.pop('student_ids', [])
         memberships = validated_data.pop('memberships', [])

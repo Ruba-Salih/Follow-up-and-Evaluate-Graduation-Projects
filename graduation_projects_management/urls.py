@@ -53,6 +53,8 @@ urlpatterns = [
     #reports urls
     path("api/report/", include("report.urls")),
 
+    path('i18n/', include('django.conf.urls.i18n')),
+
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

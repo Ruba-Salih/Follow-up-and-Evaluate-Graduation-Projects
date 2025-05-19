@@ -13,28 +13,25 @@
     <ul class="nav-links">
         {% if user.is_authenticated %}
             {% if user.admin %}
-                <!-- Navbar for Admin -->
                 <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
                 <li><a href="{% url 'notification-list' %}">{% trans "Notifications" %}</a></li>
                 <li><a href="{% url 'coordinator-dashboard' %}">{% trans "Dashboard" %}</a></li>
                 <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
             {% elif user.coordinator %}
-                <!-- Navbar for Coordinator -->
                 <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
                 <li><a href="{% url 'notification-list' %}">{% trans "Notifications" %}</a></li>
                 <li><a href="{% url 'coordinator-dashboard' %}">{% trans "Dashboard" %}</a></li>
                 <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
             {% elif user.student %}
-                <!-- Navbar for Student -->
                 <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
                 <li class="notification-link">
                     <a href="{% url 'notification-list' %}" class="notification-anchor">
-                        {% trans Notifications %}
-                      {% if unread_notifications_count > 0 %}
-                        <span class="notification-badge">{{ unread_notifications_count }}</span>
-                      {% endif %}
+                        {% trans "Notifications" %}
+                        {% if unread_notifications_count > 0 %}
+                            <span class="notification-badge">{{ unread_notifications_count }}</span>
+                        {% endif %}
                     </a>
                 </li>
                 <li><a href="#">{% trans "Dashboard" %}</a></li>
@@ -42,23 +39,32 @@
                 <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
             {% else %}
-                <!-- Navbar for Teacher -->
                 <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
                 <li class="notification-link">
                     <a href="{% url 'notification-list' %}" class="notification-anchor">
-                        {% trans Notifications %}
-                      {% if unread_notifications_count > 0 %}
-                        <span class="notification-badge">{{ unread_notifications_count }}</span>
-                      {% endif %}
+                        {% trans "Notifications" %}
+                        {% if unread_notifications_count > 0 %}
+                            <span class="notification-badge">{{ unread_notifications_count }}</span>
+                        {% endif %}
                     </a>
                 </li>
                 <li><a href="#">{% trans "Dashboard" %}</a></li>
                 <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
-
             {% endif %}
         {% else %}
-            <!-- If user is not logged in -->
             <li><a href="{% url 'login' %}">{% trans "Login" %}</a></li>
         {% endif %}
+
+        <!-- 🌐 Language Switcher 
+        <li>
+            <form action="{% url 'set_language' %}" method="post">
+                {% csrf_token %}
+                <select name="language" onchange="this.form.submit()" style="margin-left: 10px;">
+                    <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
+                    <option value="ar" {% if LANGUAGE_CODE == 'ar' %}selected{% endif %}>العربية</option>
+                </select>
+                <input type="hidden" name="next" value="{{ request.path }}">
+            </form>
+        </li>-->
     </ul>
 </nav>

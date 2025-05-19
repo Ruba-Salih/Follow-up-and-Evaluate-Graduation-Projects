@@ -19,7 +19,7 @@
             <option value="all">All Projects</option>
             <option value="available">Available</option>
             <option value="taken">Taken</option>
-            <option value="joined">My Projects</option>
+            
         </select>
     </div>
 
@@ -51,7 +51,7 @@
                         {% elif not entry.is_full %}
                             <form class="project-action-form" data-project-id="{{ project.id }}" data-action="join">
                                 {% csrf_token %}
-                                <button class="btn btn-primary">🔗 Request to Join</button>
+                                <button class="btn btn-primary">🔗 Join</button>
                             </form>
                         {% endif %}
                         <button class="btn btn-edit view-project-btn"

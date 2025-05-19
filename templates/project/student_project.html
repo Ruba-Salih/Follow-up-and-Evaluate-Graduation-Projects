@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{% static 'css/project/student_project.css' %}">
 {% endblock %}
 
+
 {% block content %}
 {% include "navbar.html" %}
 
@@ -14,27 +15,46 @@
     <h2>🎓 {% trans "Project Overview" %}</h2>
 
     <div class="project-overview card">
-        <h3 id="project-title" class="project-name">{% trans "Loading..." %}</h3>
-        <div class="info-grid">
-            <div>
-                <span class="label">📌 {% trans "Field" %}</span>
-                <p id="project-field" class="value">{% trans "Loading..." %}</p>
-            </div>
-            <div>
-                <span class="label">👨‍🏫 {% trans "Supervisor" %}</span>
-                <p id="project-supervisor" class="value">{% trans "Loading..." %}</p>
-            </div>
-            <div>
-                <span class="label">📊 {% trans "Completion" %}</span>
-                <div class="progress-wrapper">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="completion-bar" style="width: 0%;"></div>
-                    </div>
-                    <span id="project-status-text">0%</span>
+    <h3 id="project-title" class="project-name">{% trans "Loading..." %}</h3>
+
+    <div class="info-grid">
+        <div>
+            <span class="label">📌 {% trans "Field" %}</span>
+            <p id="project-field" class="value">{% trans "Loading..." %}</p>
+        </div>
+
+        <div>
+            <span class="label">📊 {% trans "Completion" %}</span>
+            <div class="progress-wrapper">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="completion-bar" style="width: 0%;"></div>
                 </div>
+                <span id="project-status-text">0%</span>
             </div>
         </div>
     </div>
+
+    <hr style="margin: 20px 0;">
+
+    <h4>👨‍🏫 {% trans "Project Members" %}</h4>
+
+    <div class="members-list">
+        <div id="students-list">
+            <strong>🎓 {% trans "Students:" %}</strong>
+            <ul id="project-students">
+                <!-- JS will populate student names here -->
+            </ul>
+        </div>
+
+        <div id="teachers-list">
+            <strong>👩‍🏫 {% trans "Involved Teachers:" %}</strong>
+            <ul id="project-teachers">
+               
+            </ul>
+        </div>
+    </div>
+</div>
+
 
     <div class="actions" style="margin-top: 40px; text-align: center;">
         <button class="btn btn-primary action-btn" data-target="#goalsModal">🎯 {% trans "Project Goals" %}</button>
@@ -150,10 +170,7 @@
            </div>
       
         </div>
-      </div>
-      
-    
-
+      </div>     
 
 <script src="{% static 'js/project/student_project.js' %}"></script>
 

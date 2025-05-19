@@ -85,6 +85,20 @@ document.addEventListener("DOMContentLoaded", async () => {
                     label.appendChild(checkbox);
                     label.append(` ${fullName}`);
                 }
+
+                checkbox.addEventListener("change", () => {
+    const maxCount = parseInt(teamCount.value || "1");
+    const allowedSelectableCount = Math.max(maxCount - 1, 0);  // User counts as one
+    const checked = checkboxContainer.querySelectorAll("input[type='checkbox']:checked");
+
+    if (checked.length > allowedSelectableCount) {
+        checkbox.checked = false;
+        alert(`You can only select ${allowedSelectableCount} other student(s) because you are already part of the team.`);
+    }
+
+
+            });
+
         
                 wrapper.appendChild(label);
                 checkboxContainer.appendChild(wrapper);
@@ -129,6 +143,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             proposedToSelect.remove();
         }
+
+        teamCount?.addEventListener("input", () => {
+    renderCheckboxes(studentsList);
+});
+
     }
 
     await loadData();

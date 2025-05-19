@@ -26,8 +26,8 @@
     <table>
         <thead>
             <tr>
-                <th>{% trans "Coordinator ID" %}</th>
                 <th>{% trans "Username" %}</th>
+                <th>{% trans "Name" %}</th>
                 <th>{% trans "Email" %}</th>
                 <th>{% trans "Department" %}</th>
                 <th>{% trans "College" %}</th>
@@ -37,8 +37,8 @@
         <tbody>
             {% for coord in super_coords %}
             <tr>
-                <td>{{ coord.coord_id }}</td>
                 <td>{{ coord.username }}</td>
+                 <td>{{ coord.first_name }} {{ coord.last_name }}</td>
                 <td>{{ coord.email }}</td>
                 <td>{{ coord.department.name }}</td>
                 <td>{{ coord.department.college.name }}</td>
@@ -46,8 +46,9 @@
                     <button class="edit-btn btn-edit"
                         data-id="{{ coord.id }}"
                         data-username="{{ coord.username }}"
+                        data-first_name="{{ coord.first_name }}"
+                        data-last_name="{{ coord.last_name }}"
                         data-email="{{ coord.email }}"
-                        data-coord_id="{{ coord.coord_id }}"
                         data-department="{{ coord.department.id }}"
                     >✏️ {% trans "Edit" %}</button>
                     <button class="delete-btn btn-delete" data-id="{{ coord.id }}">🗑️ {% trans "Delete" %}</button>
@@ -69,10 +70,17 @@
         <h3 id="modal-title">👥 {% trans "Add Coordinator" %}</h3>
         <form id="coord-form" method="POST">
             {% csrf_token %}
-            <input type="hidden" id="coord-id-hidden" name="coord_id_hidden">
             
+            <input type="hidden" id="coord-id-hidden" name="user_id">
+
             <label for="coord-username">{% trans "Username" %}:</label>
             <input type="text" id="coord-username" name="username" required>
+
+            <label for="coord-firstname">{% trans "First Name" %}:</label>
+    <input type="text" id="coord-firstname" name="first_name" required>
+
+    <label for="coord-lastname">{% trans "Last Name" %}:</label>
+    <input type="text" id="coord-lastname" name="last_name" required>
             
             <label for="coord-email">{% trans "Email (optional)" %}:</label>
             <input type="email" id="coord-email" name="email">
@@ -80,9 +88,6 @@
             <label for="coord-pass">{% trans "Password" %}:</label>
             <input type="password" id="coord-pass" name="password" required>
             
-            <label for="coord-code">{% trans "Coordinator ID" %}:</label>
-            <input type="text" id="coord-code" name="coord_id" required>
-
             <label for="coord-dept">{% trans "Department" %}:</label>
             <select id="coord-dept" name="department_id" required>
                 {% for dept in departments %}

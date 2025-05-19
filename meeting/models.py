@@ -1,34 +1,37 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from project.models import Project
-
 
 # --------------------------------------
 # Teacher's Recurring Weekly Availability
 # --------------------------------------
 class AvailableTime(models.Model):
     DAYS_OF_WEEK = [
-        ('mon', 'Monday'),
-        ('tue', 'Tuesday'),
-        ('wed', 'Wednesday'),
-        ('thu', 'Thursday'),
-        ('fri', 'Friday'),
-        ('sat', 'Saturday'),
-        ('sun', 'Sunday'),
+        ('mon', _('Monday')),
+        ('tue', _('Tuesday')),
+        ('wed', _('Wednesday')),
+        ('thu', _('Thursday')),
+        ('fri', _('Friday')),
+        ('sat', _('Saturday')),
+        ('sun', _('Sunday')),
     ]
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='available_times'
+        related_name='available_times',
+        verbose_name=_("User")
     )
-    day = models.CharField(max_length=3, choices=DAYS_OF_WEEK)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
+    day = models.CharField(_("Day of Week"), max_length=3, choices=DAYS_OF_WEEK)
+    start_time = models.TimeField(_("Start Time"))
+    end_time = models.TimeField(_("End Time"))
 
     class Meta:
         unique_together = ('user', 'day', 'start_time', 'end_time')
+        verbose_name = _("Available Time")
+        verbose_name_plural = _("Available Times")
 
     def __str__(self):
         return f"{self.user.username} - {self.get_day_display()} ({self.start_time} to {self.end_time})"
@@ -39,12 +42,12 @@ class AvailableTime(models.Model):
 # --------------------------------------
 
 MEETING_STATUS_CHOICES = [
-    ('pending', 'Pending'),        # Requested by student
-    ('accepted', 'Accepted'),      # Accepted by teacher
-    ('declined', 'Declined'),      # Declined by teacher
-    ('scheduled', 'Scheduled'),    # Officially scheduled
-    ('completed', 'Completed'),    # Finished and reviewed
-    ('cancelled', 'Cancelled'),    # Cancelled meeting
+    ('pending', _('Pending')),
+    ('accepted', _('Accepted')),
+    ('declined', _('Declined')),
+    ('scheduled', _('Scheduled')),
+    ('completed', _('Completed')),
+    ('cancelled', _('Cancelled')),
 ]
 
 
@@ -53,13 +56,15 @@ class Meeting(models.Model):
     teacher = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='meetings_as_teacher'
+        related_name='meetings_as_teacher',
+        verbose_name=_("Teacher")
     )
     requested_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='requested_meetings',
-        help_text="User who requested the meeting"
+        help_text=_("User who requested the meeting"),
+        verbose_name=_("Requested By")
     )
     project = models.ForeignKey(
         Project,
@@ -67,34 +72,39 @@ class Meeting(models.Model):
         null=True,
         blank=True,
         related_name='meetings',
-        help_text="Linked project if applicable"
+        help_text=_("Linked project if applicable"),
+        verbose_name=_("Project")
     )
-    start_datetime = models.DateTimeField()
-    end_datetime = models.DateTimeField()
+    start_datetime = models.DateTimeField(_("Start Time"))
+    end_datetime = models.DateTimeField(_("End Time"))
     status = models.CharField(
+        _("Status"),
         max_length=20,
         choices=MEETING_STATUS_CHOICES,
         default='pending'
     )
     comment = models.TextField(
+        _("Comment"),
         blank=True,
         null=True,
-        help_text="Message or agenda for the meeting"
+        help_text=_("Message or agenda for the meeting")
     )
     recommendation = models.TextField(
+        _("Recommendation"),
         blank=True,
         null=True,
-        help_text="Post-meeting notes or recommendations"
+        help_text=_("Post-meeting notes or recommendations")
     )
     meeting_report = models.TextField(
+        _("Meeting Report"),
         blank=True,
         null=True,
-        help_text="Filled by student after meeting is completed"
+        help_text=_("Filled by student after meeting is completed")
     )
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
 
     def __str__(self):
-        return f"Meeting {self.meeting_id} with {self.teacher} [{self.status}]"
+        return f"{_('Meeting')} {self.meeting_id} {_('with')} {self.teacher} [{self.status}]"
 
     def add_participants(self):
         """
@@ -105,7 +115,7 @@ class Meeting(models.Model):
             for membership in self.project.student_memberships.all():
                 MeetingParticipant.objects.get_or_create(
                     meeting=self,
-                    user=membership.student,  # Assuming student is a User instance
+                    user=membership.student,
                     defaults={
                         'attendance_status': 'pending',
                         'has_accepted': False
@@ -115,27 +125,30 @@ class Meeting(models.Model):
 
 class MeetingParticipant(models.Model):
     ATTENDANCE_CHOICES = [
-        ('pending', 'Pending'),
-        ('attended', 'Attended'),
-        ('absent', 'Absent'),
+        ('pending', _('Pending')),
+        ('attended', _('Attended')),
+        ('absent', _('Absent')),
     ]
 
     meeting = models.ForeignKey(
         Meeting,
         on_delete=models.CASCADE,
-        related_name='participants'
+        related_name='participants',
+        verbose_name=_("Meeting")
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='meeting_participations'
+        related_name='meeting_participations',
+        verbose_name=_("Participant")
     )
     attendance_status = models.CharField(
+        _("Attendance Status"),
         max_length=10,
         choices=ATTENDANCE_CHOICES,
         default='pending'
     )
-    has_accepted = models.BooleanField(default=False)
+    has_accepted = models.BooleanField(_("Has Accepted"), default=False)
 
     def __str__(self):
         return f"{self.user.username} - {self.attendance_status}"
@@ -146,16 +159,18 @@ class MeetingFile(models.Model):
     meeting = models.ForeignKey(
         Meeting,
         on_delete=models.CASCADE,
-        related_name='files'
+        related_name='files',
+        verbose_name=_("Meeting")
     )
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='meeting_files_uploaded'
+        related_name='meeting_files_uploaded',
+        verbose_name=_("Uploaded By")
     )
-    file = models.FileField(upload_to='meeting_files/')
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    description = models.TextField(blank=True, null=True)
+    file = models.FileField(_("File"), upload_to='meeting_files/')
+    uploaded_at = models.DateTimeField(_("Uploaded At"), auto_now_add=True)
+    description = models.TextField(_("Description"), blank=True, null=True)
 
     def __str__(self):
-        return f"File {self.file_id} for Meeting {self.meeting.meeting_id}"
+        return f"{_('File')} {self.file_id} {_('for Meeting')} {self.meeting.meeting_id}"

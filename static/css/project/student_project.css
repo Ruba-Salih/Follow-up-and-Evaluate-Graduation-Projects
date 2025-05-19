@@ -220,6 +220,17 @@ form input[type="file"]::file-selector-button {
     border-radius: 6px;
 }
 
+.no-project-message {
+    padding: 40px;
+    text-align: center;
+    font-size: 1.2em;
+    background-color: #fff3f3;
+    border: 1px solid #fff3cd;
+    border-radius: 8px;
+    margin-top: 50px;
+}
+
+
 /* ===== Responsive Adjustments ===== */
 @media (max-width: 768px) {
     .container {
