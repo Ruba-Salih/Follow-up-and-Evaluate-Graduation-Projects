@@ -34,9 +34,15 @@
             {% if is_super_coord %}
             <p><strong>{% trans "Department" %}:</strong> {{ project.department.name }}</p>
             {% endif %}
-            {% if project.supervisor_user %}
-                <p><strong>{% trans "Supervisor" %}:</strong> {{ project.supervisor_user.username }}</p>
-            {% endif %}
+<p><strong>{% trans "Supervisor" %}:</strong> {{ project.supervisor_name|default:_("Not assigned yet") }}</p>
+<p><strong>{% trans "Reader" %}:</strong> {{ project.reader_name|default:_("Not assigned yet") }}</p>
+<p><strong>{% trans "Judgement Committee" %}:</strong>
+    {% if project.judges_names %}
+        {{ project.judges_names|join:", " }}
+    {% else %}
+        {% trans "Not assigned yet" %}
+    {% endif %}
+</p>
 
             <p><strong>{% trans "Academic Year" %}:</strong> {{ project.academic_year }}</p>
 
@@ -80,7 +86,11 @@
 
             {% if is_super_coord %}
             <label>{% trans "Department" %}:</label>
-            <input type="text" id="department">
+            <select id="department">
+                {% for dept in departments %}
+                    <option value="{{ dept.id }}">{{ dept.name }}</option>
+                {% endfor %}
+                </select>
             {% else %}
             <input type="hidden" id="department" value="{{ coord_dept_id }}">
             {% endif %}

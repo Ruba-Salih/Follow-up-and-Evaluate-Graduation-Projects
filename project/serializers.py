@@ -90,6 +90,9 @@ class ProjectSerializer(serializers.ModelSerializer):
         required=False
     )
 
+    assigned_students = serializers.SerializerMethodField()
+
+
     memberships = serializers.ListField(
         child=serializers.DictField(),
         write_only=True,
@@ -105,6 +108,10 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['academic_year']
 
+    def get_assigned_students(self, obj):
+        return list(
+            obj.student_memberships.values_list("student_id", flat=True)
+        )
     def create(self, validated_data):
         student_ids = validated_data.pop('student_ids', [])
         memberships = validated_data.pop('memberships', [])

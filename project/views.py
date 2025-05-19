@@ -496,10 +496,38 @@ def manage_projects_view(request):
     
     for project in projects:
         supervisor_membership = ProjectMembership.objects.filter(
-            project=project,
-            role__name="Supervisor"
+            project=project, role__name="Supervisor"
         ).select_related("user").first()
+
+        reader_membership = ProjectMembership.objects.filter(
+            project=project, role__name="Reader"
+        ).select_related("user").first()
+
+        judge_memberships = ProjectMembership.objects.filter(
+            project=project, role__name="Judgement Committee"
+        ).select_related("user")
+
         project.supervisor_user = supervisor_membership.user if supervisor_membership else None
+        project.supervisor_name = (
+            f"{supervisor_membership.user.first_name} {supervisor_membership.user.last_name}".strip()
+            if supervisor_membership and supervisor_membership.user else None
+        )
+
+        project.reader_user = reader_membership.user if reader_membership else None
+        project.reader_name = (
+            f"{reader_membership.user.first_name} {reader_membership.user.last_name}".strip()
+            if reader_membership and reader_membership.user else None
+        )
+
+        project.judges_names = [
+            f"{m.user.first_name} {m.user.last_name}".strip() if m.user else ""
+            for m in judge_memberships
+        ] if judge_memberships.exists() else []
+
+        print("📦 Project:", project.name)
+        print("🧑‍🏫 Supervisor Name:", project.supervisor_name)
+        print("📘 Reader Name:", project.reader_name)
+        print("👩‍⚖️ Judges:", project.judges_names)
 
     return render(request, "project/manage_projects.html", {
         "projects": projects,
@@ -529,8 +557,6 @@ class ProjectView(APIView):
 
         if request.query_params.get("available") == "true":
             print("📥 Fetching available projects for students...")
-
-            from django.db.models import Count, F, Q
 
             # Get projects with no students or partially filled teams
             projects = Project.objects.annotate(
@@ -568,12 +594,28 @@ class ProjectView(APIView):
         )
 
         student_list = [
-            {"id": s.id, "username": s.username, "is_assigned": s.id in assigned_ids}
-            for s in students
-        ]
+        {
+            "id": s.id,
+            "username": s.username,
+            "first_name": s.first_name,
+            "last_name": s.last_name,
+            "is_assigned": s.id in assigned_ids
+        }
+        for s in students
+    ]
+
 
         all_users = User.objects.exclude(is_superuser=True)
-        teacher_list = [{"id": u.id, "username": u.username} for u in all_users if is_teacher(u)]
+        teacher_list = [
+        {
+            "id": u.id,
+            "username": u.username,
+            "first_name": u.first_name,
+            "last_name": u.last_name
+        }
+        for u in all_users if is_teacher(u)
+    ]
+
 
         return Response({
             "students": student_list,

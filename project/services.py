@@ -54,19 +54,20 @@ def assign_project_memberships(project, members):
         # Check role exists in DB
         role_obj = Role.objects.filter(name__iexact=role_name).first()
         if not role_obj:
-            print(f"⚠️ Role '{role_name}' not found in DB.")
+            
             continue
 
         # Debug log before creation
         print(f"✅ Assigning {role_name} to user {member['user_id']} in project {project.id}")
 
         # Assign membership
-        ProjectMembership.objects.get_or_create(
-            user_id=member["user_id"],
-            project=project,
-            role=role_obj,
-            group_id=member.get("group_id")
+        ProjectMembership.objects.create(
+        user_id=member["user_id"],
+        project=project,
+        role=role_obj,
+        group_id=member.get("group_id")
         )
+
 
 def calculate_completion_by_tasks(project):
     tasks = ProjectTask.objects.filter(project=project)
