@@ -135,6 +135,8 @@ class ProjectProposalView(APIView):
                     {
                         "id": sm.student.id,
                         "username": sm.student.username,
+                        "first_name": sm.student.first_name,
+                        "last_name": sm.student.last_name,
                     }
                     for sm in student_memberships
                     if sm.student
@@ -200,7 +202,16 @@ class ProjectProposalView(APIView):
             ).exclude(
                 is_superuser=True
             )
-            teachers_data = [{'id': t.id, 'username': t.username} for t in teacher_candidates]
+            teachers_data = [
+                {
+                    "id": t.id,
+                    "username": t.username,
+                    "first_name": t.first_name,
+                    "last_name": t.last_name
+                }
+                for t in teacher_candidates
+            ]
+
 
         elif is_teacher(user) and user.department and user.department.college:
             college = user.department.college
@@ -219,6 +230,8 @@ class ProjectProposalView(APIView):
                 students_data.append({
                     'id': s.id,
                     'username': s.username,
+                    'first_name': s.first_name,
+                    'last_name': s.last_name,
                     'student_id': s.student_id,
                     'already_assigned': StudentProjectMembership.objects.filter(
                             student=s,
