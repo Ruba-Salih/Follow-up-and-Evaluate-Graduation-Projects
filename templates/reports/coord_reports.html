@@ -14,6 +14,9 @@
     <a href="{% url 'report-projects' %}" class="btn btn-primary btn-block" style="margin-bottom: 12px;">📁 {% trans "List of Projects" %}</a>
     <a href="{% url 'report-unassigned-students' %}" class="btn btn-primary btn-block" style="margin-bottom: 12px;">👥 {% trans "Non-Assigned Students" %}</a>
     <a href="{% url 'report-teacher-roles' %}" class="btn btn-primary btn-block" style="margin-bottom: 12px;">👩‍🏫 {% trans "Teacher Roles" %}</a>
+    {% if is_super_coord %}
     <a href="{% url 'report-projects-by-coord' %}" class="btn btn-primary btn-block">📌 {% trans "Projects by Coordinators" %}</a>
+{% endif %}
+
 </div>
 {% endblock %}
