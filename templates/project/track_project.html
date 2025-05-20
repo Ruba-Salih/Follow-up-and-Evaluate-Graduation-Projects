@@ -67,6 +67,13 @@
             <p><strong>{% trans "Team Members" %}:</strong> <span id="modal-students"></span></p>
 
             <hr>
+            <h4>💬 {% trans "Feedback Thread" %}</h4>
+            <div id="feedback-thread" class="feedback-thread">
+            <!-- JS will insert feedback messages here -->
+            </div>
+
+
+            <hr>
             <h4>📝 {% trans "Coordinator Feedback" %}</h4>
             <textarea id="coord-feedback-input" placeholder="{% trans 'Write your feedback here...' %}" rows="4" style="width: 100%;"></textarea>
             <button id="submit-feedback-btn" class="btn btn-primary" style="margin-top: 10px;">{% trans "Submit Feedback" %}</button>

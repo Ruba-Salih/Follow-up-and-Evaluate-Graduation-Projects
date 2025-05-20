@@ -22,8 +22,10 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
     project = None
 
     if is_student_proposal:
-        if instance.teacher_status == 'accepted' and instance.coordinator_status == 'accepted':
-            supervisor_user = instance.proposed_to  # 💡 use directly even if not a Supervisor model
+        if instance.coordinator_status == 'accepted' and instance.teacher_status in ['accepted', 'rejected']:
+            if instance.teacher_status == 'accepted':
+                supervisor_user = instance.proposed_to
+
 
             if submitted_by.student.department:
                 coordinator = Coordinator.objects.filter(

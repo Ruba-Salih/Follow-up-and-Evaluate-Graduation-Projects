@@ -19,13 +19,15 @@
         <p><strong>Department:</strong> {{ project.department.name }}</p>
         <p><strong>Your Role:</strong> {{ my_role }}</p>
 
-        <hr>
+       
 
         <h5>👥 Student Members</h5>
         {% if student_members %}
             <ul>
                 {% for student in student_members %}
-                    <li>{{ student.username }}</li>
+                    <li>{{ student.first_name }} {{ student.last_name }} | 
+                      📧 {{ student.email }} | ☎️ {{ student.phone_number|default:"N/A" }}
+                    </li>
                 {% endfor %}
             </ul>
         {% else %}
@@ -36,12 +38,15 @@
         {% if teacher_members %}
             <ul>
                 {% for member in teacher_members %}
-                    <li>{{ member.name }} — <em>{{ member.role }}</em></li>
+                    <li>{{ member.name }} ({{ member.role }}) |
+                      📧 {{ member.email }} | ☎️ {{ member.phone_number|default:"N/A" }}
+                    </li>
                 {% endfor %}
             </ul>
         {% else %}
             <p>No other teachers assigned.</p>
         {% endif %}
+
     </div>
 
     <div class="pro_buttons">

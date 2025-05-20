@@ -433,32 +433,72 @@ class FeedbackExchangeView(APIView):
     def get(self, request):
         user = request.user
 
-        if hasattr(user, "student"):
-            feedbacks = FeedbackExchange.objects.filter(
-                Q(receiver=user) | Q(receiver__isnull=True),
-                proposal__submitted_by=user,
-                proposal__isnull=False
-            ).order_by("-created_at")
-        else:
-            feedbacks = FeedbackExchange.objects.filter(sender=user).order_by("-created_at")
+        report_id = request.GET.get("report_id")
+        proposal_id = request.GET.get("proposal")
+        project_id = request.GET.get("project")
+        task_id = request.GET.get("task")
+        
 
-        serializer = FeedbackExchangeSerializer(feedbacks, many=True)
-        return Response(serializer.data)
+        # Allow filtering by exactly one target
+        if report_id:
+            feedbacks = FeedbackExchange.objects.filter(report_id=report_id).order_by("-created_at")
+        elif proposal_id:
+            feedbacks = FeedbackExchange.objects.filter(proposal_id=proposal_id).order_by("-created_at")
+        elif project_id:
+            feedbacks = FeedbackExchange.objects.filter(project_id=project_id).order_by("-created_at")
+        elif task_id:
+            feedbacks = FeedbackExchange.objects.filter(task_id=task_id).order_by("-created_at")
+        else:
+            # Default fallback (e.g. personal feedbacks)
+            if hasattr(user, "student"):
+                feedbacks = FeedbackExchange.objects.filter(
+                    Q(receiver=user) | Q(receiver__isnull=True),
+                    proposal__submitted_by=user,
+                    proposal__isnull=False
+                ).order_by("-created_at")
+            else:
+                feedbacks = FeedbackExchange.objects.filter(sender=user).order_by("-created_at")
+
+        data = []
+        for fb in feedbacks:
+            entry = {
+                "id": fb.id,
+                "sender_name": fb.sender.get_full_name() or fb.sender.username,
+                "message": fb.feedback_text,
+                "created_at": fb.created_at,
+            }
+
+            if fb.comment:
+                entry["comment"] = fb.comment
+
+            if fb.feedback_file:
+                entry["feedback_file"] = fb.feedback_file.url
+
+            if hasattr(fb, "reply"):
+                entry["reply"] = {
+                    "message": fb.reply.feedback_text,
+                    "created_at": fb.reply.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                }
+
+            data.append(entry)
+
+        return Response(data)
 
     def post(self, request):
         user = request.user
         data = request.data.copy()
         data["sender"] = user.id
+        print("Received data:", data)
 
         proposal_id = data.get("proposal")
         project_id = data.get("project")
         task_id = data.get("task_id")
+        report_id = data.get("report")
+        print("Received data2:", data)
 
-        if not proposal_id and not project_id:
-            return Response({"detail": "Either proposal or project must be specified."}, status=400)
-
-        if proposal_id and project_id:
-            return Response({"detail": "Only one of proposal or project should be specified."}, status=400)
+        non_empty = [key for key in [proposal_id, project_id, task_id, report_id] if key]
+        if len(non_empty) != 1:
+            return Response({"detail": "Exactly one of proposal, project, task, or report must be provided."}, status=400)
 
         if task_id:
             try:
@@ -468,6 +508,9 @@ class FeedbackExchangeView(APIView):
                 data["task"] = task.id
             except ProjectTask.DoesNotExist:
                 return Response({"detail": "Task not found."}, status=400)
+
+        if report_id:
+            data["report"] = report_id
 
         serializer = FeedbackExchangeSerializer(data=data)
         if serializer.is_valid():
@@ -1185,7 +1228,9 @@ def teacher_view_project(request, project_id):
     student_members = [m.student for m in project.student_memberships.all()]
     teacher_members = [{
         "name": f"{m.user.first_name} {m.user.last_name}".strip() or m.user.username,
-        "role": m.role.name
+        "role": m.role.name,
+        "email": m.user.email,
+        "phone_number": getattr(m.user, "phone_number", "N/A")
     } for m in project.memberships.exclude(user=user)]
 
     form_available = EvaluationForm.objects.filter(target_role=my_membership.role).exists() if my_membership else False

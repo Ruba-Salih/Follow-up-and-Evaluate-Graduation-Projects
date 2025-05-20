@@ -40,4 +40,5 @@ urlpatterns = [
     path("project/view/<int:project_id>/", views.teacher_view_project, name="project-detail"),
     path('project/<int:project_id>/progress/', views.project_progress_view, name='project_progress'),
 
+
 ]

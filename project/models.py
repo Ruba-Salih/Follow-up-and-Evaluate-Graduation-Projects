@@ -129,6 +129,7 @@ class FeedbackExchange(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True, blank=True, related_name='feedback_exchanges', verbose_name=_("Project"))
     proposal = models.ForeignKey(ProjectProposal, on_delete=models.CASCADE, null=True, blank=True, related_name='feedback_exchanges', verbose_name=_("Proposal"))
     task = models.ForeignKey('ProjectTask', on_delete=models.CASCADE, null=True, blank=True, related_name='feedback_exchanges', verbose_name=_("Task"))
+    report = models.ForeignKey('report.ProjectReport', on_delete=models.CASCADE, null=True, blank=True, related_name='feedback_exchanges', verbose_name=_("Report"))
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_feedbacks', verbose_name=_("Sender"))
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='feedback_received', verbose_name=_("Receiver"))
     feedback_text = models.TextField(_("Feedback Text"), blank=True, null=True)
