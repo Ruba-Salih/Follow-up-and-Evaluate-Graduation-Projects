@@ -8,123 +8,126 @@
 {% endblock %}
 
 {% block content %}
+{% include "navbar.html" %}
 
-<h2 class="text-center">Project Evaluation Grades</h2>
-<h2>Project: {{ project.name }}</h2>
+<div class="container">
+    <h2 class="text-center">📊 Project Evaluation Grades</h2>
+    <h2>Project: {{ project.name }}</h2>
 
-<!-- Summary Table -->
-<h3>Summary Table</h3>
-<table border="1">
-    <thead>
-        <tr>
-            <th>Student</th>
-            <th>Supervisor Final Grade</th>
-            <th>Reader Final Grade</th>
-            <th>Committee Average Final Grade</th>
-            <th>Final Grade</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for student in students %}
-            {% with student_grades|get_item:student.id as grades %}
-            <tr>
-                <td>{{ grades.student_name }}</td>
-                <td>{{ grades.supervisor_final_grade }}</td>
-                <td>{{ grades.reader_final_grade }}</td>
-                <td>{{ student_committee_averages|get_item:student.id }}</td>
-                <td>{{ grades.final_grade }}</td>
-            </tr>
-            {% endwith %}
-        {% endfor %}
-    </tbody>
-</table>
-
-<!-- Supervisor Tables -->
-{% for evaluator in supervisors %}
-    <h3>Supervisor - {{ evaluator.name }}</h3>
-    <table border="1">
+    <!-- Summary Table -->
+    <h3>Summary Table</h3>
+    <table>
         <thead>
             <tr>
                 <th>Student</th>
-                {% for q in evaluator.grades.0.ordered_grades %}
-                    <th>{{ q.main_category }}</th>
-                {% endfor %}
-                <th>Total</th>
+                <th>Supervisor Final Grade</th>
+                <th>Reader Final Grade</th>
+                <th>Committee Average Final Grade</th>
                 <th>Final Grade</th>
             </tr>
         </thead>
         <tbody>
-            {% for student_grade in evaluator.grades %}
-            <tr>
-                <td>{{ student_grade.student_name }}</td>
-                {% for g in student_grade.ordered_grades %}
-                    <td>{{ g.grade }}</td>
-                {% endfor %}
-                <td>{{ student_grade.total }}</td>
-                <td><strong>{{ student_grade.final_grade }}</strong></td>
-            </tr>
+            {% for student in students %}
+                {% with student_grades|get_item:student.id as grades %}
+                <tr>
+                    <td>{{ grades.student_name }}</td>
+                    <td>{{ grades.supervisor_final_grade }}</td>
+                    <td>{{ grades.reader_final_grade }}</td>
+                    <td>{{ student_committee_averages|get_item:student.id }}</td>
+                    <td>{{ grades.final_grade }}</td>
+                </tr>
+                {% endwith %}
             {% endfor %}
         </tbody>
     </table>
-{% endfor %}
 
-<!-- Reader Tables -->
-{% for evaluator in readers %}
-    <h3>Reader - {{ evaluator.name }}</h3>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Student</th>
-                {% for q in evaluator.grades.0.ordered_grades %}
-                    <th>{{ q.main_category }}</th>
+    <!-- Supervisor Tables -->
+    {% for evaluator in supervisors %}
+        <h3>Supervisor - {{ evaluator.name }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    {% for q in evaluator.grades.0.ordered_grades %}
+                        <th>{{ q.main_category }}</th>
+                    {% endfor %}
+                    <th>Total</th>
+                    <th>Final Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student_grade in evaluator.grades %}
+                <tr>
+                    <td>{{ student_grade.student_name }}</td>
+                    {% for g in student_grade.ordered_grades %}
+                        <td>{{ g.grade }}</td>
+                    {% endfor %}
+                    <td>{{ student_grade.total }}</td>
+                    <td><strong>{{ student_grade.final_grade }}</strong></td>
+                </tr>
                 {% endfor %}
-                <th>Total</th>
-                <th>Final Grade</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for student_grade in evaluator.grades %}
-            <tr>
-                <td>{{ student_grade.student_name }}</td>
-                {% for g in student_grade.ordered_grades %}
-                    <td>{{ g.grade }}</td>
-                {% endfor %}
-                <td>{{ student_grade.total }}</td>
-                <td><strong>{{ student_grade.final_grade }}</strong></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
 
-<!-- Committee Tables -->
-<h3>Judging Committees</h3>
-{% for evaluator in committees %}
-    <h4>Judge {{ forloop.counter }} - {{ evaluator.name }}</h4>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Student</th>
-                {% for q in evaluator.grades.0.ordered_grades %}
-                    <th>{{ q.main_category }}</th>
+    <!-- Reader Tables -->
+    {% for evaluator in readers %}
+        <h3>Reader - {{ evaluator.name }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    {% for q in evaluator.grades.0.ordered_grades %}
+                        <th>{{ q.main_category }}</th>
+                    {% endfor %}
+                    <th>Total</th>
+                    <th>Final Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student_grade in evaluator.grades %}
+                <tr>
+                    <td>{{ student_grade.student_name }}</td>
+                    {% for g in student_grade.ordered_grades %}
+                        <td>{{ g.grade }}</td>
+                    {% endfor %}
+                    <td>{{ student_grade.total }}</td>
+                    <td><strong>{{ student_grade.final_grade }}</strong></td>
+                </tr>
                 {% endfor %}
-                <th>Total</th>
-                <th>Final Grade</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for student_grade in evaluator.grades %}
-            <tr>
-                <td>{{ student_grade.student_name }}</td>
-                {% for g in student_grade.ordered_grades %}
-                    <td>{{ g.grade }}</td>
+            </tbody>
+        </table>
+    {% endfor %}
+
+    <!-- Committee Tables -->
+    <h3>Judging Committees</h3>
+    {% for evaluator in committees %}
+        <h4>Judge {{ forloop.counter }} - {{ evaluator.name }}</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    {% for q in evaluator.grades.0.ordered_grades %}
+                        <th>{{ q.main_category }}</th>
+                    {% endfor %}
+                    <th>Total</th>
+                    <th>Final Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student_grade in evaluator.grades %}
+                <tr>
+                    <td>{{ student_grade.student_name }}</td>
+                    {% for g in student_grade.ordered_grades %}
+                        <td>{{ g.grade }}</td>
+                    {% endfor %}
+                    <td>{{ student_grade.total }}</td>
+                    <td><strong>{{ student_grade.final_grade }}</strong></td>
+                </tr>
                 {% endfor %}
-                <td>{{ student_grade.total }}</td>
-                <td><strong>{{ student_grade.final_grade }}</strong></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+</div>
 
 {% endblock %}

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2025-05-15T15:00:00.000Z" agent="5.0 (Macintosh)" etag="schema1" version="14.6.13" type="device">
+  <diagram name="Database Schema" id="schema1">
+    <mxGraphModel dx="1422" dy="826" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- EvaluationForm -->
+        <mxCell id="EF" value="" style="shape=swimlane;horizontal=0;fontSize=12;fillColor=#ffffff;strokeColor=#1b563f;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="180" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="EF_header" value="EvaluationForm" style="swimlaneFillColor=#1b563f;horizontal=0;fontColor=#ffffff;fontStyle=1;fontSize=14;" vertex="1" parent="EF">
+          <mxGeometry width="180" height="30" as="geometry"/>
+        </mxCell>
+        <!-- Fields -->
+        <mxCell value="id : INT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="EF">
+          <mxGeometry x="10" y="40" width="160" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="name : VARCHAR" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="EF">
+          <mxGeometry x="10" y="60" width="160" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="form_weight : FLOAT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="EF">
+          <mxGeometry x="10" y="80" width="160" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="created_at : DATETIME" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="EF">
+          <mxGeometry x="10" y="100" width="160" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="target_role_id : BIGINT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="EF">
+          <mxGeometry x="10" y="120" width="160" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- MainCategory -->
+        <mxCell id="MC" value="" style="shape=swimlane;horizontal=0;fontSize=12;fillColor=#ffffff;strokeColor=#1b563f;" vertex="1" parent="1">
+          <mxGeometry x="240" y="20" width="200" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell value="MainCategory" style="swimlaneFillColor=#1b563f;horizontal=0;fontColor=#ffffff;fontStyle=1;fontSize=14;" vertex="1" parent="MC">
+          <mxGeometry width="200" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell value="id : INT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="MC">
+          <mxGeometry x="10" y="40" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="number : INT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="MC">
+          <mxGeometry x="10" y="60" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="text : TEXT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="MC">
+          <mxGeometry x="10" y="80" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="weight : FLOAT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="MC">
+          <mxGeometry x="10" y="100" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="grade_type : VARCHAR" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="MC">
+          <mxGeometry x="10" y="120" width="180" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- SubCategory -->
+        <mxCell id="SC" value="" style="shape=swimlane;horizontal=0;fontSize=12;fillColor=#ffffff;strokeColor=#1b563f;" vertex="1" parent="1">
+          <mxGeometry x="480" y="20" width="160" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell value="SubCategory" style="swimlaneFillColor=#1b563f;horizontal=0;fontColor=#ffffff;fontStyle=1;fontSize=14;" vertex="1" parent="SC">
+          <mxGeometry width="160" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell value="id : INT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="SC">
+          <mxGeometry x="10" y="40" width="140" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="text : TEXT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="SC">
+          <mxGeometry x="10" y="60" width="140" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="main_category_id : BIGINT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="SC">
+          <mxGeometry x="10" y="80" width="140" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Grade -->
+        <mxCell id="G" value="" style="shape=swimlane;horizontal=0;fontSize=12;fillColor=#ffffff;strokeColor=#1b563f;" vertex="1" parent="1">
+          <mxGeometry x="20" y="200" width="200" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell value="Grade" style="swimlaneFillColor=#1b563f;horizontal=0;fontColor=#ffffff;fontStyle=1;fontSize=14;" vertex="1" parent="G">
+          <mxGeometry width="200" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell value="id : INT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="G">
+          <mxGeometry x="10" y="40" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="grade : FLOAT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="G">
+          <mxGeometry x="10" y="60" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="final_grade : FLOAT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="G">
+          <mxGeometry x="10" y="80" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="evaluation_form_id : BIGINT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="G">
+          <mxGeometry x="10" y="100" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="main_category_id : BIGINT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="G">
+          <mxGeometry x="10" y="120" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="project_id : BIGINT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="G">
+          <mxGeometry x="10" y="140" width="180" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- IndividualGrade -->
+        <mxCell id="IG" value="" style="shape=swimlane;horizontal=0;fontSize=12;fillColor=#ffffff;strokeColor=#1b563f;" vertex="1" parent="1">
+          <mxGeometry x="240" y="200" width="200" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell value="IndividualGrade" style="swimlaneFillColor=#1b563f;horizontal=0;fontColor=#ffffff;fontStyle=1;fontSize=14;" vertex="1" parent="IG">
+          <mxGeometry width="200" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell value="id : INT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="IG">
+          <mxGeometry x="10" y="40" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="grade_id : BIGINT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="IG">
+          <mxGeometry x="10" y="60" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="student_id : BIGINT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="IG">
+          <mxGeometry x="10" y="80" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell value="final_grade : FLOAT" style="text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="IG">
+          <mxGeometry x="10" y="100" width="180" height="20" as="geometry"/>
+        </mxCell>

@@ -14,7 +14,6 @@ import os
 from pathlib import Path
 from decouple import config
 
-
 RENDER = os.environ.get('RENDER', False)
 
 if RENDER:
@@ -48,6 +47,7 @@ INSTALLED_APPS = [
     'form',
     'grades',
     'feedbacks',
+    'announcement',
     'rest_framework',
     'rest_framework_simplejwt',
     'django_extensions',

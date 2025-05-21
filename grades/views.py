@@ -724,6 +724,7 @@ def manage_grades_view(request):
     committee_numbers = projects_with_committee_counts.aggregate(Max('committee_count'))['committee_count__max']
 
     print(f"department are: {departments}")
+    print(f"data is: {data}")
     return render(request, 'forms/manage_grades.html', {
         'data': data,
         'evaluation_forms': evaluation_forms,
