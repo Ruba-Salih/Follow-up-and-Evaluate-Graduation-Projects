@@ -1,41 +1,119 @@
 {% extends "base.html" %}
-
+{% load static %}
 {% block title %}Dashboard{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/coordinator/dashboard.css' %}">
+{% endblock %}
+
 {% block content %}
-    <h2>Welcome to Your Dashboard</h2>
-    <p id="user-info"></p>
-    <button id="logout">Logout</button>
+{% include "navbar.html" %}
 
-    <script>
-        async function loadUserData() {
-            const token = localStorage.getItem("access");
-            if (!token) {
-                window.location.href = "/login/";
-                return;
-            }
+<div class="dashboard">
+  <h2>📊 Dashboard Overview</h2>
 
-            const response = await fetch("/api/users/protected/", {
-                method: "GET",
-                headers: { "Authorization": "Bearer " + token }
-            });
+  <div class="stats">
+    <div id="total-projects">Total Projects: <span>0</span></div>
+    <div id="ongoing-projects">Ongoing Projects: <span>0</span></div>
+    <div id="completed-projects">Completed Projects: <span>0</span></div>
+    <div id="pending-proposals">Pending Proposals: <span>0</span></div>
+  </div>
+<div class="chart">
+  <h3>📊 Project Status</h3>
+  <canvas id="statusChart" width="400" height="200"></canvas>
+</div>
 
-            if (response.ok) {
-                const data = await response.json();
-                document.getElementById("user-info").innerText = "Hello, " + data.message;
-            } else {
-                localStorage.removeItem("access");
-                localStorage.removeItem("refresh");
-                window.location.href = "/login/";
-            }
+<div class="chart">
+  <h3>📌 Most Active Fields</h3>
+  <canvas id="fieldsChart" width="400" height="200"></canvas>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const res = await fetch("/api/project/dashboard/coordinator/");
+    const data = await res.json();
+
+    document.querySelector("#total-projects span").textContent = data.total_projects;
+    document.querySelector("#ongoing-projects span").textContent = data.ongoing_projects;
+    document.querySelector("#completed-projects span").textContent = data.completed_projects;
+    document.querySelector("#pending-proposals span").textContent = data.pending_proposals;
+
+    // 📈 Fields Chart
+    const fieldLabels = data.most_active_fields.map(f => f.field);
+    const fieldCounts = data.most_active_fields.map(f => f.count);
+
+    new Chart(document.getElementById("fieldsChart"), {
+      type: "bar",
+      data: {
+        labels: fieldLabels,
+        datasets: [{
+          label: "Number of Projects",
+          data: fieldCounts,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: "Most Active Fields" }
         }
+      }
+    });
 
-        document.getElementById("logout").addEventListener("click", function() {
-            localStorage.removeItem("access");
-            localStorage.removeItem("refresh");
-            window.location.href = "/login/";
-        });
+    const ongoing = parseInt(data.ongoing_projects) || 0;
+const completed = parseInt(data.completed_projects) || 0;
 
-        loadUserData();
-    </script>
+let chartData, chartLabels, chartColors;
+
+if (ongoing + completed === 0) {
+  chartLabels = ["No Data"];
+  chartData = [1];  // default dummy data to draw a pie slice
+  chartColors = ["#cccccc"];
+} else {
+  chartLabels = ["Ongoing", "Completed"];
+  chartData = [ongoing, completed];
+  chartColors = ["#36A2EB", "#4BC0C0"];
+}
+
+new Chart(document.getElementById("statusChart"), {
+  type: "pie",
+  data: {
+    labels: chartLabels,
+    datasets: [{
+      data: chartData,
+      backgroundColor: chartColors,
+      borderColor: ["#ffffff"],
+      borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      title: {
+        display: true,
+        text: "Project Completion Status"
+      },
+      legend: {
+        display: true,
+        position: 'bottom'
+      }
+    }
+  }
+});
+
+
+
+  } catch (error) {
+    console.error("Dashboard load error:", error);
+    alert("Failed to load dashboard data.");
+  }
+});
+
+</script>
+
 {% endblock %}

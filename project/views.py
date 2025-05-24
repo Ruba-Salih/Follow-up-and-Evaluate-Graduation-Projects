@@ -1419,3 +1419,43 @@ def get_task_detail(request, task_id):
 
     except ProjectTask.DoesNotExist:
         return Response({"detail": "Task not found."}, status=404)
+
+
+from django.http import JsonResponse
+
+def coordinator_dashboard_stats(request):
+    user = request.user
+
+    try:
+        coordinator = user.coordinator  # assuming OneToOneField from User to Coordinator
+    except Coordinator.DoesNotExist:
+        return JsonResponse({"error": "Not a coordinator"}, status=403)
+
+    if coordinator.is_super:
+        projects = Project.objects.all()
+        proposals = ProjectProposal.objects.filter(coordinator_status='pending')
+    else:
+        projects = Project.objects.filter(department=coordinator.department)
+        proposals = ProjectProposal.objects.filter(coordinator_status='pending', department=coordinator.department)
+
+    total = projects.count()
+    ongoing = projects.filter(plan__completion_status__lt=100).count()
+    completed = projects.filter(plan__completion_status=100).count()
+
+    active_fields = (projects
+        .values('field')
+        .annotate(count=Count('id'))
+        .order_by('-count'))
+
+    return JsonResponse({
+        "total_projects": total,
+        "ongoing_projects": ongoing,
+        "completed_projects": completed,
+        "pending_proposals": proposals.count(),
+        "most_active_fields": list(active_fields),
+    })
+
+
+@login_required
+def coordinator_dashboard_page(request):
+    return render(request, "coordinator/dashboard.html")
