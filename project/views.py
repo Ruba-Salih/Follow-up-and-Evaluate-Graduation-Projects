@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import redirect, render, get_object_or_404
 from django.db import transaction
 from django.db.models import Prefetch, Q, OuterRef, Subquery, Exists, Count, F
@@ -128,6 +129,10 @@ class ProjectProposalView(APIView):
 
                 serializer = ProjectProposalSerializer(proposal)
                 response_data = serializer.data
+                
+                response_data["teacher_role"] = proposal.teacher_role.name if proposal.teacher_role else None
+                response_data["teacher_role_id"] = proposal.teacher_role.id if proposal.teacher_role else None
+
 
                 student_memberships = StudentProjectMembership.objects.filter(proposal=proposal).select_related('student')
 
@@ -308,6 +313,19 @@ class ProjectProposalView(APIView):
                         proposal.teacher_status = 'accepted'
                         proposal.save(update_fields=["teacher_status"])
 
+                        if is_teacher(user):
+                            teacher_status = data.get("teacher_status")
+                            if teacher_status in dict(ProjectProposal.STATUS_CHOICES):
+                                proposal.teacher_status = teacher_status
+
+                            role_id = data.get("teacher_role_id")
+                            if role_id:
+                                try:
+                                    role = Role.objects.get(id=role_id)
+                                    proposal.teacher_role = role
+                                    proposal.save(update_fields=["teacher_role"])
+                                except Role.DoesNotExist:
+                                    pass
 
                     if team_members_ids:
                         proposal.team_members.set(team_members_ids)
@@ -377,6 +395,13 @@ class ProjectProposalView(APIView):
             teacher_status = data.get("teacher_status")
             if teacher_status in dict(ProjectProposal.STATUS_CHOICES):
                 proposal.teacher_status = teacher_status
+            role_id = request.data.get("teacher_role_id")
+            if role_id:
+                try:
+                    role = Role.objects.get(id=role_id)
+                    proposal.teacher_role = role  # ✅ update it
+                except Role.DoesNotExist:
+                    pass
         elif hasattr(user, "coordinator"):
             coordinator_status = data.get("coordinator_status")
             if coordinator_status in dict(ProjectProposal.STATUS_CHOICES):

@@ -25,6 +25,7 @@ class ProjectProposal(models.Model):
     team_members = models.ManyToManyField('users.Student', blank=True, related_name='team_proposals', verbose_name=_("Team Members"))
     teacher_status = models.CharField(_("Teacher Status"), max_length=20, choices=STATUS_CHOICES, default='pending')
     coordinator_status = models.CharField(_("Coordinator Status"), max_length=20, choices=STATUS_CHOICES, default='pending')
+    teacher_role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated At"), auto_now=True)
 

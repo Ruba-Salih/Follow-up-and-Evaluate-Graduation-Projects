@@ -80,11 +80,13 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
             })
 
         if supervisor_user:
+            selected_role = instance.teacher_role.name if instance.teacher_role else "Supervisor"
             member_payload.append({
-                "user_id": supervisor_user.id,  # ✅ use actual user, not Supervisor model
-                "role": "Supervisor",
+                "user_id": supervisor_user.id,
+                "role": selected_role,
                 "group_id": None
             })
+
 
         assign_project_memberships(project, member_payload)
 
