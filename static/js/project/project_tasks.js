@@ -66,7 +66,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                         <span class="status ${task.task_status.replace(' ', '-')}">${task.task_status}</span>
                     </div>
                 </div>
-                <p><strong>Assigned To:</strong> ${task.assign_to_name || 'N/A'}</p>
+                <p><strong>Assigned To:</strong> ${
+  students.find(s => s.id === task.assign_to)?.first_name + ' ' + students.find(s => s.id === task.assign_to)?.last_name || 'N/A'
+}</p>
                 <div class="card-buttons">
                     <button class="view-btn btn-edit" data-id="${task.id}">🔍 View</button>
                     <button class="btn btn-delete btn-delete-task" data-id="${task.id}">🗑️ Delete</button>
@@ -100,9 +102,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             `<option value="${g.id}" ${g.id == currentTask.goal_id ? "selected" : ""}>${g.goal}</option>`
         ).join("");
 
-        assignedToSelect.innerHTML = students.map(s => 
-            `<option value="${s.id}" ${s.id == currentTask.assign_to ? "selected" : ""}>${s.username}</option>`
-        ).join("");
+        assignedToSelect.innerHTML = students.map(s => {
+        const fullName = [s.first_name, s.last_name].filter(Boolean).join(" ");
+        return `<option value="${s.id}" ${s.id == currentTask.assign_to ? "selected" : ""}>${fullName}</option>`;
+        }).join("");
+
 
         const fileDiv = document.getElementById("current-file-download");
         if (currentTask.deliverable_file_url) {
@@ -176,10 +180,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         if (res.ok) {
-            alert("🗑️ Task deleted.");
+            showAlert("🗑️ Task deleted.", 'success');
             await loadGoalsAndTasks();
         } else {
-            alert("⚠️ Failed to delete task.");
+            showAlert("⚠️ Failed to delete task.", 'error');
         }
     }
 

@@ -1459,3 +1459,42 @@ def coordinator_dashboard_stats(request):
 @login_required
 def coordinator_dashboard_page(request):
     return render(request, "coordinator/dashboard.html")
+
+
+from datetime import timedelta, date
+
+def student_dashboard_stats(request):
+    user = request.user
+
+    if not hasattr(user, "student"):
+        return JsonResponse({"error": "Not a student"}, status=403)
+
+    tasks = ProjectTask.objects.filter(assign_to=user)
+    summary = {
+        "to do": tasks.filter(task_status="to do").count(),
+        "in progress": tasks.filter(task_status="in progress").count(),
+        "done": tasks.filter(task_status="done").count(),
+    }
+
+    today = date.today()
+    deadline_range = today + timedelta(days=7)
+    upcoming_tasks = tasks.filter(deadline_days__isnull=False).order_by("deadline_days")
+
+    upcoming = [
+        {
+            "name": t.name,
+            "deadline": (t.created_at.date() + timedelta(days=t.deadline_days)).isoformat(),
+            "status": t.task_status,
+        }
+        for t in upcoming_tasks
+        if t.created_at and today <= t.created_at.date() + timedelta(days=t.deadline_days) <= deadline_range
+    ]
+
+    return JsonResponse({
+        "task_summary": summary,
+        "upcoming_deadlines": upcoming
+    })
+
+@login_required
+def student_dashboard_page(request):
+    return render(request, "student/dashboard.html")

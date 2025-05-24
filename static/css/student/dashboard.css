@@ -1,0 +1,52 @@
+.dashboard {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 30px 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  
+}
+
+.dashboard h2, h3 {
+  
+  margin-top: 30px;
+  color: #333;
+  text-align: center;
+  padding-bottom: 8px;
+}
+
+canvas {
+  max-width: 100%;
+  margin: 20px auto;
+  display: block;
+}
+
+#upcoming-deadlines-list {
+  list-style-type: none;
+  padding-left: 0;
+  margin-top: 15px;
+}
+
+#upcoming-deadlines-list li {
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-left: 5px solid #a63026;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  transition: background 0.3s;
+}
+
+#upcoming-deadlines-list li:hover {
+  background: #e9ecef;
+}
+
+@media (max-width: 600px) {
+  .dashboard {
+    padding: 20px 10px;
+  }
+
+  .dashboard h2 {
+    font-size: 20px;
+  }
+}

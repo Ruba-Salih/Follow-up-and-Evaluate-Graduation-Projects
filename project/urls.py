@@ -43,5 +43,7 @@ urlpatterns = [
     path("dashboard/", views.coordinator_dashboard_page, name="coordinator_dashboard"),
     path("dashboard/coordinator/", views.coordinator_dashboard_stats, name="coordinator-dashboard-stats"),
 
+    path("dashboard_student/", views.student_dashboard_page, name="student_dashboard"),
+    path("dashboard/student/", views.student_dashboard_stats, name="student-dashboard-stats"),
 
 ]
