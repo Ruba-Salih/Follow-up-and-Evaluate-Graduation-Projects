@@ -724,6 +724,7 @@ def manage_grades_view(request):
     committee_numbers = projects_with_committee_counts.aggregate(Max('committee_count'))['committee_count__max']
 
     print(f"department are: {departments}")
+    print(f"data is: {data}")
     return render(request, 'forms/manage_grades.html', {
         'data': data,
         'evaluation_forms': evaluation_forms,
@@ -899,3 +900,156 @@ def view_project(request, project_id):
     }
 
     return render(request, "forms/view_project.html", context)
+
+
+from django.shortcuts import render
+from django.db.models import Avg, Count, F
+from collections import defaultdict
+from grades.models import Grading
+from university.models import Department
+from project.models import ProjectMembership, Project
+
+import json
+
+
+
+from collections import defaultdict
+from django.shortcuts import render
+from django.contrib.auth import get_user_model
+import json
+from users.models import User
+User = get_user_model()
+
+def grade_statistics(request):
+    gradings = Grading.objects.select_related('student', 'project__department')
+
+    # 1. Histogram of grades
+    histogram_bins = [0] * 11
+    for g in gradings:
+        if g.final_grade is not None:
+            bin_index = min(int(g.final_grade // 10), 10)
+            histogram_bins[bin_index] += 1
+
+    # 2. Department stats
+    dept_stats = defaultdict(lambda: {"grades": [], "avg": 0.0})
+    for g in gradings:
+        if g.final_grade is not None:
+            dept_name = g.project.department.name
+            dept_stats[dept_name]["grades"].append(g.final_grade)
+
+    dept_stats = {
+        dept: {
+            "grades": data["grades"],
+            "avg": sum(data["grades"]) / len(data["grades"]) if data["grades"] else 0.0
+        }
+        for dept, data in dept_stats.items()
+    }
+
+    sorted_dept_stats = sorted([
+        {"name": dept, "grades": data["grades"], "avg": data["avg"]}
+        for dept, data in dept_stats.items()
+    ], key=lambda x: x["avg"], reverse=True)
+
+    # 3. Student performance
+    student_performance = sorted([
+        {"name": g.student.get_full_name(), "grade": g.final_grade}
+        for g in gradings if g.final_grade is not None
+    ], key=lambda x: x["grade"], reverse=True)
+
+    # 4. Supervisor project grades
+    supervisor_name = request.GET.get("supervisor")
+    supervisor_projects = []
+
+    if supervisor_name:
+        try:
+            supervisor = User.objects.get(username=supervisor_name)
+            memberships = ProjectMembership.objects.filter(user=supervisor)
+            for m in memberships:
+                grades = Grading.objects.filter(project=m.project).select_related('student')
+                supervisor_projects.append({
+                    "project": m.project.name,
+                    "grades": [
+                        {"student": gr.student.get_full_name(), "grade": gr.final_grade}
+                        for gr in grades
+                    ]
+                })
+        except User.DoesNotExist:
+            pass
+
+    # Get all users with the "Supervisor" role using ProjectMembership
+    try:
+        supervisor_role = Role.objects.get(name="Supervisor")
+        supervisor_users = User.objects.filter(
+            id__in=ProjectMembership.objects.filter(role=supervisor_role)
+            .values_list('user', flat=True)
+            .distinct()
+        )
+    except Role.DoesNotExist:
+        supervisor_users = User.objects.none()
+
+    context = {
+        "histogram_bins": json.dumps(histogram_bins),
+        "dept_stats": sorted_dept_stats,
+        "student_performance": student_performance,
+        "supervisor_projects": supervisor_projects,
+        "queried_supervisor": supervisor_name,
+        "supervisors": supervisor_users,
+    }
+    return render(request, "forms/grade_statistics.html", context)
+
+""" 
+#grade statistics
+def grade_statistics(request):
+    gradings = Grading.objects.select_related('student', 'project__department')
+    
+    # 1. Histogram of grades
+    histogram_bins = [0] * 11  # 0–10, 11–20, ..., 91–100
+    for g in gradings:
+        if g.final_grade is not None:
+            bin_index = min(int(g.final_grade // 10), 10)
+            histogram_bins[bin_index] += 1
+
+    # 2. Average and distribution per department
+    dept_stats = defaultdict(lambda: {"grades": [], "avg": 0.0})
+    for g in gradings:
+        if g.final_grade is not None:
+            dept_name = g.project.department.name
+            dept_stats[dept_name]["grades"].append(g.final_grade)
+
+    for dept, data in dept_stats.items():
+        if data["grades"]:
+            data["avg"] = sum(data["grades"]) / len(data["grades"])
+
+    # 3. Student-level performance
+    student_performance = [
+        {
+            "name": g.student.get_full_name(),
+            "grade": g.final_grade
+        }
+        for g in gradings if g.final_grade is not None
+    ]
+
+    # 4. Supervisor project grading (if queried)
+    supervisor_name = request.GET.get('supervisor')
+    supervisor_projects = []
+    if supervisor_name:
+        try:
+            supervisor = User.objects.get(username=supervisor_name)
+            memberships = ProjectMembership.objects.filter(user=supervisor)
+            for m in memberships:
+                grades = Grading.objects.filter(project=m.project).select_related('student')
+                supervisor_projects.append({
+                    "project": m.project.name,
+                    "grades": [{"student": gr.student.get_full_name(), "grade": gr.final_grade} for gr in grades]
+                })
+        except User.DoesNotExist:
+            pass
+
+    context = {
+        "histogram_bins": json.dumps(histogram_bins),
+        "dept_stats": dept_stats,
+        "student_performance": sorted(student_performance, key=lambda x: x["grade"], reverse=True),
+        "supervisor_projects": supervisor_projects,
+        "queried_supervisor": supervisor_name,
+    }
+    return render(request, "forms/grade_statistics.html", context) """

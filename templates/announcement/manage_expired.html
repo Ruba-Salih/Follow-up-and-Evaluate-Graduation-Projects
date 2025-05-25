@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block head %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+  <link rel="stylesheet" href="{% static 'css/announcement/announcement.css' %}">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <style>
+    /* Use your system palette with green & blue accents */
+    body, .announcement-container {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #fff;
+      color: #8e281f; /* main dark red text */
+    }
+
+    /* Center the heading and filter container */
+    .announcement-header-filter {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      text-align: center;
+      color: #8e281f;
+    }
+
+    .announcement-header-filter h2 {
+      font-weight: 700;
+      font-size: 2.25rem;
+      color: #8e281f;
+      user-select: none;
+    }
+
+    /* Filter form inline and centered */
+    form.d-flex.align-items-center.gap-3.mb-4 {
+      justify-content: center !important;
+      gap: 1rem;
+    }
+
+    /* Label styling */
+    label.form-label {
+      font-weight: 600;
+      color: #555; /* softer than #888 for readability */
+    }
+
+    /* Hide the default checkbox */
+    .announcement-container input.form-check-input {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #8e281f;
+      border-radius: 3px;
+      position: relative;
+      cursor: pointer;
+      background-color: white;
+      vertical-align: middle;
+      margin-top: 0.25rem;
+    }
+
+    /* When checked, show a custom checkmark */
+    .announcement-container input.form-check-input:checked {
+      background-color: #8e281f;
+      border-color: #8e281f;
+    }
+
+    /* Create checkmark with ::after */
+    .announcement-container input.form-check-input:checked::after {
+      position: absolute;
+      left: 4px;
+      top: 0px;
+      width: 5px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      pointer-events: none;
+    }
+
+    /* Focus style */
+    .announcement-container input.form-check-input:focus {
+      outline: none;
+      box-shadow: 0 0 5px #8e281f;
+    }
+
+    /* Table styling */
+    table.table {
+      border: 2px solid #8e281f;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(142, 40, 31, 0.15);
+    }
+    thead.table-light {
+      background-color: #8e281f;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    tbody tr:hover {
+      background-color: #f0f8ff; /* light blue hover */
+    }
+
+    /* Badge colors */
+    .badge.bg-success {
+      background-color: #d3a672 !important; /* green */
+      font-weight: 600;
+    }
+    .badge.bg-secondary {
+      background-color: #888 !important;
+      font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn-danger {
+      background-color: #8e281f;
+      border-color: #8e281f;
+    }
+    .btn-danger:hover {
+      background-color: #6b1d17;
+      border-color: #6b1d17;
+    }
+
+    .btn-warning {
+      background-color: #f0ad4e;
+      border-color: #f0ad4e;
+      color: #fff;
+    }
+    .btn-warning:hover {
+      background-color: #d6952f;
+      border-color: #d6952f;
+      color: #fff;
+    }
+
+    .btn-success {
+      background-color: #8e281f; /* blue */
+      border-color: #8e281f;
+      color: #fff;
+    }
+    .btn-success:hover {
+      background-color: #8e281f;
+      border-color: #8e281f;
+      color: #fff;
+    }
+
+    .btn-primary {
+      background-color: #8e281f; /* darker blue */
+      border-color: #8e281f;
+    }
+    .btn-primary:hover {
+      background-color: #8e281f;
+      border-color: #8e281f;
+    }
+
+    /* Modal header */
+    .modal-header {
+      background-color: transparent; /* remove background */
+      color: #000; /* or any text color you want */
+      font-weight: 700; /* bold */
+      justify-content: center; /* center horizontally */
+      border-bottom: none; /* optional: remove bottom border if you want cleaner look */
+    }
+
+    /* Form check labels */
+    .form-check-label {
+      color: #444;
+      font-weight: 600;
+    }
+
+    /* Input and textarea styling */
+    input.form-control, select.form-select, textarea.form-control {
+      border: 1.5px solid #8e281f;
+      border-radius: 5px;
+    }
+    input.form-control:focus, select.form-select:focus, textarea.form-control:focus {
+      border-color: #8e281f;
+      box-shadow: 0 0 5px rgba(255, 51, 0, 0.5);
+      outline: none;
+    }
+
+    /* Small helper text */
+    small.form-text.text-muted {
+      color: #555;
+      font-style: italic;
+    }
+    .form-check-input {
+      width: 16px;        /* smaller checkbox */
+      height: 16px;
+      accent-color: #8e281f !important; /* override Bootstrap */
+      cursor: pointer;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container announcement-container mt-4">
+
+  <div class="announcement-header-filter">
+    <h2>🕒 {% trans "Manage Announcements" %}</h2>
+
+    <!-- Filter Form -->
+    <form method="get" class="d-flex align-items-center gap-3 mb-4">
+      <label for="status_filter" class="form-label mb-0">{% trans "Filter by status:" %}</label>
+      <select name="status" id="status_filter" class="form-select w-auto" onchange="this.form.submit()">
+        <option value="" {% if not request.GET.status %}selected{% endif %}>{% trans "All" %}</option>
+        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>{% trans "Active" %}</option>
+        <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>{% trans "Inactive" %}</option>
+      </select>
+    </form>
+  </div>
+
+  {% if expired_announcements %}
+    <table class="table table-bordered table-striped align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>{% trans "Title" %}</th>
+          <th>{% trans "Deadline" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ann in expired_announcements %}
+          <tr>
+            <td>{{ ann.title }}</td>
+            <td>{{ ann.deadline|date:"Y-m-d H:i" }}</td>
+            <td>
+              <span class="badge {% if ann.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                {{ ann.is_active|yesno:"Active,Inactive" }}
+              </span>
+            </td>
+            <td>
+              <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="announcement_id" value="{{ ann.id }}">
+                <button type="submit" name="action" value="delete" class="btn btn-danger btn-sm">{% trans "Delete" %}</button>
+                {% if ann.is_active %}
+                  <button type="submit" name="action" value="deactivate" class="btn btn-warning btn-sm">{% trans "Deactivate" %}</button>
+                {% else %}
+                  <button type="submit" name="action" value="activate" class="btn btn-success btn-sm">{% trans "Activate" %}</button>
+                {% endif %}
+              </form>
+
+              <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ ann.id }}">
+                {% trans "Edit" %}
+              </button>
+
+              <!-- Edit Modal -->
+              <div class="modal fade" id="editModal{{ ann.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ ann.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
+                    <form method="post" action="{% url 'announcement_edit' ann.id %}" enctype="multipart/form-data">
+                      {% csrf_token %}
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="editModalLabel{{ ann.id }}">{% trans "Edit Announcement" %}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label for="title{{ ann.id }}" class="form-label">{% trans "Title" %}</label>
+                          <input type="text" name="title" id="title{{ ann.id }}" class="form-control" value="{{ ann.title }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                          <label for="deadline{{ ann.id }}" class="form-label">{% trans "Deadline" %}</label>
+                          <input type="datetime-local" name="deadline" id="deadline{{ ann.id }}" class="form-control" value="{{ ann.deadline|date:'Y-m-d\\TH:i' }}">
+                        </div>
+
+                        <div class="mb-3">
+                          <label for="is_active{{ ann.id }}" class="form-label">{% trans "Active" %}</label>
+                          <select name="is_active" id="is_active{{ ann.id }}" class="form-select">
+                            <option value="true" {% if ann.is_active %}selected{% endif %}>{% trans "Yes" %}</option>
+                            <option value="false" {% if not ann.is_active %}selected{% endif %}>{% trans "No" %}</option>
+                          </select>
+                        </div>
+
+                        <div class="mb-3">
+                          <label for="message{{ ann.id }}" class="form-label">{% trans "Message" %}</label>
+                          <textarea name="message" id="message{{ ann.id }}" class="form-control" rows="4" required>{{ ann.message }}</textarea>
+                        </div>
+
+                        <!-- Target Roles -->
+                        <div class="mb-3">
+                          <label class="form-label">{% trans "Target Roles" %}</label>
+                          <div class="row">
+                            {% for role in available_roles %}
+                              <div class="col-md-4">
+                                <div class="form-check">
+                                  <input class="form-check-input" type="checkbox" id="role_{{ role }}" name="target_roles" value="{{ role }}" {% if role in ann.target_roles %}checked{% endif %}>
+                                  <label class="form-check-label" for="role_{{ role }}">{{ role|capfirst }}</label>
+                                </div>
+                              </div>
+                            {% endfor %}
+                          </div>
+                        </div>
+
+                        <!-- Target Departments -->
+                        <div class="mb-3">
+                          <label class="form-label">{% trans "Target Departments" %}</label>
+                          <div class="row">
+                            {% for dept in all_departments %}
+                              <div class="col-md-4">
+                                <div class="form-check">
+                                  <input class="form-check-input" type="checkbox" id="dept_{{ dept.id }}" name="target_departments" value="{{ dept.id }}" {% if dept in ann.target_departments.all %}checked{% endif %}>
+                                  <label class="form-check-label" for="dept_{{ dept.id }}">{{ dept.name }}</label>
+                                </div>
+                              </div>
+                            {% endfor %}
+                          </div>
+                          <small class="form-text text-muted">{% trans "Leave empty to target all departments" %}</small>
+                        </div>
+
+                        <!-- Existing files -->
+                        <div class="mb-3">
+                          <label class="form-label">{% trans "Existing Files" %}</label>
+                          <ul class="list-group">
+                            {% for file in ann.files.all %}
+                              <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a href="{{ file.file.url }}" target="_blank">{{ file.file.name }}</a>
+                                <div class="form-check">
+                                  <input class="form-check-input" type="checkbox" name="remove_files" value="{{ file.id }}" id="remove_file_{{ file.id }}">
+                                  <label class="form-check-label" for="remove_file_{{ file.id }}">{% trans "Remove" %}</label>
+                                </div>
+                              </li>
+                            {% empty %}
+                              <li class="list-group-item">{% trans "No files attached." %}</li>
+                            {% endfor %}
+                          </ul>
+                        </div>
+
+                        <!-- Upload files -->
+                        <div class="mb-3">
+                          <label for="new_files{{ ann.id }}" class="form-label">{% trans "Upload New Files" %}</label>
+                          <input type="file" name="new_files" id="new_files{{ ann.id }}" class="form-control" multiple>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                        <button type="submit" class="btn btn-primary">{% trans "Save changes" %}</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-center text-muted fs-5">{% trans "No expired announcements found." %}</p>
+  {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
