@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const statusFilter = document.getElementById("status-filter");
     const proposalList = document.getElementById("coordinator-proposal-list");
 
+
     function filterProposals() {
         const query = searchInput?.value.toLowerCase() || "";
         const selectedStatus = statusFilter?.value.toLowerCase() || "";
@@ -63,10 +64,30 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("modal-field").textContent = data.field || '';
                 document.getElementById("modal-description").textContent = data.description || '';
                 document.getElementById("modal-team-count").textContent = data.team_member_count || 0;
-                document.getElementById("modal-team-members").textContent =
-                    (data.team_members || []).map(m => {
-                        return [m.first_name, m.last_name].filter(Boolean).join(" ") || m.username;
-                    }).join(", ") || "None";
+                const team = data.student_memberships || [];
+
+const alreadyInTeam = team.some(m => m.username === data.submitted_by.username);
+if (
+    data.submitted_by &&
+    !alreadyInTeam &&
+    (data.submitted_by.first_name || data.submitted_by.last_name || data.submitted_by.username)
+) {
+    team.unshift({
+        first_name: data.submitted_by.first_name || "",
+        last_name: data.submitted_by.last_name || "",
+        username: data.submitted_by.username || "",
+        role: "Submitter"
+    });
+}
+
+const teamMembersSpan = document.getElementById("modal-team-members");
+if (teamMembersSpan) {
+    teamMembersSpan.textContent = team.map(m => {
+        const fullName = [m.first_name, m.last_name].filter(Boolean).join(" ") || m.username;
+        return `${fullName}${m.role ? ` (${m.role})` : ""}`;
+    }).join(", ") || "None";
+}
+
                 
                 const membersSpan = document.getElementById("modal-members");
 if (data.members && membersSpan) {
@@ -104,6 +125,7 @@ if (roleSpan) {
     document.getElementById("edit-btn").addEventListener("click", () => updateStatus("pending"));
     document.getElementById("reject-btn").addEventListener("click", () => updateStatus("rejected"));
 
+    
     async function updateStatus(status) {
         const proposalId = modal.dataset.proposalId;
         if (!proposalId) {

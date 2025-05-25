@@ -22,7 +22,7 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
     project = None
 
     if is_student_proposal:
-        if instance.coordinator_status == 'accepted' and instance.teacher_status in ['accepted', 'rejected']:
+        if instance.coordinator_status == 'accepted':
             if instance.teacher_status == 'accepted':
                 supervisor_user = instance.proposed_to
 
@@ -121,3 +121,5 @@ def setup_project_relations(sender, instance, created, **kwargs):
                         project=instance,
                         defaults={"grade": 0.0}
                     )
+    StudentProjectMembership.objects.filter(proposal=proposal).exclude(project=instance).delete()
+
