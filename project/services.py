@@ -45,14 +45,16 @@ def assign_project_memberships(project, members):
         if isinstance(role_value, int):
             role_name = get_role_name_from_id(role_value)
         else:
-            role_name = str(role_value).strip().capitalize()
+            role_name = str(role_value).strip()
 
         if not role_name:
             print(f"⚠️ Invalid role ID or name: '{role_value}', skipping.")
             continue
 
-        # Check role exists in DB
-        role_obj = Role.objects.filter(name__iexact=role_name).first()
+
+        # Ensure exact match with DB
+        role_obj = Role.objects.filter(name=role_name).first()
+
         if not role_obj:
             
             continue

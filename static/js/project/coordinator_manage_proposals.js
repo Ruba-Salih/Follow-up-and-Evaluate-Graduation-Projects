@@ -63,7 +63,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("modal-field").textContent = data.field || '';
                 document.getElementById("modal-description").textContent = data.description || '';
                 document.getElementById("modal-team-count").textContent = data.team_member_count || 0;
-                document.getElementById("modal-team-members").textContent = (data.team_members || []).map(m => m.username).join(", ") || "None";
+                document.getElementById("modal-team-members").textContent =
+                    (data.team_members || []).map(m => {
+                        return [m.first_name, m.last_name].filter(Boolean).join(" ") || m.username;
+                    }).join(", ") || "None";
+                
+                const membersSpan = document.getElementById("modal-members");
+if (data.members && membersSpan) {
+    const list = data.members.map(m => `${m.name} (${m.role})`);
+    membersSpan.textContent = list.join(", ") || "None";
+}
+
+const roleSpan = document.getElementById("modal-teacher-role");
+if (roleSpan) {
+    roleSpan.textContent = data.teacher_role || "None";
+}
+
                 document.getElementById("modal-file").innerHTML = data.attached_file
                     ? `<a href="${data.attached_file}" target="_blank">Download File</a>`
                     : 'None';

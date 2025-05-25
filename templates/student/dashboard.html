@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/student/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="dashboard">
+  <h2>📊 Dashboard Overview</h2>
+
+  <h3>📋 My Tasks Summary</h3>
+<canvas id="taskStatusChart" width="400" height="200"></canvas>
+
+<br>
+<h3>⏳ Upcoming Deadlines</h3>
+<ul id="upcoming-deadlines-list"></ul>
+
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const res = await fetch("/api/project/dashboard/student/");  // ✅ Make sure this path matches your URLs
+    const data = await res.json();
+
+    // 🧩 Render Task Status Chart
+    const ctx = document.getElementById("taskStatusChart").getContext("2d");
+    new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels: ["To Do", "In Progress", "Done"],
+        datasets: [{
+          label: "Tasks",
+          data: [
+            data.task_summary["to do"] || 0,
+            data.task_summary["in progress"] || 0,
+            data.task_summary["done"] || 0
+          ],
+          backgroundColor: ["#a63026", "#f2e2d2", "#a67b5b"]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: "Task Status Breakdown" },
+          legend: { position: "bottom" }
+        }
+      }
+    });
+
+    // 🧩 Render Upcoming Deadlines List
+    const list = document.getElementById("upcoming-deadlines-list");
+    list.innerHTML = "";
+    if (data.upcoming_deadlines.length === 0) {
+      list.innerHTML = "<li>No upcoming deadlines.</li>";
+    } else {
+      data.upcoming_deadlines.forEach(task => {
+        const li = document.createElement("li");
+        li.textContent = `${task.name} - Due ${task.deadline}`;
+        list.appendChild(li);
+      });
+    }
+
+  } catch (err) {
+    console.error("Failed to load student dashboard:", err);
+    alert("Error loading task data.");
+  }
+});
+</script>
+
+{% endblock %}

@@ -40,4 +40,10 @@ urlpatterns = [
     path("project/view/<int:project_id>/", views.teacher_view_project, name="project-detail"),
     path('project/<int:project_id>/progress/', views.project_progress_view, name='project_progress'),
 
+    path("dashboard/", views.coordinator_dashboard_page, name="coordinator_dashboard"),
+    path("dashboard/coordinator/", views.coordinator_dashboard_stats, name="coordinator-dashboard-stats"),
+
+    path("dashboard_student/", views.student_dashboard_page, name="student_dashboard"),
+    path("dashboard/student/", views.student_dashboard_stats, name="student-dashboard-stats"),
+
 ]

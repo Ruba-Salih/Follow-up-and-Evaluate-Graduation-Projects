@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import redirect, render, get_object_or_404
 from django.db import transaction
 from django.db.models import Prefetch, Q, OuterRef, Subquery, Exists, Count, F
@@ -128,6 +129,10 @@ class ProjectProposalView(APIView):
 
                 serializer = ProjectProposalSerializer(proposal)
                 response_data = serializer.data
+                
+                response_data["teacher_role"] = proposal.teacher_role.name if proposal.teacher_role else None
+                response_data["teacher_role_id"] = proposal.teacher_role.id if proposal.teacher_role else None
+
 
                 student_memberships = StudentProjectMembership.objects.filter(proposal=proposal).select_related('student')
 
@@ -308,6 +313,19 @@ class ProjectProposalView(APIView):
                         proposal.teacher_status = 'accepted'
                         proposal.save(update_fields=["teacher_status"])
 
+                        if is_teacher(user):
+                            teacher_status = data.get("teacher_status")
+                            if teacher_status in dict(ProjectProposal.STATUS_CHOICES):
+                                proposal.teacher_status = teacher_status
+
+                            role_id = data.get("teacher_role_id")
+                            if role_id:
+                                try:
+                                    role = Role.objects.get(id=role_id)
+                                    proposal.teacher_role = role
+                                    proposal.save(update_fields=["teacher_role"])
+                                except Role.DoesNotExist:
+                                    pass
 
                     if team_members_ids:
                         proposal.team_members.set(team_members_ids)
@@ -377,6 +395,13 @@ class ProjectProposalView(APIView):
             teacher_status = data.get("teacher_status")
             if teacher_status in dict(ProjectProposal.STATUS_CHOICES):
                 proposal.teacher_status = teacher_status
+            role_id = request.data.get("teacher_role_id")
+            if role_id:
+                try:
+                    role = Role.objects.get(id=role_id)
+                    proposal.teacher_role = role  # ✅ update it
+                except Role.DoesNotExist:
+                    pass
         elif hasattr(user, "coordinator"):
             coordinator_status = data.get("coordinator_status")
             if coordinator_status in dict(ProjectProposal.STATUS_CHOICES):
@@ -433,32 +458,72 @@ class FeedbackExchangeView(APIView):
     def get(self, request):
         user = request.user
 
-        if hasattr(user, "student"):
-            feedbacks = FeedbackExchange.objects.filter(
-                Q(receiver=user) | Q(receiver__isnull=True),
-                proposal__submitted_by=user,
-                proposal__isnull=False
-            ).order_by("-created_at")
-        else:
-            feedbacks = FeedbackExchange.objects.filter(sender=user).order_by("-created_at")
+        report_id = request.GET.get("report_id")
+        proposal_id = request.GET.get("proposal")
+        project_id = request.GET.get("project")
+        task_id = request.GET.get("task")
+        
 
-        serializer = FeedbackExchangeSerializer(feedbacks, many=True)
-        return Response(serializer.data)
+        # Allow filtering by exactly one target
+        if report_id:
+            feedbacks = FeedbackExchange.objects.filter(report_id=report_id).order_by("-created_at")
+        elif proposal_id:
+            feedbacks = FeedbackExchange.objects.filter(proposal_id=proposal_id).order_by("-created_at")
+        elif project_id:
+            feedbacks = FeedbackExchange.objects.filter(project_id=project_id).order_by("-created_at")
+        elif task_id:
+            feedbacks = FeedbackExchange.objects.filter(task_id=task_id).order_by("-created_at")
+        else:
+            # Default fallback (e.g. personal feedbacks)
+            if hasattr(user, "student"):
+                feedbacks = FeedbackExchange.objects.filter(
+                    Q(receiver=user) | Q(receiver__isnull=True),
+                    proposal__submitted_by=user,
+                    proposal__isnull=False
+                ).order_by("-created_at")
+            else:
+                feedbacks = FeedbackExchange.objects.filter(sender=user).order_by("-created_at")
+
+        data = []
+        for fb in feedbacks:
+            entry = {
+                "id": fb.id,
+                "sender_name": fb.sender.get_full_name() or fb.sender.username,
+                "message": fb.feedback_text,
+                "created_at": fb.created_at,
+            }
+
+            if fb.comment:
+                entry["comment"] = fb.comment
+
+            if fb.feedback_file:
+                entry["feedback_file"] = fb.feedback_file.url
+
+            if hasattr(fb, "reply"):
+                entry["reply"] = {
+                    "message": fb.reply.feedback_text,
+                    "created_at": fb.reply.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                }
+
+            data.append(entry)
+
+        return Response(data)
 
     def post(self, request):
         user = request.user
         data = request.data.copy()
         data["sender"] = user.id
+        print("Received data:", data)
 
         proposal_id = data.get("proposal")
         project_id = data.get("project")
         task_id = data.get("task_id")
+        report_id = data.get("report")
+        print("Received data2:", data)
 
-        if not proposal_id and not project_id:
-            return Response({"detail": "Either proposal or project must be specified."}, status=400)
-
-        if proposal_id and project_id:
-            return Response({"detail": "Only one of proposal or project should be specified."}, status=400)
+        non_empty = [key for key in [proposal_id, project_id, task_id, report_id] if key]
+        if len(non_empty) != 1:
+            return Response({"detail": "Exactly one of proposal, project, task, or report must be provided."}, status=400)
 
         if task_id:
             try:
@@ -468,6 +533,9 @@ class FeedbackExchangeView(APIView):
                 data["task"] = task.id
             except ProjectTask.DoesNotExist:
                 return Response({"detail": "Task not found."}, status=400)
+
+        if report_id:
+            data["report"] = report_id
 
         serializer = FeedbackExchangeSerializer(data=data)
         if serializer.is_valid():
@@ -1185,7 +1253,9 @@ def teacher_view_project(request, project_id):
     student_members = [m.student for m in project.student_memberships.all()]
     teacher_members = [{
         "name": f"{m.user.first_name} {m.user.last_name}".strip() or m.user.username,
-        "role": m.role.name
+        "role": m.role.name,
+        "email": m.user.email,
+        "phone_number": getattr(m.user, "phone_number", "N/A")
     } for m in project.memberships.exclude(user=user)]
 
     form_available = EvaluationForm.objects.filter(target_role=my_membership.role).exists() if my_membership else False
@@ -1349,3 +1419,82 @@ def get_task_detail(request, task_id):
 
     except ProjectTask.DoesNotExist:
         return Response({"detail": "Task not found."}, status=404)
+
+
+from django.http import JsonResponse
+
+def coordinator_dashboard_stats(request):
+    user = request.user
+
+    try:
+        coordinator = user.coordinator  # assuming OneToOneField from User to Coordinator
+    except Coordinator.DoesNotExist:
+        return JsonResponse({"error": "Not a coordinator"}, status=403)
+
+    if coordinator.is_super:
+        projects = Project.objects.all()
+        proposals = ProjectProposal.objects.filter(coordinator_status='pending')
+    else:
+        projects = Project.objects.filter(department=coordinator.department)
+        proposals = ProjectProposal.objects.filter(coordinator_status='pending', department=coordinator.department)
+
+    total = projects.count()
+    ongoing = projects.filter(plan__completion_status__lt=100).count()
+    completed = projects.filter(plan__completion_status=100).count()
+
+    active_fields = (projects
+        .values('field')
+        .annotate(count=Count('id'))
+        .order_by('-count'))
+
+    return JsonResponse({
+        "total_projects": total,
+        "ongoing_projects": ongoing,
+        "completed_projects": completed,
+        "pending_proposals": proposals.count(),
+        "most_active_fields": list(active_fields),
+    })
+
+
+@login_required
+def coordinator_dashboard_page(request):
+    return render(request, "coordinator/dashboard.html")
+
+
+from datetime import timedelta, date
+
+def student_dashboard_stats(request):
+    user = request.user
+
+    if not hasattr(user, "student"):
+        return JsonResponse({"error": "Not a student"}, status=403)
+
+    tasks = ProjectTask.objects.filter(assign_to=user)
+    summary = {
+        "to do": tasks.filter(task_status="to do").count(),
+        "in progress": tasks.filter(task_status="in progress").count(),
+        "done": tasks.filter(task_status="done").count(),
+    }
+
+    today = date.today()
+    deadline_range = today + timedelta(days=7)
+    upcoming_tasks = tasks.filter(deadline_days__isnull=False).order_by("deadline_days")
+
+    upcoming = [
+        {
+            "name": t.name,
+            "deadline": (t.created_at.date() + timedelta(days=t.deadline_days)).isoformat(),
+            "status": t.task_status,
+        }
+        for t in upcoming_tasks
+        if t.created_at and today <= t.created_at.date() + timedelta(days=t.deadline_days) <= deadline_range
+    ]
+
+    return JsonResponse({
+        "task_summary": summary,
+        "upcoming_deadlines": upcoming
+    })
+
+@login_required
+def student_dashboard_page(request):
+    return render(request, "student/dashboard.html")

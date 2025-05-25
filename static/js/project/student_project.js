@@ -411,7 +411,7 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
     const goalDuration = newGoalDuration.value.trim();
 
     if (!goalText) {
-        alert("⚠️ Please enter a goal text.");
+        showAlert("⚠️ Please enter a goal text.", 'warning');
         return;
     }
 
@@ -653,7 +653,7 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
         }
     
         if (success > 0) {
-            alert(`✅ Progress submitted successfully for ${success} tasks!`);
+            alert(`✅ Progress submitted successfully for task(s)!`);
             window.location.reload();
         } else if (failed > 0) {
             alert(`⚠️ Failed to submit some progress.`);

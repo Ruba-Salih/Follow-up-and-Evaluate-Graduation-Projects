@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const feedbackTextarea = document.getElementById("feedback-textarea");
     const feedbackMessage = document.getElementById("feedback-message");
 
+    let currentReportId = null;
     reportDateInput.value = today;
 
     const studentIdToNameMap = {};
@@ -154,72 +155,86 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     });
 
-    async function loadFeedbackThread() {
-        try {
-            const res = await fetch(`/feedbacks/project-feedbacks/?project_id=${projectId}`);
-            if (!res.ok) throw new Error("Failed to load feedback.");
-            const feedbackData = await res.json();
+    async function loadFeedbackThread(currentReportId) {
+    console.log("🔍 Loading feedback for report:", currentReportId);
+    try {
+        const res = await fetch(`/api/project/feedback/?report_id=${currentReportId}`);
+        if (!res.ok) throw new Error("Failed to load feedback.");
+        const feedbackData = await res.json();
 
-            feedbackList.innerHTML = "";
+        feedbackList.innerHTML = "";
 
-            if (feedbackData.length === 0) {
-                feedbackList.innerHTML = "<p class='text-muted'>No feedback yet.</p>";
-                return;
-            }
-
-            feedbackData.forEach(fb => {
-                const reply = fb.reply ? `
-                    <div class="mt-2 p-2 bg-light border-start border-success ps-3">
-                        <strong>↪️ Reply:</strong> ${fb.reply.message}
-                        <br><small class="text-muted">${new Date(fb.reply.created_at).toLocaleString()}</small>
-                    </div>
-                ` : "";
-
-                const card = `
-                    <div class="mb-3 p-3 border rounded">
-                        <strong>👤 ${fb.sender_name}</strong><br>
-                        <span>${fb.message}</span><br>
-                        <small class="text-muted">${new Date(fb.created_at).toLocaleString()}</small>
-                        ${reply}
-                    </div>
-                `;
-                feedbackList.insertAdjacentHTML("beforeend", card);
-            });
-        } catch (err) {
-            feedbackList.innerHTML = "<p class='text-danger'>Error loading feedback thread.</p>";
+        if (feedbackData.length === 0) {
+            feedbackList.innerHTML = "<p class='text-muted'>No feedback yet.</p>";
+            return;
         }
+
+        feedbackData.forEach(fb => {
+            const reply = fb.reply ? `
+                <div class="mt-2 p-2 bg-light border-start border-success ps-3">
+                    <strong>↪️ Reply:</strong> ${fb.reply.message}
+                    <br><small class="text-muted">${new Date(fb.reply.created_at).toLocaleString()}</small>
+                </div>
+            ` : "";
+
+            const card = `
+                <div class="mb-3 p-3 border rounded">
+                    <strong>👤 ${fb.sender_name}</strong><br>
+                    <span>${fb.message}</span><br>
+                    <small class="text-muted">${new Date(fb.created_at).toLocaleString()}</small>
+                    ${reply}
+                </div>
+            `;
+            feedbackList.insertAdjacentHTML("beforeend", card);
+        });
+    } catch (err) {
+        console.error("❌ Error loading feedback:", err);
+        feedbackList.innerHTML = "<p class='text-danger'>Error loading feedback thread.</p>";
     }
+}
+
 
     if (feedbackForm) {
         feedbackForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            feedbackMessage.textContent = "";
+    e.preventDefault();
+    e.stopPropagation(); 
+    feedbackMessage.textContent = "";
 
-            const message = feedbackTextarea.value.trim();
-            if (!message) return;
+    const message = feedbackTextarea.value.trim();
+    if (!message) return;
 
-            const res = await fetch("/feedbacks/submit/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken
-                },
-                body: JSON.stringify({
-                    project_id: projectId,
-                    message: message
-                })
-            });
+    if (!currentReportId) {
+        console.error("❌ No report selected for feedback.");
+        feedbackMessage.textContent = "❌ No report selected. Please open a report first.";
+        return;
+    }
+
+    console.log("📤 Submitting feedback for report:", currentReportId, "Message:", message);
+
+    const res = await fetch("/api/project/feedback/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken
+        },
+        body: JSON.stringify({
+            report: currentReportId,
             
-            if (res.ok) {
-                feedbackTextarea.value = "";
-                feedbackMessage.textContent = "✅ Feedback sent.";
-                loadFeedbackThread();
-            } else {
-                const error = await res.json();
-                feedbackMessage.textContent = "❌ " + (error.detail || "Failed to send.");
-            }
-              
-        });
+            feedback_text: message
+        })
+    });
+
+    if (res.ok) {
+        feedbackTextarea.value = "";
+        feedbackMessage.textContent = "✅ Feedback sent.";
+        await loadFeedbackThread(currentReportId);
+    } else {
+        const error = await res.json();
+        feedbackMessage.textContent = "❌ " + (error.detail || "Failed to send.");
+        console.error("❌ Error sending feedback:", error);
+    }
+});
+
     }
 
     document.querySelectorAll(".btn-view").forEach(button => {
@@ -248,7 +263,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 // Show modal & load thread
                 detailModal.classList.add("show");
-                loadFeedbackThread();
+                currentReportId = reportId;
+                loadFeedbackThread(currentReportId);
             } catch (err) {
                 alert("❌ Failed to load report details.");
             }

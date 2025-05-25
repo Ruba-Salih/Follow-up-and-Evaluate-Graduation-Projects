@@ -1,11 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
     const tableBody = document.getElementById("teacher-table-body");
     const roleFilter = document.getElementById("role-filter");
+    const teacherSearch = document.getElementById("teacher-search");
     const downloadBtn = document.getElementById("download-btn");
 
     let allData = [];
 
-    // Load data from API
     fetch("/api/report/report-view/?type=teacher_roles")
         .then(res => res.json())
         .then(data => {
@@ -13,7 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
             renderTable(data);
         });
 
-    // Render table rows
     function renderTable(data) {
         tableBody.innerHTML = "";
         data.forEach(item => {
@@ -27,19 +26,22 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Filter by role
-    roleFilter?.addEventListener("change", () => {
-        const selected = roleFilter.value;
-        if (!selected) {
-            renderTable(allData);
-            return;
-        }
+    roleFilter?.addEventListener("change", applyFilters);
+    teacherSearch?.addEventListener("input", applyFilters);
 
-        const filtered = allData.filter(item => item.role === selected);
+    function applyFilters() {
+        const roleVal = roleFilter.value.toLowerCase();
+        const searchVal = teacherSearch.value.toLowerCase();
+
+        const filtered = allData.filter(item => {
+            const matchesRole = !roleVal || item.role.toLowerCase() === roleVal;
+            const matchesSearch = !searchVal || item.teacher.toLowerCase().includes(searchVal);
+            return matchesRole && matchesSearch;
+        });
+
         renderTable(filtered);
-    });
+    }
 
-    // Download as CSV
     downloadBtn?.addEventListener("click", () => {
         let csv = "Teacher,Project,Role\n";
         document.querySelectorAll("#teacher-table-body tr").forEach(row => {

@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", async () => {
+    const currentUserId = document.getElementById("user-context")?.dataset?.userId;
+
     const modal = document.getElementById("proposal-modal");
     const form = document.getElementById("proposal-form");
     const createBtn = document.getElementById("create-proposal-btn");
@@ -202,6 +204,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (coordId) {
                 formData.append("proposed_to", coordId);
             }
+             const selectedRole = document.getElementById("teacher-role")?.value;
+            if (selectedRole) {
+                formData.append("teacher_role_id", selectedRole);
+            }
         } else {
             if (proposedToSelect?.value) {
                 formData.append("proposed_to", proposedToSelect.value);
@@ -212,8 +218,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             formData.append("attached_file", fileInput.files[0]);
         }
 
-        const checkedBoxes = teamMemberWrapper.querySelectorAll("input[type='checkbox']:checked");
-        checkedBoxes.forEach(cb => formData.append("team_members_ids", cb.value));
+        if (!isTeacher && teamMemberWrapper) {
+            const checkedBoxes = teamMemberWrapper.querySelectorAll("input[type='checkbox']:checked");
+            checkedBoxes.forEach(cb => formData.append("team_members_ids", cb.value));
+        }
 
         const url = editMode ? `/api/project/proposals/${currentProposalId}/` : `/api/project/proposals/`;
 
@@ -257,6 +265,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             teamCount.value = data.team_member_count || "";
             additionalComment.value = data.additional_comment || "";
             document.getElementById("duration").value = data.duration || 0;
+
+           const teacherRoleSelect = document.getElementById("teacher-role");
+            if (teacherRoleSelect && data.teacher_role_id) {
+                teacherRoleSelect.value = String(data.teacher_role_id);  // force string match
+            }
+
 
             const feedback = data.feedback_text?.trim();
             const role = data.feedback_sender_role || "Teacher";

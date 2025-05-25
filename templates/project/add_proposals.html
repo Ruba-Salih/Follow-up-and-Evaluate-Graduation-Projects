@@ -7,9 +7,10 @@
 <link rel="stylesheet" href="{% static 'css/project/add_proposals.css' %}">
 {% endblock %}
 
+
 {% block content %}
 {% include "navbar.html" %}
-
+<div id="user-context" data-user-id="{{ request.user.id }}"></div>
 <div class="container">
     <h2>📝 {% trans "Manage Proposals" %}</h2>
     <button id="create-proposal-btn" class="btn btn-primary">+ {% trans "New Proposal" %}</button>
@@ -103,8 +104,18 @@
             </select>
             {% endif %}
 
-            <label>{% trans "Choose Team Members (optional)" %}:</label>
-            <div id="team-member-checkboxes" class="team-member-list"></div>
+            {% if not is_teacher %}
+                <label>{% trans "Choose Team Members (optional)" %}:</label>
+                <div id="team-member-checkboxes" class="team-member-list"></div>
+            {% else %}
+                <label>{% trans "Your Role in This Proposal" %}:</label>
+                <select id="teacher-role">
+                    <option value="">{% trans "-- Select Role --" %}</option>
+                    <option value="1">{% trans "Supervisor" %}</option>
+                    <option value="2">{% trans "Reader" %}</option>
+                    <option value="3">{% trans "Judgement Committee" %}</option>
+                </select>
+            {% endif %}
 
             <label>{% trans "Upload File (optional)" %}:</label>
             <input type="file" id="attached_file">
