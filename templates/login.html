@@ -31,7 +31,7 @@
             <p id="error-message" class="error-msg"></p>
         </form>
 
-        <!-- 🌐 Language Switcher -->
+        <!-- 🌐 Language Switcher 
         <form action="{% url 'set_language' %}" method="post" style="margin-top: 20px; text-align: center;">
             {% csrf_token %}
             <select name="language" onchange="this.form.submit()">
@@ -39,7 +39,7 @@
                 <option value="ar" {% if LANGUAGE_CODE == 'ar' %}selected{% endif %}>العربية</option>
             </select>
             <input type="hidden" name="next" value="{{ request.path }}">
-        </form>
+        </form>-->
 
     </div>
 </div>

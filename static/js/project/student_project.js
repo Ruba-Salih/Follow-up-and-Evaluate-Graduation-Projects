@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", async () => {
     const BASE_URL = "/api/project/project/track";
+    const i18n = document.getElementById("i18n-js-labels")?.dataset || {};
 
     const projectTitle = document.getElementById("project-title");
     const projectField = document.getElementById("project-field");
@@ -13,10 +14,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const newGoalText = document.getElementById("new-goal-text");
     const newGoalDuration = document.getElementById("new-goal-duration");
 
-
     const reportForm = document.getElementById("weekly-report-form");
     const progressForm = document.getElementById("progress-form");
-    
 
 
     let projectId = null;
@@ -166,6 +165,19 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
             if (!response.ok) throw new Error("Failed to fetch project.");
             const data = await response.json();
 
+            const studentList = document.getElementById("project-students");
+            if (studentList && data.students) {
+                studentList.innerHTML = "";
+                data.students.forEach(s => {
+                    const fullName = `${s.first_name || ""} ${s.last_name || ""}`.trim();
+            studentList.innerHTML += `
+            <li>
+                ${s.first_name} ${s.last_name} <br>
+                📧 ${s.email} | ☎️ ${s.phone || "N/A"}
+            </li>`;
+                });
+            }
+            
             if (data.projects && data.projects.length > 0) {
                 const project = data.projects[0];
                 projectId = project.id;
@@ -179,6 +191,18 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
                 if (detailedRes.ok) {
                     const detailedData = await detailedRes.json();
 
+                    const teacherList = document.getElementById("project-teachers");
+                    if (teacherList && detailedData.project?.members) {
+                        teacherList.innerHTML = "";
+                        detailedData.project.members.forEach(m => {
+                            teacherList.innerHTML += `
+                                <li>
+                                    <strong>${m.role}</strong>: ${m.first_name} ${m.last_name} |
+                                    📧 ${m.email} | ☎️ ${m.phone_number || "N/A"}
+                                </li>`;
+                        });
+                    }
+
                     const percent = detailedData.completion_status ?? 0;
 
                     if (projectStatus) projectStatus.value = percent;
@@ -190,13 +214,21 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
                 } else {
                     console.warn("⚠️ Could not fetch completion_status.");
                 }
-            students = data.students || [];
+                students = data.students || [];
 
                 await loadGoals();
                 await loadReports();
                 await loadTasks();
                 
             }
+             else {
+                    document.querySelector(".container").innerHTML = `
+                        <div class="no-project-message">
+                            <h3>😢 You are not assigned to any project yet.</h3>
+                            <p>Please contact your coordinator or check back later.</p>
+                        </div>
+                    `;
+                }
         } catch (error) {
             console.error("Error loading project:", error);
         }
@@ -317,7 +349,6 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
         }
     }
     
-
     async function loadTasks() {
         try {
             const res = await fetch(`${BASE_URL}/${projectId}/`);
@@ -336,7 +367,6 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
     goalProgressSelect?.addEventListener("change", () => {
         const selectedGoalId = goalProgressSelect.value;
         const filtered = tasks.filter(t => String(t.goal) === selectedGoalId);
-
 
         loadProgressTasks(filtered);
     });
@@ -416,37 +446,6 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
     }
 });
 
-    
-    /*saveStatusBtn?.addEventListener("click", async () => {
-        if (!projectId) return;
-
-        const completion = projectStatus.value;
-        if (completion < 0 || completion > 100) {
-            alert("Please enter a valid completion percentage between 0-100.");
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append("completion_status", completion);
-
-        try {
-            const res = await fetch(`${BASE_URL}/${projectId}/`, {
-                method: "PUT",
-                headers: {
-                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
-                },
-                body: formData
-            });
-
-            if (res.ok) {
-                alert("Project status updated successfully!");
-            } else {
-                alert("Failed to update project status.");
-            }
-        } catch (error) {
-            console.error("Update status error:", error);
-        }
-    });*/
 
     document.querySelectorAll(".action-btn").forEach(btn => {
         btn.addEventListener("click", async function() {
@@ -499,7 +498,10 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
     
             <label>Assign To:</label>
             <select name="assign_to_${taskCounter}" class="form-control">
-                ${students.map(s => `<option value="${s.id}">${s.username}</option>`).join('')}
+                ${students.map(s => {
+                    const fullName = `${s.first_name || ""} ${s.last_name || ""}`.trim();
+                    return `<option value="${s.id}">${fullName}</option>`;
+                }).join('')}
             </select>
     
             <label>Deadline (in days):</label>

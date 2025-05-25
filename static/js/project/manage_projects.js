@@ -42,7 +42,11 @@ document.addEventListener("DOMContentLoaded", () => {
         function renderList(filter = "") {
             listContainer.innerHTML = "";
             list
-                .filter(user => user.username.toLowerCase().includes(filter.toLowerCase()))
+                .filter(user => {
+                    const fullName = `${user.first_name || ""} ${user.last_name || ""}`.toLowerCase().trim();
+                    return fullName.includes(filter.toLowerCase());
+                })
+
                 .forEach(user => {
                     const label = document.createElement("label");
                     const cb = document.createElement("input");
@@ -60,7 +64,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     cb.addEventListener("change", async () => {
                         const teamLimit = parseInt(countInput.value || "0");
                         if (cb.checked && isAssigned && !confirmedReassignments.has(user.id)) {
-                            const confirmed = await confirmAction(`${user.username} is already assigned to another project. Do you want to reassign them?`);
+                            const fullName = (user.first_name || user.last_name)
+                            ? `${user.first_name || ""} ${user.last_name || ""}`.trim()
+                            : user.username;
+                            const confirmed = await confirmAction(`${fullName} is already assigned to another project. Do you want to reassign them?`);
                             if (confirmed) {
                                 confirmedReassignments.add(user.id);
                             } else {
@@ -83,8 +90,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     });
 
+                     const fullName = (user.first_name || user.last_name)
+                    ? `${user.first_name || ""} ${user.last_name || ""}`.trim()
+                    : user.username;
+
                     label.appendChild(cb);
-                    label.append(" " + user.username + (isAssigned ? " (Already Assigned)" : ""));
+                    label.append(" " + fullName + (isAssigned ? " (Already Assigned)" : ""));
                     listContainer.appendChild(label);
                 });
         }
@@ -112,11 +123,18 @@ document.addEventListener("DOMContentLoaded", () => {
         function render(filter = "", selectedValue = null) {
             select.innerHTML = "<option value=''>-- Select --</option>";
             items
-                .filter(u => u.username.toLowerCase().includes(filter.toLowerCase()))
+                .filter(u => {
+                    const fullName = `${u.first_name || ""} ${u.last_name || ""}`.toLowerCase().trim();
+                    return fullName.includes(filter.toLowerCase());
+                })
+
                 .forEach(u => {
                     const opt = document.createElement("option");
+                    const fullName = (u.first_name || u.last_name)
+                        ? `${u.first_name || ""} ${u.last_name || ""}`.trim()
+                        : u.username;
                     opt.value = u.id;
-                    opt.textContent = u.username;
+                    opt.textContent = fullName;
                     if (selectedValue && u.id === selectedValue) {
                         opt.selected = true;
                     }
@@ -160,7 +178,10 @@ document.addEventListener("DOMContentLoaded", () => {
         function renderList(filter = "") {
             listContainer.innerHTML = "";
             list
-                .filter(user => user.username.toLowerCase().includes(filter.toLowerCase()))
+                .filter(user => {
+                    const fullName = `${user.first_name || ""} ${user.last_name || ""}`.toLowerCase().trim();
+                    return fullName.includes(filter.toLowerCase());
+                })
                 .forEach(user => {
                     const label = document.createElement("label");
                     const cb = document.createElement("input");
@@ -177,7 +198,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
 
                     label.appendChild(cb);
-                    label.append(" " + user.username);
+                    const fullName = (user.first_name || user.last_name)
+                    ? `${user.first_name || ""} ${user.last_name || ""}`.trim()
+                    : user.username;
+                    label.append(" " + fullName);
                     listContainer.appendChild(label);
                 });
         }
@@ -214,7 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 }
 
-                createCheckboxListWithSearch(studentWrapper, "Students:", studentsList, project.student_ids || [], "student_ids");
+                createCheckboxListWithSearch(studentWrapper, "Students:", studentsList, project.assigned_students || [], "student_ids");
                 supervisorSelect = createSearchableSelect(supervisorWrapper, "Supervisor:", teachersList, supervisorId);
                 readerSelect = createSearchableSelect(readerWrapper, "Reader:", teachersList, readerId);
                 renderJudgesCheckboxes(teachersList, judgeIds);

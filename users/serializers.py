@@ -10,13 +10,14 @@ class UserSerializer(serializers.ModelSerializer):
     sitting_number = serializers.CharField(required=False, allow_blank=True)
     coord_id = serializers.CharField(required=False, allow_blank=True)
     department_id = serializers.IntegerField(required=False)
+    is_super = serializers.BooleanField(required=False)
 
     class Meta:
         model = User
         fields = [
             "id", "username", "email", "password", "phone_number",
             "first_name", "last_name",  
-            "role", "student_id", "sitting_number", "coord_id", "department_id"
+            "role", "student_id", "sitting_number", "coord_id", "department_id", "is_super"
         ]
         extra_kwargs = {"password": {"write_only": True}}
 
@@ -45,19 +46,23 @@ class UserSerializer(serializers.ModelSerializer):
             user.sitting_number = sitting_number
             user.save()
             return user
+        
+        if role == "coordinator" or validated_data.get("is_super"):
+                user = Coordinator.objects.create_user(
+                    **validated_data
+                )
+                user.first_name = first_name
+                user.last_name = last_name
+                user.save()
 
-        if coord_id:
-            if Coordinator.objects.filter(coord_id=coord_id).exists():
-                raise serializers.ValidationError({"Error": "This Coordinator ID is already in use."})
-            user = Coordinator.objects.create_user(
-                coord_id=coord_id,
-                **validated_data
-            )
-            user.first_name = first_name
-            user.last_name = last_name
-            user.is_super = True
-            user.save()
-            return user
+                # Re-fetch as Coordinator to access Coordinator fields
+                user = Coordinator.objects.get(pk=user.pk)
+                user.is_super = validated_data.get("is_super", False)
+                user.coord_id = f"C-{user.pk}"
+                user.save()
+                return user
+
+
 
         user = User.objects.create_user(**validated_data)
         user.first_name = first_name

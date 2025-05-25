@@ -158,8 +158,10 @@ button {
 #student-wrapper .student-list label {
     display: flex;
     align-items: center;
-    gap: 1px;
+    gap: 8px;
     font-weight: normal;
+    white-space: nowrap; /* keep name on one line */
+    
 }
 
 /* === Enhanced Select + Search Wrapper === */
@@ -205,9 +207,10 @@ button {
 #judge-checkboxes .judge-list label {
     display: flex;
     align-items: center;
-    
-    gap: 1px;
+    gap: 8px;
     font-weight: normal;
+    white-space: nowrap;
+
 }
 
 /* === Search bar layout === */

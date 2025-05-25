@@ -212,30 +212,46 @@ document.addEventListener("DOMContentLoaded", function () {
     const tableRows = document.querySelectorAll("table tbody tr");
 
     function filterUsers() {
-        const searchText = searchInput.value.toLowerCase();
-        const selectedRole = roleFilter.value;
+    const searchText = searchInput.value.toLowerCase();
+    const selectedRole = roleFilter.value;
 
-        tableRows.forEach(row => {
-            const username = row.querySelector("td:nth-child(1)")?.textContent.toLowerCase();
-            const roleAttr = row.querySelector(".edit-btn")?.getAttribute("data-role");
-            const matchesSearch = !searchText || username.includes(searchText);
-            const matchesRole = !selectedRole || roleAttr === selectedRole;
-            row.style.display = matchesSearch && matchesRole ? "" : "none";
-        });
-    }
+    let rowNumber = 1;
+
+    tableRows.forEach(row => {
+        const username = row.querySelector("td:nth-child(2)")?.textContent.toLowerCase();
+        const roleAttr = row.querySelector(".edit-btn")?.getAttribute("data-role");
+        const matchesSearch = !searchText || username.includes(searchText);
+        const matchesRole = !selectedRole || roleAttr === selectedRole;
+
+        if (matchesSearch && matchesRole) {
+            row.style.display = "";
+            const numberCell = row.querySelector(".user-index");
+            if (numberCell) numberCell.textContent = rowNumber++;
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
 
     searchInput.addEventListener("input", filterUsers);
     roleFilter.addEventListener("change", filterUsers);
 
     document.getElementById("download-btn").addEventListener("click", () => {
         const headers = ["Username", "Email", "Phone", "Department"];
-        const visibleRows = Array.from(tableRows).filter(row => row.style.display !== "none");
+        const visibleRows = Array.from(tableRows).filter(row => row.style.display !== "-");
 
         const csv = [
             headers.join(","),
-            ...visibleRows.map(row => {
+            ...visibleRows.map((row, index) => {
                 const cols = row.querySelectorAll("td");
-                return Array.from(cols).slice(0, 4).map(td => `"${td.textContent.trim()}"`).join(",");
+                return [
+            `"${index + 1}"`, //
+            `"${cols[1].textContent.trim()}"`, // Username
+            `"${cols[2].textContent.trim()}"`, // Full Name
+            `"${cols[3].textContent.trim()}"`, // Email
+            `"${cols[4].textContent.trim()}"`, // Phone
+            `"${cols[5].textContent.trim()}"`  // Department
+        ].join(",");
             })
         ].join("\n");
 
@@ -247,4 +263,6 @@ document.addEventListener("DOMContentLoaded", function () {
         a.click();
         URL.revokeObjectURL(url);
     });
+    filterUsers(); // Initialize row numbers on first load
+
 });

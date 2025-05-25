@@ -286,6 +286,8 @@ class SuperCoordinatorView(APIView):
         if not department_id:
             return Response({"error": "Department is required."}, status=400)
 
+        mutable_data["is_super"] = True 
+
         serializer = UserSerializer(data=mutable_data)
 
         if serializer.is_valid():
@@ -293,6 +295,12 @@ class SuperCoordinatorView(APIView):
             user.is_staff = True
             user.set_password(mutable_data["password"])
             user.save()
+
+            if hasattr(user, "coordinator"):
+                user.coordinator.is_super = True
+                user.coordinator.coord_id = f"C-{user.pk}"
+                user.coordinator.save()
+
             return Response(UserSerializer(user).data, status=201)
 
         return Response(serializer.errors or {"error": "Invalid data"}, status=400)
