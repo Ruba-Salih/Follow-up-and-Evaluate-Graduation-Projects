@@ -82,12 +82,6 @@ def coordinator_home(request):
     })
 
 
-
-""" @login_required
-def coordinator_home(request):
-    return render(request, "coordinator/home.html") """
-
-
 @login_required
 def student_home(request):
     # Confirm user has a linked student profile
