@@ -247,6 +247,12 @@ class ProjectProposalView(APIView):
                         ).exists()
                     })
     
+        response_data["submitted_by"] = {
+            "username": proposal.submitted_by.username,
+            "first_name": proposal.submitted_by.first_name,
+            "last_name": proposal.submitted_by.last_name,
+        }
+
         return Response({
             'proposals': proposals_serializer.data,
             'students': students_data,
@@ -333,10 +339,11 @@ class ProjectProposalView(APIView):
                     if hasattr(user, 'student'):
                         StudentProjectMembership.objects.create(student=user.student, proposal_id=proposal.id)
 
-                    for sid in team_members_ids:
-                        if not StudentProjectMembership.objects.filter(student_id=sid, proposal_id=proposal.id).exists():
-                            StudentProjectMembership.objects.create(student_id=sid, proposal_id=proposal.id)
-
+                    for sid in set(team_members_ids):
+                        StudentProjectMembership.objects.get_or_create(
+                        student_id=sid,
+                        proposal=proposal
+                    )
             except Exception as e:
                 print("❌ Error creating proposal and memberships:", str(e))
                 return Response({'detail': 'Failed to create proposal with team members.'}, status=400)
@@ -448,7 +455,12 @@ class ProjectProposalView(APIView):
         except ProjectProposal.DoesNotExist:
             return Response({'detail': 'Proposal not found.'}, status=404)
 
+        StudentProjectMembership.objects.filter(proposal=proposal).delete()
+
+        Project.objects.filter(proposal=proposal).delete()
+
         proposal.delete()
+
         return Response({'detail': 'Proposal deleted successfully.'}, status=204)
 
 

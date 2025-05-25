@@ -48,10 +48,16 @@
 
             {% if project.proposal %}
             <hr>
-            <p><strong>{% trans "From Proposal" %}:</strong> {{ project.proposal.title }}</p>
-            {% blocktrans with username=project.proposal.submitted_by.username %}
-                <strong>Submitted By:</strong> {{ username }}
-            {% endblocktrans %}
+            <p><strong>{% trans "Submitted By" %}:</strong>
+    {% with user=project.proposal.submitted_by %}
+        {% if user.first_name or user.last_name %}
+            {{ user.first_name }} {{ user.last_name }}
+        {% else %}
+            {{ user.username }}
+        {% endif %}
+    {% endwith %}
+</p>
+
             {% endif %}
 
             <div class="card-buttons">
