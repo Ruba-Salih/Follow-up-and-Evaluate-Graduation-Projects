@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.views import APIView
+from django.http import HttpResponseBadRequest
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -16,8 +17,12 @@ from university.models import College, Department
 from django.urls import reverse
 from grades.models import Grading
 #from project.models import Project
-#from announcement.models import Announcement
-
+from announcement.models import Announcement
+from django.db.models import Q
+from django.utils import timezone
+from django.utils.timezone import now
+from .services import is_teacher
+from project.models import ProjectMembership  
 
 def land(request): 
     #login_url = reverse("login-page")
@@ -57,28 +62,118 @@ def admin_home(request):
 
 @login_required
 def coordinator_home(request):
-    return render(request, "coordinator/home.html")
+    user = request.user
+
+    if not hasattr(user, 'coordinator'):
+        return HttpResponseBadRequest("User is not a coordinator.")
+
+    # Get announcements from other coordinators targeting 'coordinator' role
+    announcements = Announcement.objects.filter(
+        is_active=True,
+        created_by__isnull=False  # Ensure creator is set
+    ).exclude(
+        created_by=user  # Exclude current coordinator's own announcements
+    ).filter(
+        Q(deadline__isnull=True) | Q(deadline__gte=timezone.now())
+    ).order_by('-created_at')[:5]  # Show the 5 most recent
+
+    return render(request, "coordinator/home.html", {
+        'announcements': announcements,
+    })
+
 
 @login_required
 def student_home(request):
+    # Confirm user has a linked student profile
+    if not hasattr(request.user, 'student'):
+        return Response({"error": "User is not a student."}, status=400)
+
     student = request.user.student
     grading = Grading.objects.filter(student=student).first()
+    student_dept = getattr(student, 'department', None)
+    user_role = 'student'
+
+    # Filter active announcements targeting the user's role and not expired
+    announcements = Announcement.objects.filter(
+        is_active=True
+    ).filter(
+        Q(deadline__isnull=True) | Q(deadline__gte=timezone.now())
+    ).filter(
+        target_roles__contains=[user_role]
+    )
+
+    # Department filtering
+    if student_dept:
+        announcements = announcements.filter(
+            Q(target_departments__isnull=True) | Q(target_departments=student_dept)
+        ).distinct()
+    else:
+        announcements = announcements.filter(target_departments__isnull=True)
+
+    # Sort by newest and limit to latest 5
+    announcements = announcements.order_by('-created_at')[:5]
 
     return render(request, 'student/home.html', {
         'grading': grading,
+        'announcements': announcements,
     })
+
+
 
 @login_required
 def teacher_home(request):
-    #total_projects = Project.objects.filter(teacher=request.user).count()
-    #announcements = Announcement.objects.all().order_by('-date_posted')[:5]
+    user = request.user
 
-    #return render(request, "teacher/home.html", {
-        #"total_projects": total_projects,
-        #"announcements": announcements,
-    #})
+    if not is_teacher(user):
+        return HttpResponseBadRequest("User is not a teacher.")
 
-    return render(request, "teacher/home.html")
+    print("ok lets start")
+    # Get project roles the teacher has
+    roles = ProjectMembership.objects.filter(user=user).values_list('role__name', flat=True).distinct()
+    print(f"role are:{roles}")
+    # Map role names to Announcement.ROLE_CHOICES values
+    role_mapping = {
+        'Supervisor': 'supervisor',
+        'Reader': 'reader',
+        'Judgement Committee': 'committee',  
+    }
+    project_roles = [role_mapping[r] for r in roles if r in role_mapping]
+    print(f"project roles are:{project_roles}")
+    # Always include 'teacher' role
+    effective_roles = ['teacher'] + project_roles
+
+    # Get user's department if available
+    user_dept = getattr(user, 'department', None)
+    print(f"user dept is:{user_dept}")
+
+    query = Q()
+    for role in effective_roles:
+        query |= Q(target_roles__contains=role)  # checks if JSON array contains the string role
+
+    print(f"queery is {query}")
+    # Filter announcements by active, deadline, roles first
+    announcements = Announcement.objects.filter(
+        is_active=True
+    ).filter(
+        Q(deadline__gte=timezone.now()) | Q(deadline__isnull=True)
+    ).filter(query).distinct()
+    print("announcmentis")
+    print(announcements)
+    # Filter by department
+    if user_dept:
+        announcements = announcements.filter(
+            Q(target_departments__isnull=True) | Q(target_departments=user_dept)
+        ).distinct()
+    else:
+        announcements = announcements.filter(target_departments__isnull=True)
+
+    # Order and slice after all filtering
+    announcements = announcements.order_by('-created_at')[:5]
+    print(announcements)
+    return render(request, 'teacher/home.html', {
+        'announcements': announcements,
+    })
+
 
 def login_view(request):
     return render(request, "login.html")
