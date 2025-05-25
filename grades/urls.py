@@ -15,5 +15,4 @@ urlpatterns = [
     #path('home/', views.teacher_home, name='teacher_home'),
     path('manage-projects/', views.manage_projects, name='manage_projects'),
     path('project/<int:project_id>/<str:role>/', views.project_role_dashboard, name='project_role_dashboard'),
-    path('grade-statistics/', views.grade_statistics, name='grade_statistics'),
 ]

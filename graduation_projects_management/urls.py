@@ -15,7 +15,6 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.conf.urls.i18n import i18n_patterns
 from django.urls import path, include
 from users import views
 from django.conf import settings
@@ -53,9 +52,6 @@ urlpatterns = [
 
     #reports urls
     path("api/report/", include("report.urls")),
-
-    # Announcement app API routes
-    path('api/announcements/', include('announcement.urls')),
 
     path('i18n/', include('django.conf.urls.i18n')),
 

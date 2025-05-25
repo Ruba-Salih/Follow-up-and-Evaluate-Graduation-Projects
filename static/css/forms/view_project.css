@@ -1,19 +1,10 @@
-/* Base styles */
+/* Page background and font */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f5f5f5;
     color: #333;
     padding: 40px;
     line-height: 1.6;
-}
-.container {
-    max-width: 900px;
-    margin: 0 auto;
-    background-color: white;
-    padding: 30px;
-    border-radius: 8px;
-    margin-top: 30px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
 /* Headings */
@@ -25,7 +16,8 @@ h2 {
 
 h3 {
     color: #444;
-    margin: 40px 0 10px;
+    margin-top: 40px;
+    margin-bottom: 10px;
     font-size: 20px;
     border-left: 5px solid #a63026;
     padding-left: 10px;
@@ -38,9 +30,8 @@ h4 {
     font-weight: 600;
 }
 
-/* Buttons */
-button,
-.btn-primary {
+/* Button styles */
+button, .btn-primary {
     padding: 10px 20px;
     font-size: 15px;
     border-radius: 6px;
@@ -51,12 +42,11 @@ button,
     transition: background-color 0.3s;
 }
 
-button:hover,
-.btn-primary:hover {
+button:hover, .btn-primary:hover {
     background-color: #92271e;
 }
 
-/* Section and form spacing */
+/* Section spacing */
 section {
     margin-bottom: 40px;
 }
@@ -66,14 +56,19 @@ form {
     margin-bottom: 30px;
 }
 
-/* Search bar section */
+button.btn-primary {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 6px;
+}
+
 .search-section {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    align-items: center;
     gap: 10px;
     margin-bottom: 20px;
+    align-items: center;
 }
 
 .search-section select,
@@ -94,7 +89,18 @@ form {
     min-width: 200px;
 }
 
-/* Table styling */
+body {
+    font-family: Arial, sans-serif;
+    padding: 30px;
+    background-color: #f5f5f5;
+}
+
+h2 {
+    color: #a63026;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -103,8 +109,7 @@ table {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-th,
-td {
+th, td {
     padding: 10px;
     text-align: center;
     border: 1px solid #ddd;
@@ -120,19 +125,19 @@ tr:hover {
     background-color: #f9f9f9;
 }
 
-td:first-child,
-th:first-child {
+td:first-child, th:first-child {
     font-weight: bold;
 }
 
-/* Responsive styles */
+
+
+/* Optional: improve responsiveness slightly */
 @media (max-width: 768px) {
     body {
         padding: 20px;
     }
 
-    h3,
-    h4 {
+    h3, h4 {
         font-size: 18px;
     }
 

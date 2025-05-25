@@ -10,8 +10,6 @@
 
 {% block content %}
 
-{% include "navbar.html" %}
-<div class="container">
 <h2 class="text-center">Manage Grades</h2>
 
 <form action="{% url 'send_grades_to_all' %}" method="post" style="text-align: center;">
@@ -21,9 +19,6 @@
     {% endfor %}
     <button type="submit" class="btn btn-primary">Send Grades to All Students</button>
 </form>
-<div style="text-align: center; margin-top: 10px;">
-    <a href="{% url 'grade_statistics' %}" class="btn btn-primary" style="margin: 10px;">Grade Statistics</a>
-</div>
 
 <div class="search-section">
     <input type="text" id="searchInput" placeholder="Search by student or project name..." autocomplete="off">
@@ -145,7 +140,7 @@
         {% endfor %}
     </tbody>
 </table>
-</div>
+
 <script>
     $(document).ready(function () {
         function filterTable() {

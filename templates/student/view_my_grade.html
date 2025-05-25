@@ -20,9 +20,9 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: #ddd;
-            color: #000000;
-            border: 1px solid #ffffff;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
             border-radius: 10px;
             padding: 30px 40px;
             width: 60%; /* Adjust this to make the box bigger */
@@ -54,7 +54,7 @@
         th, td {
             padding: 10px;
             text-align: center;
-            border: 1px solid #545353;
+            border: 1px solid #ddd;
             vertical-align: middle;
         }
 
@@ -93,14 +93,12 @@
                 <thead>
                     <tr>
                         <th>Project</th>
-                        <th>Name</th>
                         <th>Grade</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td>{{ grading.project.name }}</td>
-                        <td>{{ grading.student.get_full_name }}</td>
                         <td>{{ grading.final_grade }}</td>
                     </tr>
                 </tbody>
