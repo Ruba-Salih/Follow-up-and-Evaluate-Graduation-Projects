@@ -78,6 +78,37 @@ document.addEventListener("DOMContentLoaded", () => {
                 modal.dataset.proposalId = proposalId;
                 feedbackTextarea.value = "";
                 modal.classList.remove("hidden");
+                // 💬 Load feedback thread for this proposal
+const feedbackThread = document.getElementById("feedback-thread");
+feedbackThread.innerHTML = "<p>Loading feedback...</p>";
+
+try {
+    const fbRes = await fetch(`/api/project/feedback/?proposal=${proposalId}`);
+    const feedbackData = await fbRes.json();
+
+    if (Array.isArray(feedbackData) && feedbackData.length > 0) {
+        const sortedFeedbacks = feedbackData.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
+
+        feedbackThread.innerHTML = sortedFeedbacks.map(fb => {
+            const sender = fb.sender_name || "Unknown";
+            const created = new Date(fb.created_at).toLocaleString();
+            const message = fb.message || "";
+
+            return `
+                <div class="feedback-item" style="margin-bottom: 10px;">
+                    <p><strong>${sender}</strong>: ${message}</p>
+                    <p>🕒<em>${created}</em></p>
+                </div>
+            `;
+        }).join("");
+    } else {
+        feedbackThread.innerHTML = "<p>No feedback yet.</p>";
+    }
+} catch (err) {
+    console.error("❌ Error loading feedback:", err);
+    feedbackThread.innerHTML = "<p>⚠️ Failed to load feedback.</p>";
+}
+
             } catch (error) {
                 console.error("Fetch error:", error);
             }
@@ -133,6 +164,8 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Update error:", error);
         }
     }
+
+    
 
     function getCSRFToken() {
         const name = "csrftoken";

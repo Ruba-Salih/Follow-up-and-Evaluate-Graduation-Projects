@@ -127,8 +127,15 @@ class ProjectProposalView(APIView):
                 elif not is_owner and not is_recipient:
                     return Response({'detail': 'Unauthorized access.'}, status=403)
 
+                
                 serializer = ProjectProposalSerializer(proposal)
                 response_data = serializer.data
+
+                response_data["submitted_by"] = {
+                "username": proposal.submitted_by.username,
+                "first_name": proposal.submitted_by.first_name,
+                "last_name": proposal.submitted_by.last_name,
+                }
                 
                 response_data["teacher_role"] = proposal.teacher_role.name if proposal.teacher_role else None
                 response_data["teacher_role_id"] = proposal.teacher_role.id if proposal.teacher_role else None
@@ -246,12 +253,6 @@ class ProjectProposalView(APIView):
                             proposal__isnull=False
                         ).exists()
                     })
-    
-        response_data["submitted_by"] = {
-            "username": proposal.submitted_by.username,
-            "first_name": proposal.submitted_by.first_name,
-            "last_name": proposal.submitted_by.last_name,
-        }
 
         return Response({
             'proposals': proposals_serializer.data,
@@ -533,9 +534,24 @@ class FeedbackExchangeView(APIView):
         report_id = data.get("report")
         print("Received data2:", data)
 
-        non_empty = [key for key in [proposal_id, project_id, task_id, report_id] if key]
-        if len(non_empty) != 1:
-            return Response({"detail": "Exactly one of proposal, project, task, or report must be provided."}, status=400)
+        if task_id:
+            try:
+                task = ProjectTask.objects.get(id=task_id)
+                if project_id and str(task.project.id) != str(project_id):
+                    return Response({"detail": "Task does not belong to the specified project."}, status=400)
+                data["task"] = task.id
+                data.pop("task_id", None)
+                data.pop("project", None)  # ✅ Remove project to avoid serializer errors
+            except ProjectTask.DoesNotExist:
+                return Response({"detail": "Task not found."}, status=400)
+        elif report_id:
+            data["report"] = report_id
+        elif proposal_id:
+            pass
+        elif project_id:
+            pass
+        else:
+            return Response({"detail": "Must include one of proposal, project, task, or report."}, status=400)
 
         if task_id:
             try:
@@ -543,6 +559,7 @@ class FeedbackExchangeView(APIView):
                 if project_id and str(task.project.id) != str(project_id):
                     return Response({"detail": "Task does not belong to the specified project."}, status=400)
                 data["task"] = task.id
+                data.pop("task_id", None)
             except ProjectTask.DoesNotExist:
                 return Response({"detail": "Task not found."}, status=400)
 
@@ -551,9 +568,11 @@ class FeedbackExchangeView(APIView):
 
         serializer = FeedbackExchangeSerializer(data=data)
         if serializer.is_valid():
+            
             serializer.save()
             return Response(serializer.data, status=201)
 
+        print("❌ Serializer Errors:", serializer.errors)
         return Response(serializer.errors, status=400)
 
 
