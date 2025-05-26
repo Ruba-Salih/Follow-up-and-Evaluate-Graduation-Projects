@@ -1527,9 +1527,18 @@ def student_dashboard_stats(request):
         if t.created_at and today <= t.created_at.date() + timedelta(days=t.deadline_days) <= deadline_range
     ]
 
+    # ✅ Add project completion
+    try:
+        membership = StudentProjectMembership.objects.select_related("project").get(student=user.student)
+        project = membership.project
+        completion = round(calculate_completion_by_tasks(project), 2)
+    except StudentProjectMembership.DoesNotExist:
+        completion = 0
+
     return JsonResponse({
         "task_summary": summary,
-        "upcoming_deadlines": upcoming
+        "upcoming_deadlines": upcoming,
+        "completion": completion
     })
 
 @login_required

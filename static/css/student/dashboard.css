@@ -5,11 +5,10 @@
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  
 }
 
-.dashboard h2, h3 {
-  
+.dashboard h2,
+.dashboard h3 {
   margin-top: 30px;
   color: #333;
   text-align: center;
@@ -18,10 +17,63 @@
 
 canvas {
   max-width: 100%;
-  margin: 20px auto;
+  height: auto;
   display: block;
+  margin: 0 auto;
 }
 
+/* Horizontal layout for charts */
+.dashboard-row {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.dashboard-section {
+  flex: 1 1 400px;
+  text-align: center;
+}
+
+/* Project Completion */
+#completion-chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#completionChart {
+  max-width: 350px;
+  max-height: 350px;
+}
+
+#completionLabel {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-top: 12px;
+  color: #333;
+}
+
+/* Divider */
+.dashboard-divider {
+  margin: 40px auto;
+  border: 0;
+  border-top: 2px solid #ddd;
+  width: 80%;
+}
+
+.vertical-divider {
+  width: 2px;
+  background-color: #ddd;
+  height: auto;
+  min-height: 300px;
+  align-self: stretch;
+}
+
+
+/* Upcoming Deadlines */
 #upcoming-deadlines-list {
   list-style-type: none;
   padding-left: 0;
@@ -41,6 +93,7 @@ canvas {
   background: #e9ecef;
 }
 
+/* Responsive */
 @media (max-width: 600px) {
   .dashboard {
     padding: 20px 10px;
@@ -48,5 +101,10 @@ canvas {
 
   .dashboard h2 {
     font-size: 20px;
+  }
+
+  .dashboard-row {
+    flex-direction: column;
+    align-items: center;
   }
 }

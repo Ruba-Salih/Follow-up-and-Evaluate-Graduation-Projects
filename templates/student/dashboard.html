@@ -12,12 +12,30 @@
 <div class="dashboard">
   <h2>📊 Dashboard Overview</h2>
 
-  <h3>📋 My Tasks Summary</h3>
-<canvas id="taskStatusChart" width="400" height="200"></canvas>
+  
+<div class="dashboard-row">
+  <div class="dashboard-section">
+    <h3>✅ Project Completion</h3>
+    <div id="completion-chart-wrapper">
+      <canvas id="completionChart"></canvas>
+      <p id="completionLabel"></p>
+    </div>
+  </div>
+  
+  <div class="vertical-divider"></div>
+  
+  <div class="dashboard-section">
+    <h3>📋 My Tasks Summary</h3>
+    <canvas id="taskStatusChart"></canvas>
+  </div>
+  
+</div>
 
-<br>
+<hr class="dashboard-divider">
+
 <h3>⏳ Upcoming Deadlines</h3>
 <ul id="upcoming-deadlines-list"></ul>
+
 
 
 </div>
@@ -28,6 +46,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     const res = await fetch("/api/project/dashboard/student/");  // ✅ Make sure this path matches your URLs
     const data = await res.json();
+
+    // ✅ Render Project Completion Chart
+const completionPercent = Math.min(Math.max(data.completion || 0, 0), 100);  // clamp between 0-100
+const completionCtx = document.getElementById("completionChart").getContext("2d");
+
+new Chart(completionCtx, {
+  type: "pie",
+  data: {
+    labels: ["Completed", "Remaining"],
+    datasets: [{
+      data: [completionPercent, 100 - completionPercent],
+      backgroundColor: ["#4CAF50", "#E0E0E0"],
+      
+      borderWidth: 1
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      tooltip: { enabled: true },
+      legend: { display: true, position: "bottom" },
+      title: {
+        display: true,
+        text: "Project Completion"
+      }
+    }
+  }
+});
+
+document.getElementById("completionLabel").textContent = `${completionPercent}% Complete`;
+
 
     // 🧩 Render Task Status Chart
     const ctx = document.getElementById("taskStatusChart").getContext("2d");
