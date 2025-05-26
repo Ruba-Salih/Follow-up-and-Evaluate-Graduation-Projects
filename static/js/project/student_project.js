@@ -19,6 +19,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     let projectId = null;
+
+    function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+
+            if (cookie.startsWith(name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
     let taskCounter = 0;
     let tasks = [];
     let students = [];
@@ -468,6 +486,50 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
             }
         });
     });
+
+    // Edit Project Info Modal logic
+const editProjectForm = document.getElementById("edit-project-form");
+const editProjectModal = document.getElementById("editProjectModal");
+
+document.querySelector("[data-target='#editProjectModal']")?.addEventListener("click", () => {
+    if (projectTitle) document.getElementById("edit-project-name").value = projectTitle.textContent;
+    if (projectField) document.getElementById("edit-project-field").value = projectField.textContent;
+    editProjectModal.classList.add("show");
+});
+
+editProjectForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const newName = document.getElementById("edit-project-name").value.trim();
+    const newField = document.getElementById("edit-project-field").value.trim();
+
+    try {
+        const res = await fetch(`/api/project/projects/${projectId}/`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken")
+            },
+            body: JSON.stringify({
+                name: newName,
+                field: newField
+            })
+        });
+
+        if (!res.ok) throw new Error("Failed to update project info.");
+
+        const data = await res.json();
+
+        projectTitle.textContent = data.name || newName;
+        projectField.textContent = data.field || newField;
+
+        editProjectModal.classList.remove("show");
+        alert("✅ Project info updated successfully!");
+    } catch (err) {
+        alert("❌ Could not update project.");
+        console.error(err);
+    }
+});
+
 
     function handleAddTask() {
         const goalSelect = document.getElementById("selected-goal-for-task");
