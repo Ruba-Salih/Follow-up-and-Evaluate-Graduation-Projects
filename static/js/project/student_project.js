@@ -172,8 +172,7 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
                     const fullName = `${s.first_name || ""} ${s.last_name || ""}`.trim();
             studentList.innerHTML += `
             <li>
-                ${s.first_name} ${s.last_name} <br>
-                📧 ${s.email} | ☎️ ${s.phone || "N/A"}
+                ${s.first_name} ${s.last_name} | 📧 ${s.email} | ☎️ ${s.phone || "N/A"}
             </li>`;
                 });
             }

@@ -20,10 +20,8 @@
                 <a href="{% url 'coordinator-home' %}">{% trans "Home" %}</a>
             {% elif user.student %}
                 <a href="{% url 'student-home' %}">{% trans "Home" %}</a>
-            {% elif user.teacher %}
-                <a href="{% url 'teacher-home' %}">{% trans "Home" %}</a>
             {% else %}
-                <a href="{% url 'home' %}">{% trans "Home" %}</a>
+                <a href="{% url 'teacher-home' %}">{% trans "Home" %}</a>
             {% endif %}
         </li>
     {% endif %}

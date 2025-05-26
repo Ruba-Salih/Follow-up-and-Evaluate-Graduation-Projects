@@ -127,8 +127,15 @@ class ProjectProposalView(APIView):
                 elif not is_owner and not is_recipient:
                     return Response({'detail': 'Unauthorized access.'}, status=403)
 
+                
                 serializer = ProjectProposalSerializer(proposal)
                 response_data = serializer.data
+
+                response_data["submitted_by"] = {
+                "username": proposal.submitted_by.username,
+                "first_name": proposal.submitted_by.first_name,
+                "last_name": proposal.submitted_by.last_name,
+                }
                 
                 response_data["teacher_role"] = proposal.teacher_role.name if proposal.teacher_role else None
                 response_data["teacher_role_id"] = proposal.teacher_role.id if proposal.teacher_role else None
@@ -246,12 +253,6 @@ class ProjectProposalView(APIView):
                             proposal__isnull=False
                         ).exists()
                     })
-    
-        response_data["submitted_by"] = {
-            "username": proposal.submitted_by.username,
-            "first_name": proposal.submitted_by.first_name,
-            "last_name": proposal.submitted_by.last_name,
-        }
 
         return Response({
             'proposals': proposals_serializer.data,
@@ -533,9 +534,24 @@ class FeedbackExchangeView(APIView):
         report_id = data.get("report")
         print("Received data2:", data)
 
-        non_empty = [key for key in [proposal_id, project_id, task_id, report_id] if key]
-        if len(non_empty) != 1:
-            return Response({"detail": "Exactly one of proposal, project, task, or report must be provided."}, status=400)
+        if task_id:
+            try:
+                task = ProjectTask.objects.get(id=task_id)
+                if project_id and str(task.project.id) != str(project_id):
+                    return Response({"detail": "Task does not belong to the specified project."}, status=400)
+                data["task"] = task.id
+                data.pop("task_id", None)
+                data.pop("project", None)  # ✅ Remove project to avoid serializer errors
+            except ProjectTask.DoesNotExist:
+                return Response({"detail": "Task not found."}, status=400)
+        elif report_id:
+            data["report"] = report_id
+        elif proposal_id:
+            pass
+        elif project_id:
+            pass
+        else:
+            return Response({"detail": "Must include one of proposal, project, task, or report."}, status=400)
 
         if task_id:
             try:
@@ -543,6 +559,7 @@ class FeedbackExchangeView(APIView):
                 if project_id and str(task.project.id) != str(project_id):
                     return Response({"detail": "Task does not belong to the specified project."}, status=400)
                 data["task"] = task.id
+                data.pop("task_id", None)
             except ProjectTask.DoesNotExist:
                 return Response({"detail": "Task not found."}, status=400)
 
@@ -551,9 +568,11 @@ class FeedbackExchangeView(APIView):
 
         serializer = FeedbackExchangeSerializer(data=data)
         if serializer.is_valid():
+            
             serializer.save()
             return Response(serializer.data, status=201)
 
+        print("❌ Serializer Errors:", serializer.errors)
         return Response(serializer.errors, status=400)
 
 
@@ -886,15 +905,14 @@ class TrackProjectView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request, pk=None):
-        print("🔍 Project GET request received")
 
         if pk:
-            print(f"🔎 Fetching details for project ID {pk}")
+            
             try:
                 project = Project.objects.select_related(
                     "plan", "supervisor", "coordinator", "department"
                 ).get(pk=pk)
-                print(f"✅ Found project: {project.name}")
+                
             except Project.DoesNotExist:
                 return Response({"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -920,7 +938,9 @@ class TrackProjectView(APIView):
                     task_obj = goal_tasks.get(id=t["id"])
                     if task_obj.assign_to:
                         t["assign_to"] = task_obj.assign_to.id  # <-- This is the key fix
-                        t["assign_to_name"] = task_obj.assign_to.username
+                        full_name = f"{task_obj.assign_to.first_name} {task_obj.assign_to.last_name}".strip()
+                        t["assign_to_name"] = full_name or task_obj.assign_to.username
+
                     else:
                         t["assign_to"] = None
                         t["assign_to_name"] = None
@@ -935,11 +955,11 @@ class TrackProjectView(APIView):
 
             tasks_data = ProjectTaskSerializer(tasks, many=True).data
             completion = round(calculate_completion_by_tasks(project), 2)
-            print(f"🧮 Completion Status for project {project.id}: {completion}")
+            
 
             # ✅ Include feedbacks from all teaching roles
             feedbacks = FeedbackExchange.objects.filter(project=project).order_by("-created_at")
-            print("🔁 Total Feedbacks Found:", feedbacks.count())
+            
             for fb in feedbacks:
                 print("📝 Feedback:", {
                     "sender": f"{fb.sender.first_name} {fb.sender.last_name}".strip(),
@@ -1400,7 +1420,12 @@ def get_task_detail(request, task_id):
             } if task.goal else None,
             "outputs": task.outputs,
             "assign_to": task.assign_to.id if task.assign_to else None,
-            "assign_to_name": task.assign_to.username if task.assign_to else None,
+            "assign_to_name": (
+                    f"{task.assign_to.first_name} {task.assign_to.last_name}".strip()
+                    if task.assign_to and (task.assign_to.first_name or task.assign_to.last_name)
+                    else task.assign_to.username if task.assign_to else None
+                ),
+
             "deadline_days": task.deadline_days,
             "deliverable_text": task.deliverable_text,
             "deliverable_file": task.deliverable_file.url if task.deliverable_file else None,

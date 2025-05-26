@@ -272,19 +272,33 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
 
-            const feedback = data.feedback_text?.trim();
+            // 🔄 Fetch all feedbacks related to this proposal
+const feedbackRes = await fetch(`/api/project/feedback/?proposal=${data.id}`);
+const feedbackData = await feedbackRes.json();
+
+if (Array.isArray(feedbackData) && feedbackData.length > 0) {
+    feedbackSection.classList.remove("hidden");
+    const sortedFeedbacks = feedbackData.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
+
+    feedbackContent.innerHTML = sortedFeedbacks.map(fb => {
+        const sender = fb.sender_name || "Unknown";
+        const created = new Date(fb.created_at).toLocaleString();
+        const message = fb.message || "";
+
+        return `
+            <div class="feedback-item" style="margin-bottom: 10px;">
+                <p><strong>${sender}</strong>: ${message}</p>
+                <p>🕒<em>${created}</em></p>
+            </div>
+        `;
+    }).join("");
+} else {
+    feedbackSection.classList.add("hidden");
+    feedbackContent.innerHTML = "<p>No feedback yet.</p>";
+}
+
             const role = data.feedback_sender_role || "Teacher";
-            if (feedback) {
-                feedbackSection.classList.remove("hidden");
-                const label = feedbackSection.querySelector("label");
-                if (label) {
-                    label.innerHTML = `<strong>${role} Feedback:</strong>`;
-                }
-                feedbackContent.textContent = feedback;
-            } else {
-                feedbackSection.classList.add("hidden");
-                feedbackContent.textContent = "";
-            }
+            
 
             if (departmentSelect && data.department) {
                 departmentSelect.value = data.department;

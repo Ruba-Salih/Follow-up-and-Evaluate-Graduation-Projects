@@ -156,6 +156,28 @@ h2 {
     font-size: 14px;
 }
 
+
+.feedback-thread {
+    max-height: 200px;
+    overflow-y: auto;
+    background: #f7f7f7;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.feedback-item {
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 5px solid #a63026;
+    background: #fff;
+    margin-bottom: 10px;
+}
+
+.feedback-item p {
+    
+    margin: 4px 0;
+}
 /* Modal status buttons */
 .status-buttons {
     display: flex;

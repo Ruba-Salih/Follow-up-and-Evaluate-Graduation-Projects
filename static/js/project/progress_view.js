@@ -32,7 +32,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
 
     goalFilter.innerHTML += goals.map(g => `<option value="${g.id}">${g.goal}</option>`).join("");
-    studentFilter.innerHTML += students.map(s => `<option value="${s.id}">${s.username}</option>`).join("");
+    studentFilter.innerHTML += students.map(s => {
+    const fullName = [s.first_name, s.last_name].filter(Boolean).join(" ");
+    return `<option value="${s.id}">${fullName || s.username}</option>`;
+}).join("");
+
 
     function renderTasks() {
         const goalVal = goalFilter.value;
@@ -138,33 +142,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     function attachFeedbackForm() {
-        const form = document.getElementById("feedback-form");
-        form?.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const formData = new FormData(form);
-            const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]')?.value || "";
+    const form = document.getElementById("feedback-form");
+    form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]')?.value || "";
 
-            const res = await fetch("/api/project/feedback/", {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": csrfToken
-                },
-                credentials: "same-origin",
-                body: formData
-            });
+        const payload = {
+            project: form.querySelector('[name=project]')?.value,
+            task_id: form.querySelector('[name=task_id]')?.value,
+            feedback_text: form.querySelector('#feedback-comment')?.value
+        };
 
-            const msg = document.getElementById("feedback-message");
-            if (res.ok) {
-                msg.textContent = "✅ Feedback sent!";
-                msg.style.color = "green";
-                form.reset();
-                await openTaskModal(formData.get("task_id")); // reload modal
-            } else {
-                msg.textContent = "❌ Failed to send feedback.";
-                msg.style.color = "red";
-            }
+        const res = await fetch("/api/project/feedback/", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "Content-Type": "application/json"
+            },
+            credentials: "same-origin",
+            body: JSON.stringify(payload)
         });
-    }
+
+        const msg = document.getElementById("feedback-message");
+        if (res.ok) {
+            msg.textContent = "✅ Feedback sent!";
+            msg.style.color = "green";
+            form.reset();
+            await openTaskModal(payload.task_id); // reload modal with feedback
+        } else {
+            msg.textContent = "❌ Failed to send feedback.";
+            msg.style.color = "red";
+        }
+    });
+}
 
     goalFilter.addEventListener("change", renderTasks);
     statusFilter.addEventListener("change", renderTasks);

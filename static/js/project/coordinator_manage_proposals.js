@@ -108,22 +108,27 @@ document.addEventListener("DOMContentLoaded", () => {
                     const feedbackData = await feedbackRes.json();
 
                     if (Array.isArray(feedbackData) && feedbackData.length > 0) {
-                        feedbackThread.innerHTML = feedbackData.map(fb => {
-                            const sender = fb.sender_name || "Unknown";
-                            const created = new Date(fb.created_at).toLocaleString();
-                            const message = fb.message || "";
+    // Sort feedback by created_at ascending (older first)
+    feedbackData.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-                            return `
-                                <div class="feedback-item" style="margin-bottom: 10px;">
-                                    <p><strong>${sender}</strong> <em>${created}</em></p>
-                                    <p>${message}</p>
-                                    <hr>
-                                </div>
-                            `;
-                        }).join("");
-                    } else {
-                        feedbackThread.innerHTML = "<p>No feedback yet.</p>";
-                    }
+    feedbackThread.innerHTML = feedbackData.map(fb => {
+        const sender = fb.sender_name || "Unknown";
+        const created = new Date(fb.created_at).toLocaleString();
+        const message = fb.message || "";
+
+        return `
+            <div class="feedback-item" style="margin-bottom: 10px;">
+                <p><strong>${sender}</strong>: ${message}</p>
+                <p>🕒<em>${created}</em></p>
+                
+                
+            </div>
+        `;
+    }).join("");
+} else {
+    feedbackThread.innerHTML = "<p>No feedback yet.</p>";
+}
+
                 } catch (err) {
                     console.error("❌ Error loading feedback:", err);
                     feedbackThread.innerHTML = "<p>⚠️ Failed to load feedback.</p>";
