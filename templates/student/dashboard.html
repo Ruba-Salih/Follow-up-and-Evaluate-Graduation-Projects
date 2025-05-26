@@ -31,28 +31,45 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 🧩 Render Task Status Chart
     const ctx = document.getElementById("taskStatusChart").getContext("2d");
-    new Chart(ctx, {
-      type: "doughnut",
-      data: {
-        labels: ["To Do", "In Progress", "Done"],
-        datasets: [{
-          label: "Tasks",
-          data: [
-            data.task_summary["to do"] || 0,
-            data.task_summary["in progress"] || 0,
-            data.task_summary["done"] || 0
-          ],
-          backgroundColor: ["#a63026", "#f2e2d2", "#a67b5b"]
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          title: { display: true, text: "Task Status Breakdown" },
-          legend: { position: "bottom" }
-        }
-      }
-    });
+    const taskSummary = {
+  todo: data.task_summary["to do"] || 0,
+  inprogress: data.task_summary["in progress"] || 0,
+  done: data.task_summary["done"] || 0
+};
+
+// Check if all values are 0
+const allZero = taskSummary.todo === 0 && taskSummary.inprogress === 0 && taskSummary.done === 0;
+
+const chartData = allZero
+  ? [1, 0, 0]  // Fallback: show one neutral segment
+  : [taskSummary.todo, taskSummary.inprogress, taskSummary.done];
+
+const chartLabels = allZero
+  ? ["No Tasks"]
+  : ["To Do", "In Progress", "Done"];
+
+const chartColors = allZero
+  ? ["#cccccc"]
+  : ["#a63026", "#f2e2d2", "#a67b5b"];
+
+new Chart(ctx, {
+  type: "doughnut",
+  data: {
+    labels: chartLabels,
+    datasets: [{
+      label: "Tasks",
+      data: chartData,
+      backgroundColor: chartColors
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      title: { display: true, text: "Task Status Breakdown" },
+      legend: { position: "bottom" }
+    }
+  }
+});
 
     // 🧩 Render Upcoming Deadlines List
     const list = document.getElementById("upcoming-deadlines-list");
