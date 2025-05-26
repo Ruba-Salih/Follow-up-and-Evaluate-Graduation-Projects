@@ -19,7 +19,17 @@
     <div id="pending-proposals">Pending Proposals: <span>0</span></div>
   </div>
 <div class="chart">
+
+
   <h3>📊 Project Status</h3>
+  <div class="filter-bar">
+  <label for="projectFilter">Filter by Project:</label>
+  <select id="projectFilter">
+    <option value="">All Projects</option>
+  </select>
+</div>
+
+
   <canvas id="statusChart" width="400" height="200"></canvas>
 </div>
 
@@ -31,11 +41,17 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
-  try {
-    const res = await fetch("/api/project/dashboard/coordinator/");
+  let statusChartInstance = null;
+  let fieldsChartInstance = null;
+
+  const statusCtx = document.getElementById("statusChart").getContext("2d");
+  const fieldsCtx = document.getElementById("fieldsChart").getContext("2d");
+  const projectSelect = document.getElementById("projectFilter");
+
+  async function loadDashboard(projectId = "") {
+    const res = await fetch(`/api/project/dashboard/coordinator/?project=${projectId}`);
     const data = await res.json();
 
     document.querySelector("#total-projects span").textContent = data.total_projects;
@@ -43,17 +59,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.querySelector("#completed-projects span").textContent = data.completed_projects;
     document.querySelector("#pending-proposals span").textContent = data.pending_proposals;
 
-    // 📈 Fields Chart
-    const fieldLabels = data.most_active_fields.map(f => f.field);
+    const ongoing = parseInt(data.ongoing_projects) || 0;
+    const completed = parseInt(data.completed_projects) || 0;
+
+    const hasData = ongoing + completed > 0;
+    const chartData = hasData ? [ongoing, completed] : [1];
+    const chartLabels = hasData ? ["Ongoing", "Completed"] : ["No Data"];
+    const chartColors = hasData ? ["#36A2EB", "#4BC0C0"] : ["#cccccc"];
+
+    if (statusChartInstance) statusChartInstance.destroy();
+    statusChartInstance = new Chart(statusCtx, {
+      type: "pie",
+      data: {
+        labels: chartLabels,
+        datasets: [{
+          data: chartData,
+          backgroundColor: chartColors,
+          borderColor: ["#ffffff"],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: "Project Completion Status" },
+          legend: { display: true, position: 'bottom' }
+        }
+      }
+    });
+
+    const fieldLabels = data.most_active_fields.map(f => f.field || "Unspecified");
     const fieldCounts = data.most_active_fields.map(f => f.count);
 
-    new Chart(document.getElementById("fieldsChart"), {
+    if (fieldsChartInstance) fieldsChartInstance.destroy();
+    fieldsChartInstance = new Chart(fieldsCtx, {
       type: "bar",
       data: {
         labels: fieldLabels,
         datasets: [{
           label: "Number of Projects",
           data: fieldCounts,
+          
         }]
       },
       options: {
@@ -65,55 +111,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
-    const ongoing = parseInt(data.ongoing_projects) || 0;
-const completed = parseInt(data.completed_projects) || 0;
+    // 🎯 Populate Project Dropdown
+    if (data.projects?.length) {
+      projectSelect.innerHTML = `<option value="">All Projects</option>`;
+      data.projects.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name || `Project ${p.id}`;
+        projectSelect.appendChild(opt);
+      });
 
-let chartData, chartLabels, chartColors;
-
-if (ongoing + completed === 0) {
-  chartLabels = ["No Data"];
-  chartData = [1];  // default dummy data to draw a pie slice
-  chartColors = ["#cccccc"];
-} else {
-  chartLabels = ["Ongoing", "Completed"];
-  chartData = [ongoing, completed];
-  chartColors = ["#36A2EB", "#4BC0C0"];
-}
-
-new Chart(document.getElementById("statusChart"), {
-  type: "pie",
-  data: {
-    labels: chartLabels,
-    datasets: [{
-      data: chartData,
-      backgroundColor: chartColors,
-      borderColor: ["#ffffff"],
-      borderWidth: 2
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      title: {
-        display: true,
-        text: "Project Completion Status"
-      },
-      legend: {
-        display: true,
-        position: 'bottom'
-      }
+      projectSelect.style.display = "inline-block";
+      projectSelect.onchange = () => loadDashboard(projectSelect.value);
     }
   }
+
+  loadDashboard();
 });
-
-
-
-  } catch (error) {
-    console.error("Dashboard load error:", error);
-    alert("Failed to load dashboard data.");
-  }
-});
-
 </script>
+
 
 {% endblock %}

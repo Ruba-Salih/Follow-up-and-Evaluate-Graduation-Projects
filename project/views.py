@@ -1460,20 +1460,30 @@ def get_task_detail(request, task_id):
 
 from django.http import JsonResponse
 
+
 def coordinator_dashboard_stats(request):
     user = request.user
 
     try:
-        coordinator = user.coordinator  # assuming OneToOneField from User to Coordinator
-    except Coordinator.DoesNotExist:
+        coordinator = user.coordinator
+    except AttributeError:
         return JsonResponse({"error": "Not a coordinator"}, status=403)
+
+    project_id = request.GET.get("project")
 
     if coordinator.is_super:
         projects = Project.objects.all()
-        proposals = ProjectProposal.objects.filter(coordinator_status='pending')
     else:
         projects = Project.objects.filter(department=coordinator.department)
-        proposals = ProjectProposal.objects.filter(coordinator_status='pending', department=coordinator.department)
+
+    project_list = projects.values("id", "name")  # For dropdown
+
+    if project_id:
+        projects = projects.filter(id=project_id)
+
+    proposals = ProjectProposal.objects.filter(coordinator_status='pending')
+    if not coordinator.is_super:
+        proposals = proposals.filter(department=coordinator.department)
 
     total = projects.count()
     ongoing = projects.filter(plan__completion_status__lt=100).count()
@@ -1490,8 +1500,8 @@ def coordinator_dashboard_stats(request):
         "completed_projects": completed,
         "pending_proposals": proposals.count(),
         "most_active_fields": list(active_fields),
+        "projects": list(project_list),
     })
-
 
 @login_required
 def coordinator_dashboard_page(request):
