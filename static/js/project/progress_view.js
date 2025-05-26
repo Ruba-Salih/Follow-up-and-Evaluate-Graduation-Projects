@@ -32,7 +32,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
 
     goalFilter.innerHTML += goals.map(g => `<option value="${g.id}">${g.goal}</option>`).join("");
-    studentFilter.innerHTML += students.map(s => `<option value="${s.id}">${s.username}</option>`).join("");
+    studentFilter.innerHTML += students.map(s => {
+    const fullName = [s.first_name, s.last_name].filter(Boolean).join(" ");
+    return `<option value="${s.id}">${fullName || s.username}</option>`;
+}).join("");
+
 
     function renderTasks() {
         const goalVal = goalFilter.value;
@@ -171,7 +175,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 }
-
 
     goalFilter.addEventListener("change", renderTasks);
     statusFilter.addEventListener("change", renderTasks);

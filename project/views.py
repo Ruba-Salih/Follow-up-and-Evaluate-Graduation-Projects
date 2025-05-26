@@ -905,15 +905,14 @@ class TrackProjectView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request, pk=None):
-        print("🔍 Project GET request received")
 
         if pk:
-            print(f"🔎 Fetching details for project ID {pk}")
+            
             try:
                 project = Project.objects.select_related(
                     "plan", "supervisor", "coordinator", "department"
                 ).get(pk=pk)
-                print(f"✅ Found project: {project.name}")
+                
             except Project.DoesNotExist:
                 return Response({"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -939,7 +938,9 @@ class TrackProjectView(APIView):
                     task_obj = goal_tasks.get(id=t["id"])
                     if task_obj.assign_to:
                         t["assign_to"] = task_obj.assign_to.id  # <-- This is the key fix
-                        t["assign_to_name"] = task_obj.assign_to.username
+                        full_name = f"{task_obj.assign_to.first_name} {task_obj.assign_to.last_name}".strip()
+                        t["assign_to_name"] = full_name or task_obj.assign_to.username
+
                     else:
                         t["assign_to"] = None
                         t["assign_to_name"] = None
@@ -954,11 +955,11 @@ class TrackProjectView(APIView):
 
             tasks_data = ProjectTaskSerializer(tasks, many=True).data
             completion = round(calculate_completion_by_tasks(project), 2)
-            print(f"🧮 Completion Status for project {project.id}: {completion}")
+            
 
             # ✅ Include feedbacks from all teaching roles
             feedbacks = FeedbackExchange.objects.filter(project=project).order_by("-created_at")
-            print("🔁 Total Feedbacks Found:", feedbacks.count())
+            
             for fb in feedbacks:
                 print("📝 Feedback:", {
                     "sender": f"{fb.sender.first_name} {fb.sender.last_name}".strip(),
@@ -1419,7 +1420,12 @@ def get_task_detail(request, task_id):
             } if task.goal else None,
             "outputs": task.outputs,
             "assign_to": task.assign_to.id if task.assign_to else None,
-            "assign_to_name": task.assign_to.username if task.assign_to else None,
+            "assign_to_name": (
+                    f"{task.assign_to.first_name} {task.assign_to.last_name}".strip()
+                    if task.assign_to and (task.assign_to.first_name or task.assign_to.last_name)
+                    else task.assign_to.username if task.assign_to else None
+                ),
+
             "deadline_days": task.deadline_days,
             "deliverable_text": task.deliverable_text,
             "deliverable_file": task.deliverable_file.url if task.deliverable_file else None,
