@@ -53,6 +53,9 @@ urlpatterns = [
     #reports urls
     path("api/report/", include("report.urls")),
 
+    # Announcement app API routes
+    path('api/announcements/', include('announcement.urls')),
+
     path('i18n/', include('django.conf.urls.i18n')),
 
 ]

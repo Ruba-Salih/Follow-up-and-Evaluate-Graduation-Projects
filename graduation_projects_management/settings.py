@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'form',
     'grades',
     'feedbacks',
+    'announcement',
     'rest_framework',
     'rest_framework_simplejwt',
     'django_extensions',

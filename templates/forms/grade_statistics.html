@@ -1,0 +1,459 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Grade Statistics{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/forms/manage_grades.css' %}">
+<style>
+  /* Reset and base */
+  body {
+    font-family: 'Inter', sans-serif; 
+    color: #333333;
+    background: #FFFFFF;
+  }
+
+  /* Container */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  h2.page-title {
+    font-weight: 600;
+    font-size: 2rem; /* 32px */
+    line-height: 2.5rem; /* 40px */
+    margin-bottom: 40px;
+    text-align: center;
+  }
+
+  /* Grid Layout */
+  .main-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 24px;
+  }
+
+  @media (max-width: 992px) {
+    .main-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Card Base */
+  .card {
+    background: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 16px;
+  }
+
+  /* Section Titles */
+  .section-title {
+    font-weight: 600;
+    font-size: 1.25rem; /* 20px */
+    line-height: 1.75rem; /* 28px */
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Grade Over Time Chart Card */
+  #gradeHistogram {
+    max-height: 300px;
+    width: 100%;
+  }
+
+  /* Department Average Widget */
+  /* Department Average Widget */
+.dept-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: flex-start; /* Ensure items align left */
+}
+
+.dept-mini {
+  background: #F9F9F9;
+  border-radius: 8px;
+  padding: 16px;
+  width: calc(33.333% - 16px); /* Three per row with gap */
+  max-width: 300px;
+  min-width: 200px;
+  box-sizing: border-box;
+  text-align: center;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  cursor: default;
+  flex-grow: 1;
+}
+
+.dept-mini:hover,
+.dept-mini:focus-within {
+  background: #FFFFFF;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+.dept-mini h4 {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #333333;
+}
+
+.dept-mini p {
+  font-weight: 700;
+  font-size: 24px;
+  margin: 0;
+  color: #a63026;
+}
+.dept-mini p.dept-grade-count {
+  font-size: 14px;
+  color: #383737;
+  margin-top: 4px;
+}
+
+  /* Top Student Spotlight */
+  .top-student {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .top-student-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #F0F0F0;
+    flex-shrink: 0;
+  }
+  .top-student-info {
+    flex-grow: 1;
+  }
+  .top-student-name {
+    font-weight: 600;
+    font-size: 16px;
+    margin: 0;
+    color: #333333;
+  }
+  .top-student-grade {
+    font-weight: 700;
+    font-size: 32px;
+    color: #a63026;
+    margin-top: 4px;
+  }
+  .btn-view-profile {
+    padding: 8px 16px;
+    background-color: transparent;
+    border: 2px solid #a63026;
+    color: #a63026;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .btn-view-profile:hover,
+  .btn-view-profile:focus {
+    background-color: #a63026;
+    color: #FFFFFF;
+    outline: none;
+  }
+
+  /* Supervisor Filter Panel */
+  .filter-panel form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .filter-panel label {
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .filter-panel select {
+    border: 1px solid #CCCCCC;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    min-width: 220px;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+  }
+  .filter-panel select:hover,
+  .filter-panel select:focus {
+    border-color: #a63026;
+    outline: none;
+  }
+  .filter-panel button {
+    background-color: transparent;
+    border: 2px solid #a63026;
+    color: #a63026;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .filter-panel button:hover,
+  .filter-panel button:focus {
+    background-color: #444;
+    color: #FFFFFF;
+    outline: none;
+  }
+.top-student-section {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.top-student-list {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.top-student-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 12px;
+  flex: 1 1 calc(33.333% - 24px);
+  min-width: 280px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.top-student-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.top-student-avatar svg {
+  width: 48px;
+  height: 48px;
+}
+
+.top-student-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.top-student-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #222;
+}
+
+.top-student-grade {
+  font-size: 0.9rem;
+  color: #a63026;
+}
+
+.btn-view-profile {
+  background: transparent;
+  border: 1px solid #a63026;
+  color: #a63026;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.btn-view-profile:hover {
+  background: #e7f1ff;
+}
+
+  /* List styles for students and grades */
+  .list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #F0F0F0;
+  }
+  .badge-grade {
+    font-size: 1rem;
+    padding: 0.5em 0.75em;
+    border-radius: 12px;
+    background-color: #a63026;
+    color: white;
+    font-weight: 600;
+  }
+  .badge-grade.bg-success {
+    background-color: #6c2929;
+  }
+  .badge-grade.bg-secondary {
+    background-color: #a63026;
+  }
+
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+<div class="container py-4">
+  <h2 class="page-title">📊 Grade Statistics Dashboard</h2>
+
+  <div class="main-grid">
+    <!-- Grades Over Time Chart -->
+    <section class="card" aria-label="Grades Over Time">
+      <div class="section-title">📈 Grades Distribution</div>
+      <canvas id="gradeHistogram" role="img" aria-label="Bar chart showing grade distribution over ranges"></canvas>
+    </section>
+
+    <!-- Department Average Scores -->
+    <section class="card" aria-label="Department Average Scores">
+      <div class="section-title">🏫 Department Average Scores</div>
+      <div class="dept-list" role="list">
+        {% for dept in dept_stats %}
+          <div class="dept-mini" tabindex="0" role="listitem" aria-label="Department {{ dept.name }} average grade {{ dept.avg|floatformat:2 }}">
+            <h4>{{ dept.name }}</h4>
+            <p>{{ dept.avg|floatformat:2 }}</p>
+            <p class="dept-grade-count">{{ dept.grades|length }} grades</p>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Top Student Spotlight -->
+     <section class="card p-4 top-student-section" aria-label="Top Student Spotlight">
+  <div class="section-title mb-3">🏅 Top 3 Students</div>
+  {% if student_performance %}
+    <div class="top-student-list">
+      {% for student in student_performance|slice:":3" %}
+        <div class="top-student-card">
+          
+          <div class="top-student-info">
+            <p class="top-student-name mb-1">{{ student.name }}</p>
+            <p class="top-student-grade mb-1">Grade: <strong>{{ student.grade }}</strong></p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>No student data available.</p>
+  {% endif %}
+</section>
+
+   <!--  <section class="card" aria-label="Top Student Spotlight">
+      <div class="section-title">🏅 Top Student</div>
+      {% if student_performance %}
+      {% with top_student=student_performance.0 %}
+      <div class="top-student">
+        <div class="top-student-avatar" aria-hidden="true">
+          <svg width="48" height="48" fill="#CCCCCC" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="24"/></svg>
+        </div>
+        <div class="top-student-info">
+          <p class="top-student-name">{{ top_student.name }}</p>
+          <p class="top-student-grade">{{ top_student.grade }}</p>
+          <button class="btn-view-profile" type="button" aria-label="View profile of {{ top_student.name }}">View Profile</button>
+        </div>
+      </div>
+      {% endwith %}
+      {% else %}
+      <p>No student data available.</p>
+      {% endif %}
+    </section>
+ -->
+    <!-- Supervisor Filter Panel -->
+    <section class="card filter-panel" aria-label="Filter grades by supervisor">
+      <div class="section-title">🧑‍🏫 Filter by Supervisor</div>
+      <form method="get" aria-controls="supervisor-projects" aria-describedby="filter-desc">
+        <label for="supervisor">Select Supervisor:</label>
+        <select name="supervisor" id="supervisor" aria-required="true">
+          <option value="">-- Select Supervisor --</option>
+          {% for sup in supervisors %}
+            <option value="{{ sup.username }}" {% if sup.username == queried_supervisor %}selected{% endif %}>
+              {{ sup.get_full_name }}
+            </option>
+          {% endfor %}
+        </select>
+        <button type="submit">Apply</button>
+      </form>
+
+      {% if supervisor_projects %}
+      <div id="supervisor-projects" tabindex="0" aria-live="polite" aria-relevant="additions removals">
+        <h6 id="filter-desc" class="mt-3 mb-3 text-muted">Projects by: <strong>{{ queried_supervisor }}</strong></h6>
+        {% for proj in supervisor_projects %}
+          <div class="card mb-2" style="box-shadow:none; padding: 0;">
+            <div class="card-header fw-semibold" style="font-weight:600; background:none; padding:8px 16px; border-bottom: 1px solid #F0F0F0;">
+              {{ proj.project }}
+            </div>
+            <ul class="list-group list-group-flush" style="list-style:none; margin:0; padding:0;">
+              {% for entry in proj.grades %}
+                <li class="list-group-item" role="listitem">
+                  {{ entry.student }}
+                  <span class="badge bg-secondary badge-grade">{{ entry.grade }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const bins = JSON.parse('{{ histogram_bins|safe }}');
+  const ctx = document.getElementById('gradeHistogram').getContext('2d');
+
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['0-10', '11-20', '21-30', '31-40', '41-50', '51-60', '61-70', '71-80', '81-90', '91-100'],
+      datasets: [{
+        label: 'Number of Students',
+        data: bins,
+        backgroundColor: 'rgba(74, 144, 226, 0.6)',
+        borderColor: 'rgba(74, 144, 226, 1)',
+        borderWidth: 1,
+        barThickness: 20,
+        hoverBackgroundColor: 'rgba(74, 144, 226, 0.9)',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1
+          },
+          title: {
+            display: true,
+            text: 'Student Count'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Grade Ranges'
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          enabled: true,
+          mode: 'nearest',
+          intersect: false
+        }
+      },
+      interaction: {
+        mode: 'nearest',
+        intersect: false
+      }
+    }
+  });
+</script>
+{% endblock %}

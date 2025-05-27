@@ -4,6 +4,7 @@
 {% block title %}{% trans "Teacher Home" %}{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
+<link rel="stylesheet" href="{% static 'css/announcement/announce.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -28,15 +29,85 @@
     </div>
 
     <!-- Announcements Section -->
+    <!--Announcements-->
     <div class="announcements">
-        <h3>📢 {% trans "Recent Announcements" %}</h3>
-        <ul>
-            {% for announcement in announcements %}
-                <li>{{ announcement.title }} - {{ announcement.date_posted }}</li>
-            {% empty %}
-                <li>{% trans "No announcements available." %}</li>
-            {% endfor %}
-        </ul>
-    </div>
-</div>
+    <h3>📢 {% trans "Recent Announcements" %}</h3>
+
+    <input type="text" id="announcementSearch" class="form-input" placeholder="{% trans 'Search by title...' %}">
+
+    {% if announcements %}
+      <div id="announcementContainer">
+        <div class="announcement-list" id="initialAnnouncements">
+          {% for announcement in announcements|slice:":3" %}
+            <div class="announcement-card" data-title="{{ announcement.title|lower }}">
+              <div class="announcement-header">
+                <strong class="announcement-title">🛎️ {{ announcement.title }}</strong>
+                <small class="announcement-date">📅 {{ announcement.created_at|date:"M d, Y H:i" }}</small>
+              </div>
+              <p class="announcement-message">💬 {{ announcement.message|truncatewords:30 }}</p>
+              {% for attachment in announcement.files.all %}
+                <a href="{{ attachment.file.url }}" class="announcement-attachment" target="_blank">
+                  📎 {{ attachment.file.name|cut:"announcement_files/" }}
+                </a>
+              {% empty %}
+                <p>{% trans "No attachments." %}</p>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="announcement-list" id="moreAnnouncements" style="display: none;">
+          {% for announcement in announcements|slice:"3:" %}
+            <div class="announcement-card" data-title="{{ announcement.title|lower }}">
+              <div class="announcement-header">
+                <strong class="announcement-title">🛎️ {{ announcement.title }}</strong>
+                <small class="announcement-date">📅 {{ announcement.created_at|date:"M d, Y H:i" }}</small>
+              </div>
+              <p class="announcement-message">💬 {{ announcement.message|truncatewords:30 }}</p>
+              {% for attachment in announcement.files.all %}
+                <a href="{{ attachment.file.url }}" class="announcement-attachment" target="_blank">
+                  📎 {{ attachment.file.name|cut:"announcement_files/" }}
+                </a>
+              {% empty %}
+                <p>{% trans "No attachments." %}</p>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+
+        {% if announcements|length > 3 %}
+          <button id="toggleBtn" class="btn-view-toggle">{% trans "View More" %}</button>
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="no-announcements">{% trans "No announcements available." %}</p>
+    {% endif %}
+  </div>
+
+  <script>
+    const toggleBtn = document.getElementById('toggleBtn');
+    const moreAnnouncements = document.getElementById('moreAnnouncements');
+    const searchInput = document.getElementById('announcementSearch');
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        if (moreAnnouncements.style.display === 'none') {
+          moreAnnouncements.style.display = 'block';
+          toggleBtn.textContent = '{% trans "View Less" %}';
+        } else {
+          moreAnnouncements.style.display = 'none';
+          toggleBtn.textContent = '{% trans "View More" %}';
+        }
+      });
+    }
+
+    searchInput?.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.announcement-card');
+      cards.forEach(card => {
+        const title = card.dataset.title;
+        card.style.display = title.includes(query) ? 'block' : 'none';
+      });
+    });
+  </script>
 {% endblock %}
