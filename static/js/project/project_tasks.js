@@ -166,7 +166,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     async function handleDelete(taskId) {
-        if (!confirm("Are you sure you want to delete this task?")) return;
+        if (!confirmAction("Are you sure you want to delete this task?")) return;
 
         const formData = new FormData();
         formData.append("task_id", taskId);

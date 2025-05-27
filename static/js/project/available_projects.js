@@ -46,14 +46,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 const data = await res.json();
 
                 if (res.ok) {
-                    alert(`✅ ${data.detail}`);
+                    showAlert(`✅ ${data.detail}`, 'success');
                     window.location.reload();
                 } else {
-                    alert(`⚠️ ${data.detail || "Something went wrong."}`);
+                    showAlert(`⚠️ ${data.detail || "Something went wrong."}`, 'warning');
                 }
             } catch (err) {
                 console.error("❌ Error:", err);
-                alert("⚠️ Network error. Please try again.");
+                showAlert("⚠️ Network error. Please try again.", 'error');
             }
         });
     });

@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
         const data = await res.json();
         if (res.ok) {
-          alert("✅ Feedback submitted successfully!");
+          showAlert("✅ Feedback submitted successfully!", 'success');
           feedbackForm.reset();
           modal.classList.remove("show");
         } else {

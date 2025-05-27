@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
 
-            if (!confirm("Are you sure you want to leave this project?")) return;
+            if (!confirmAction("Are you sure you want to leave this project?")) return;
 
             const projectId = form.dataset.projectId;
             const csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
@@ -54,10 +54,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const data = await response.json();
                 if (response.ok) {
-                    alert("✅ You have been removed from the project.");
+                    showAlert("✅ You have been removed from the project.", 'success');
                     location.reload();
                 } else {
-                    alert(`⚠️ ${data.detail || "Failed to remove you from the project."}`);
+                    showAlert(`⚠️ ${data.detail || "Failed to remove you from the project."}`, 'error');
                 }
 
             } catch (error) {

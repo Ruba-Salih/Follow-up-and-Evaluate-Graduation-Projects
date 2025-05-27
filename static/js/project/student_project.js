@@ -69,7 +69,7 @@ researchUploadForm?.addEventListener("submit", async (e) => {
     const file = fileInput.files[0];
 
     if (!file) {
-        alert("⚠️ Please select a file to upload.");
+        showAlert("⚠️ Please select a file to upload.", 'warning');
         return;
     }
 
@@ -85,11 +85,11 @@ researchUploadForm?.addEventListener("submit", async (e) => {
     });
 
     if (res.ok) {
-        alert("✅ Research file uploaded successfully!");
+        showAlert("✅ Research file uploaded successfully!", 'success');
         researchModal.classList.remove("show");
         window.location.reload();
     } else {
-        alert("❌ Failed to upload research file.");
+        showAlert("❌ Failed to upload research file.", 'error');
     }
 });
 
@@ -148,7 +148,7 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
     const file = document.getElementById("research-feedback-file")?.files[0];
 
     if (!comment && !file) {
-        alert("Please write feedback or upload a file.");
+        showAlert("Please write feedback or upload a file.", 'warning');
         return;
     }
 
@@ -168,11 +168,11 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
     });
 
     if (res.ok) {
-        alert("✅ Feedback submitted!");
+        showAlert("✅ Feedback submitted!", 'success');
         researchModal.classList.remove("show");
         window.location.reload();
     } else {
-        alert("❌ Failed to submit feedback.");
+        showAlert("❌ Failed to submit feedback.", 'error');
     }
 });
 
@@ -321,10 +321,10 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
                         });
     
                         if (res.ok) {
-                            alert("✅ Goal updated successfully!");
+                            showAlert("✅ Goal updated successfully!", 'success');
                             await loadGoals();
                         } else {
-                            alert("⚠️ Failed to update goal.");
+                            showAlert("⚠️ Failed to update goal.", 'error');
                         }
                     } catch (error) {
                         console.error("Update goal error:", error);
@@ -334,7 +334,7 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
     
             document.querySelectorAll(".delete-goal-btn").forEach(btn => {
                 btn.addEventListener("click", async function () {
-                    if (!confirm("Are you sure you want to delete this goal?")) return;
+                    if (!confirmAction("Are you sure you want to delete this goal?")) return;
     
                     const id = this.getAttribute("data-goal-id");
                     const formData = new FormData();
@@ -350,10 +350,10 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
                         });
     
                         if (res.ok) {
-                            alert("✅ Goal deleted successfully!");
+                            showAlert("✅ Goal deleted successfully!", 'success');
                             await loadGoals();
                         } else {
-                            alert("⚠️ Failed to delete goal.");
+                            showAlert("⚠️ Failed to delete goal.", 'error');
                         }
                     } catch (error) {
                         console.error("Delete goal error:", error);
@@ -448,14 +448,14 @@ researchFeedbackForm?.addEventListener("submit", async (e) => {
         });
 
         if (res.ok) {
-            alert("✅ Goal added successfully!");
+            showAlert("✅ Goal added successfully!", 'success');
             newGoalText.value = "";
             newGoalDuration.value = "";
             await loadGoals();
         } else {
             const errorText = await res.text();
             console.error("❌ Goal add failed:", res.status, errorText);
-            alert("⚠️ Failed to add goal.");
+            showAlert("⚠️ Failed to add goal.", 'error');
         }
     } catch (error) {
         console.error("💥 Add goal error:", error);
@@ -523,7 +523,7 @@ editProjectForm?.addEventListener("submit", async (e) => {
         projectField.textContent = data.field || newField;
 
         editProjectModal.classList.remove("show");
-        alert("✅ Project info updated successfully!");
+        showAlert("✅ Project info updated successfully!", 'success');
     } catch (err) {
         alert("❌ Could not update project.");
         console.error(err);
@@ -537,7 +537,7 @@ editProjectForm?.addEventListener("submit", async (e) => {
         const selectedGoalText = goalSelect?.options[goalSelect.selectedIndex]?.text;
     
         if (!selectedGoalId) {
-            alert("⚠️ Please select a goal first.");
+            showAlert("⚠️ Please select a goal first.", 'warning');
             return;
         }
     
@@ -646,7 +646,7 @@ editProjectForm?.addEventListener("submit", async (e) => {
                 });
 
                 if (res.ok) {
-                    alert("✅ Your weekly report have been submitted successfully!");
+                    showAlert("✅ Your weekly report have been submitted successfully!", 'success');
                     window.location.reload();
                     return;
                 } else {
@@ -660,10 +660,10 @@ editProjectForm?.addEventListener("submit", async (e) => {
         }
 
         if (tasksCreated > 0) {
-            alert(`✅ ${tasksCreated} task(s) submitted successfully!`);
+            showAlert(`✅ ${tasksCreated} task(s) submitted successfully!`, 'success');
             window.location.reload();
         } else if (tasksFailed > 0) {
-            alert("⚠️ Some tasks failed to submit.");
+            showAlert("⚠️ Some tasks failed to submit.", 'warning');
         } else {
             alert("⚠️ Nothing was submitted.");
         }
@@ -714,7 +714,7 @@ editProjectForm?.addEventListener("submit", async (e) => {
         }
     
         if (success > 0) {
-            alert(`✅ Progress submitted successfully for task(s)!`);
+            showAlert(`✅ Progress submitted successfully for task(s)!`, 'success');
             window.location.reload();
         } else if (failed > 0) {
             alert(`⚠️ Failed to submit some progress.`);

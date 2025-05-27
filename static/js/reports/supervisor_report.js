@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
 
             if (res.ok) {
-                alert("✅ Report submitted successfully!");
+                showAlert("✅ Report submitted successfully!", 'success');
                 reportModal.classList.remove("show");
                 location.reload();
             } else {
@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.querySelectorAll(".btn-delete").forEach(button => {
         button.addEventListener("click", async () => {
             const reportId = button.dataset.reportId;
-            const confirmDelete = confirm("Are you sure you want to delete this report?");
+            const confirmDelete = confirmAction("Are you sure you want to delete this report?");
             if (!confirmDelete) return;
 
             try {
@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 });
 
                 if (res.status === 204) {
-                    alert("✅ Report deleted successfully.");
+                    showAlert("✅ Report deleted successfully.", 'success');
                     location.reload();
                 } else {
                     const error = await res.json();

@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (checked.length > allowedSelectableCount) {
         checkbox.checked = false;
-        alert(`You can only select ${allowedSelectableCount} other student(s) because you are already part of the team.`);
+        showAlert(`You can only select ${allowedSelectableCount} other student(s) because you are already part of the team.`, 'warning');
     }
 
 
