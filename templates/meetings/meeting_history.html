@@ -21,7 +21,9 @@
                     <div class="meeting-card">
                         <p><strong>Meeting ID:</strong> {{ meeting.meeting_id }}</p>
                         <p><strong>Requested By:</strong> {{ meeting.requested_by.username }}</p>
-                        <p><strong>Teacher:</strong> {{ meeting.teacher.username }}</p>
+                        {% if not is_teacher %}
+                            <p><strong>Teacher:</strong> {{ meeting.teacher.username }}</p>
+                        {% endif %}
                         <p><strong>Meeting Time:</strong> {{ meeting.start_datetime }}</p>
                         <p><strong>Project:</strong> {% if meeting.project %}{{ meeting.project.name }}{% else %}No Project{% endif %}</p>
                         <p><strong>Status:</strong> {{ meeting.status }}</p>
@@ -29,6 +31,17 @@
                         {% if is_teacher %}
                         <div class="meeting-actions">
                             <div class="meeting-info-box">
+                                 <div class="attendance-status">
+                                    <h4>Attendance Status:</h4>
+                                    <ul>
+                                        {% for participant in meeting.participants.all %}
+                                            <li>
+                                                <strong>{{ participant.user.username }}:</strong>
+                                                    {{ participant.attendance_status }}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
                                 <div class="recommendation-box">
                                     <h4>Recommendations:</h4>
                                     <p>{{ meeting.recommendation|default:"No recommendation provided." }}</p>
@@ -77,7 +90,6 @@
                                             <label for="status">Update Status:</label>
                                             <select name="status" class="form-control">
                                                 <option value="accepted" {% if meeting.status == 'accepted' %}selected{% endif %}>Accepted</option>
-                                                <option value="scheduled" {% if meeting.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
                                                 <option value="completed" {% if meeting.status == 'completed' %}selected{% endif %}>Completed</option>
                                                 <option value="cancelled" {% if meeting.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
                                             </select>
@@ -107,12 +119,14 @@
                                             <label for="meeting_files">Attach New Files:</label>
                                             <input type="file" name="meeting_files" multiple>
                                         </div>
-
-                                        <button type="submit" class="btn btn-primary">💾 Save Changes</button>
-                                    </form>
+                                <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                                </form>
                                 </div>
-                            </div>
-                            {% else %}
+                                </div>
+                                </div> <!-- end of meeting-actions -->
+                                {% endif %}  <!-- close if is_teacher -->
+
+                                {% if not is_teacher %}
                                 <!-- Student View -->
                                 <div class="attendance-status">
                                     <h4>Attendance Status:</h4>
@@ -137,6 +151,29 @@
                                 <div class="recommendation-box">
                                     <h4>Meeting report:</h4>
                                     <p>{{ meeting.meeting_report|default:"No report available." }}</p>
+                                </div>
+                                <div class="uploaded-files">
+                                    <h4>📎 Uploaded Files:</h4>
+                                    {% with files=meeting_files|dict_get:meeting.meeting_id %}
+                                        {% if files %}
+                                            <div class="file-list">
+                                                {% for file in files %}
+                                                    <div class="file-entry">
+                                                        <p><strong>File:</strong>
+                                                            <a href="{{ file.file.url }}" target="_blank">{{ file.file.name|slice:"10:" }}</a>
+                                                        </p>
+                                                        {% if file.description %}
+                                                            <p><strong>Description:</strong> <em>{{ file.description }}</em></p>
+                                                        {% endif %}
+                                                        <p><small><strong>Uploaded by:</strong> {{ file.uploaded_by.get_full_name }}</small></p>
+                                                        <hr>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <p>No files uploaded for this meeting.</p>
+                                        {% endif %}
+                                    {% endwith %}
                                 </div>
 
                                 {% if meeting.status == 'completed' %}
