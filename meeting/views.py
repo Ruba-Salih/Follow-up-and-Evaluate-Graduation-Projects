@@ -263,6 +263,35 @@ class ScheduleMeetingAPIView(APIView):
                     {'error': 'Meeting time must be within the allowed time slot.'},
                     status=400
                 )
+            
+        if is_teacher(request.user):
+            # Parse meeting date and time
+            meeting_date_obj = datetime.strptime(meeting_date, "%Y-%m-%d").date()
+            meeting_start_obj = datetime.strptime(slot_start_time, "%H:%M").time()
+            meeting_end_obj = datetime.strptime(slot_end_time, "%H:%M").time()
+
+            start_datetime = datetime.combine(meeting_date_obj, meeting_start_obj)
+            end_datetime = datetime.combine(meeting_date_obj, meeting_end_obj)
+
+            # Get the project ID from the request
+            project_id = request.data.get('project_id')
+            if not project_id:
+                return Response({'error': 'Missing project_id.'}, status=400)
+
+            # Check for conflicting accepted meetings for that project
+            conflict_exists = Meeting.objects.filter(
+                project_id=project_id,
+                status='accepted',
+                start_datetime__lt=end_datetime,
+                end_datetime__gt=start_datetime
+            ).exists()
+
+            if conflict_exists:
+                return Response(
+                    {'error': 'This group already has a meeting scheduled during this time.'},
+                    status=400
+                )
+
         
         try:
             print(f"meeting date is {meeting_date}")
