@@ -230,6 +230,35 @@ form input[type="file"]::file-selector-button {
     margin-top: 50px;
 }
 
+.members-view {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  font-size: 19px;
+  color: #a63026;
+}
+
+
+#project-teachers li{
+    border-left: 5px solid #a63026;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    padding: 8px 12px;
+    margin-top: 10px;
+    list-style-type: none;
+    text-align: left;
+}
+
+#project-students li{
+    border-left: 5px solid #a63026;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    padding: 8px 12px;
+    margin-top: 10px;
+    list-style-type: none;
+    text-align: left;
+}
 
 /* ===== Responsive Adjustments ===== */
 @media (max-width: 768px) {

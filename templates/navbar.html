@@ -12,16 +12,32 @@
 
     <ul class="nav-links">
         {% if user.is_authenticated %}
+    {% if request.path != '/home/' and request.path != '/admin-home/home/' and request.path != '/coordinator/home/' and request.path != '/student/home/' and request.path != '/teacher/home/' %}
+        <li>
+            {% if user.admin %}
+                <a href="{% url 'admin-home' %}">{% trans "Home" %}</a>
+            {% elif user.coordinator %}
+                <a href="{% url 'coordinator-home' %}">{% trans "Home" %}</a>
+            {% elif user.student %}
+                <a href="{% url 'student-home' %}">{% trans "Home" %}</a>
+            {% else %}
+                <a href="{% url 'teacher-home' %}">{% trans "Home" %}</a>
+            {% endif %}
+        </li>
+    {% endif %}
+    {% endif %}
+    
+        {% if user.is_authenticated %}
             {% if user.admin %}
                 <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
                 <li><a href="{% url 'notification-list' %}">{% trans "Notifications" %}</a></li>
-                <li><a href="{% url 'coordinator-dashboard' %}">{% trans "Dashboard" %}</a></li>
+                <li><a href="#">{% trans "Dashboard" %}</a></li>
                 <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
             {% elif user.coordinator %}
                 <li><a href="{% url 'profile-page' %}">{% trans "Profile" %}</a></li>
                 <li><a href="{% url 'notification-list' %}">{% trans "Notifications" %}</a></li>
-                <li><a href="{% url 'coordinator-dashboard' %}">{% trans "Dashboard" %}</a></li>
+                <li><a href="{% url 'coordinator_dashboard' %}">{% trans "Dashboard" %}</a></li>
                 <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
             {% elif user.student %}
@@ -34,7 +50,7 @@
                         {% endif %}
                     </a>
                 </li>
-                <li><a href="#">{% trans "Dashboard" %}</a></li>
+                <li><a href="{% url 'student_dashboard' %}">{% trans "Dashboard" %}</a></li>
                 <li><a href="#">{% trans "Grades" %}</a></li>
                 <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
 
@@ -54,6 +70,9 @@
         {% else %}
             <li><a href="{% url 'login' %}">{% trans "Login" %}</a></li>
         {% endif %}
+
+        
+
 
         <!-- 🌐 Language Switcher 
         <li>

@@ -188,8 +188,7 @@ button {
 
 /* Feedback section inside modal */
 #feedback-section {
-    background-color: #fff0f0;
-    
+    background-color: #f7f7f7;
     padding: 10px 12px;
     border-radius: 5px;
     margin-top: 10px;
@@ -197,15 +196,18 @@ button {
 }
 
 #feedback-section label {
-    font-weight: bold;
-    color: #a63026;
+    font-weight: bold;  
+}
+
+.feedback-item{
+    background-color: #fff;
+    border-left: 5px solid #a63026;
+    border-radius: 5px;
+    padding: 6px;
 }
 
 #feedback-content {
     margin-top: 6px;
-    font-size: 14px;
-    font-style: italic;
-    color: #a63026;
 }
 
 /* Search Bar */

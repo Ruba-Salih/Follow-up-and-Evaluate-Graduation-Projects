@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", async () => {
+    const currentUserId = document.getElementById("user-context")?.dataset?.userId;
+
     const modal = document.getElementById("proposal-modal");
     const form = document.getElementById("proposal-form");
     const createBtn = document.getElementById("create-proposal-btn");
@@ -202,6 +204,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (coordId) {
                 formData.append("proposed_to", coordId);
             }
+             const selectedRole = document.getElementById("teacher-role")?.value;
+            if (selectedRole) {
+                formData.append("teacher_role_id", selectedRole);
+            }
         } else {
             if (proposedToSelect?.value) {
                 formData.append("proposed_to", proposedToSelect.value);
@@ -212,8 +218,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             formData.append("attached_file", fileInput.files[0]);
         }
 
-        const checkedBoxes = teamMemberWrapper.querySelectorAll("input[type='checkbox']:checked");
-        checkedBoxes.forEach(cb => formData.append("team_members_ids", cb.value));
+        if (!isTeacher && teamMemberWrapper) {
+            const checkedBoxes = teamMemberWrapper.querySelectorAll("input[type='checkbox']:checked");
+            checkedBoxes.forEach(cb => formData.append("team_members_ids", cb.value));
+        }
 
         const url = editMode ? `/api/project/proposals/${currentProposalId}/` : `/api/project/proposals/`;
 
@@ -258,19 +266,39 @@ document.addEventListener("DOMContentLoaded", async () => {
             additionalComment.value = data.additional_comment || "";
             document.getElementById("duration").value = data.duration || 0;
 
-            const feedback = data.feedback_text?.trim();
-            const role = data.feedback_sender_role || "Teacher";
-            if (feedback) {
-                feedbackSection.classList.remove("hidden");
-                const label = feedbackSection.querySelector("label");
-                if (label) {
-                    label.innerHTML = `<strong>${role} Feedback:</strong>`;
-                }
-                feedbackContent.textContent = feedback;
-            } else {
-                feedbackSection.classList.add("hidden");
-                feedbackContent.textContent = "";
+           const teacherRoleSelect = document.getElementById("teacher-role");
+            if (teacherRoleSelect && data.teacher_role_id) {
+                teacherRoleSelect.value = String(data.teacher_role_id);  // force string match
             }
+
+
+            // 🔄 Fetch all feedbacks related to this proposal
+const feedbackRes = await fetch(`/api/project/feedback/?proposal=${data.id}`);
+const feedbackData = await feedbackRes.json();
+
+if (Array.isArray(feedbackData) && feedbackData.length > 0) {
+    feedbackSection.classList.remove("hidden");
+    const sortedFeedbacks = feedbackData.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // oldest first
+
+    feedbackContent.innerHTML = sortedFeedbacks.map(fb => {
+        const sender = fb.sender_name || "Unknown";
+        const created = new Date(fb.created_at).toLocaleString();
+        const message = fb.message || "";
+
+        return `
+            <div class="feedback-item" style="margin-bottom: 10px;">
+                <p><strong>${sender}</strong>: ${message}</p>
+                <p>🕒<em>${created}</em></p>
+            </div>
+        `;
+    }).join("");
+} else {
+    feedbackSection.classList.add("hidden");
+    feedbackContent.innerHTML = "<p>No feedback yet.</p>";
+}
+
+            const role = data.feedback_sender_role || "Teacher";
+            
 
             if (departmentSelect && data.department) {
                 departmentSelect.value = data.department;

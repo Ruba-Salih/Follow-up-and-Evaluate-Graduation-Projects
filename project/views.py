@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import redirect, render, get_object_or_404
 from django.db import transaction
 from django.db.models import Prefetch, Q, OuterRef, Subquery, Exists, Count, F
@@ -126,8 +127,19 @@ class ProjectProposalView(APIView):
                 elif not is_owner and not is_recipient:
                     return Response({'detail': 'Unauthorized access.'}, status=403)
 
+                
                 serializer = ProjectProposalSerializer(proposal)
                 response_data = serializer.data
+
+                response_data["submitted_by"] = {
+                "username": proposal.submitted_by.username,
+                "first_name": proposal.submitted_by.first_name,
+                "last_name": proposal.submitted_by.last_name,
+                }
+                
+                response_data["teacher_role"] = proposal.teacher_role.name if proposal.teacher_role else None
+                response_data["teacher_role_id"] = proposal.teacher_role.id if proposal.teacher_role else None
+
 
                 student_memberships = StudentProjectMembership.objects.filter(proposal=proposal).select_related('student')
 
@@ -241,7 +253,7 @@ class ProjectProposalView(APIView):
                             proposal__isnull=False
                         ).exists()
                     })
-    
+
         return Response({
             'proposals': proposals_serializer.data,
             'students': students_data,
@@ -308,6 +320,19 @@ class ProjectProposalView(APIView):
                         proposal.teacher_status = 'accepted'
                         proposal.save(update_fields=["teacher_status"])
 
+                        if is_teacher(user):
+                            teacher_status = data.get("teacher_status")
+                            if teacher_status in dict(ProjectProposal.STATUS_CHOICES):
+                                proposal.teacher_status = teacher_status
+
+                            role_id = data.get("teacher_role_id")
+                            if role_id:
+                                try:
+                                    role = Role.objects.get(id=role_id)
+                                    proposal.teacher_role = role
+                                    proposal.save(update_fields=["teacher_role"])
+                                except Role.DoesNotExist:
+                                    pass
 
                     if team_members_ids:
                         proposal.team_members.set(team_members_ids)
@@ -315,10 +340,11 @@ class ProjectProposalView(APIView):
                     if hasattr(user, 'student'):
                         StudentProjectMembership.objects.create(student=user.student, proposal_id=proposal.id)
 
-                    for sid in team_members_ids:
-                        if not StudentProjectMembership.objects.filter(student_id=sid, proposal_id=proposal.id).exists():
-                            StudentProjectMembership.objects.create(student_id=sid, proposal_id=proposal.id)
-
+                    for sid in set(team_members_ids):
+                        StudentProjectMembership.objects.get_or_create(
+                        student_id=sid,
+                        proposal=proposal
+                    )
             except Exception as e:
                 print("❌ Error creating proposal and memberships:", str(e))
                 return Response({'detail': 'Failed to create proposal with team members.'}, status=400)
@@ -377,6 +403,13 @@ class ProjectProposalView(APIView):
             teacher_status = data.get("teacher_status")
             if teacher_status in dict(ProjectProposal.STATUS_CHOICES):
                 proposal.teacher_status = teacher_status
+            role_id = request.data.get("teacher_role_id")
+            if role_id:
+                try:
+                    role = Role.objects.get(id=role_id)
+                    proposal.teacher_role = role  # ✅ update it
+                except Role.DoesNotExist:
+                    pass
         elif hasattr(user, "coordinator"):
             coordinator_status = data.get("coordinator_status")
             if coordinator_status in dict(ProjectProposal.STATUS_CHOICES):
@@ -423,7 +456,12 @@ class ProjectProposalView(APIView):
         except ProjectProposal.DoesNotExist:
             return Response({'detail': 'Proposal not found.'}, status=404)
 
+        StudentProjectMembership.objects.filter(proposal=proposal).delete()
+
+        Project.objects.filter(proposal=proposal).delete()
+
         proposal.delete()
+
         return Response({'detail': 'Proposal deleted successfully.'}, status=204)
 
 
@@ -433,32 +471,68 @@ class FeedbackExchangeView(APIView):
     def get(self, request):
         user = request.user
 
-        if hasattr(user, "student"):
-            feedbacks = FeedbackExchange.objects.filter(
-                Q(receiver=user) | Q(receiver__isnull=True),
-                proposal__submitted_by=user,
-                proposal__isnull=False
-            ).order_by("-created_at")
-        else:
-            feedbacks = FeedbackExchange.objects.filter(sender=user).order_by("-created_at")
+        report_id = request.GET.get("report_id")
+        proposal_id = request.GET.get("proposal")
+        project_id = request.GET.get("project")
+        task_id = request.GET.get("task")
+        
 
-        serializer = FeedbackExchangeSerializer(feedbacks, many=True)
-        return Response(serializer.data)
+        # Allow filtering by exactly one target
+        if report_id:
+            feedbacks = FeedbackExchange.objects.filter(report_id=report_id).order_by("-created_at")
+        elif proposal_id:
+            feedbacks = FeedbackExchange.objects.filter(proposal_id=proposal_id).order_by("-created_at")
+        elif project_id:
+            feedbacks = FeedbackExchange.objects.filter(project_id=project_id).order_by("-created_at")
+        elif task_id:
+            feedbacks = FeedbackExchange.objects.filter(task_id=task_id).order_by("-created_at")
+        else:
+            # Default fallback (e.g. personal feedbacks)
+            if hasattr(user, "student"):
+                feedbacks = FeedbackExchange.objects.filter(
+                    Q(receiver=user) | Q(receiver__isnull=True),
+                    proposal__submitted_by=user,
+                    proposal__isnull=False
+                ).order_by("-created_at")
+            else:
+                feedbacks = FeedbackExchange.objects.filter(sender=user).order_by("-created_at")
+
+        data = []
+        for fb in feedbacks:
+            entry = {
+                "id": fb.id,
+                "sender_name": fb.sender.get_full_name() or fb.sender.username,
+                "message": fb.feedback_text,
+                "created_at": fb.created_at,
+            }
+
+            if fb.comment:
+                entry["comment"] = fb.comment
+
+            if fb.feedback_file:
+                entry["feedback_file"] = fb.feedback_file.url
+
+            if hasattr(fb, "reply"):
+                entry["reply"] = {
+                    "message": fb.reply.feedback_text,
+                    "created_at": fb.reply.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                }
+
+            data.append(entry)
+
+        return Response(data)
 
     def post(self, request):
         user = request.user
         data = request.data.copy()
         data["sender"] = user.id
+        print("Received data:", data)
 
         proposal_id = data.get("proposal")
         project_id = data.get("project")
         task_id = data.get("task_id")
-
-        if not proposal_id and not project_id:
-            return Response({"detail": "Either proposal or project must be specified."}, status=400)
-
-        if proposal_id and project_id:
-            return Response({"detail": "Only one of proposal or project should be specified."}, status=400)
+        report_id = data.get("report")
+        print("Received data2:", data)
 
         if task_id:
             try:
@@ -466,14 +540,39 @@ class FeedbackExchangeView(APIView):
                 if project_id and str(task.project.id) != str(project_id):
                     return Response({"detail": "Task does not belong to the specified project."}, status=400)
                 data["task"] = task.id
+                data.pop("task_id", None)
+                data.pop("project", None)  # ✅ Remove project to avoid serializer errors
+            except ProjectTask.DoesNotExist:
+                return Response({"detail": "Task not found."}, status=400)
+        elif report_id:
+            data["report"] = report_id
+        elif proposal_id:
+            pass
+        elif project_id:
+            pass
+        else:
+            return Response({"detail": "Must include one of proposal, project, task, or report."}, status=400)
+
+        if task_id:
+            try:
+                task = ProjectTask.objects.get(id=task_id)
+                if project_id and str(task.project.id) != str(project_id):
+                    return Response({"detail": "Task does not belong to the specified project."}, status=400)
+                data["task"] = task.id
+                data.pop("task_id", None)
             except ProjectTask.DoesNotExist:
                 return Response({"detail": "Task not found."}, status=400)
 
+        if report_id:
+            data["report"] = report_id
+
         serializer = FeedbackExchangeSerializer(data=data)
         if serializer.is_valid():
+            
             serializer.save()
             return Response(serializer.data, status=201)
 
+        print("❌ Serializer Errors:", serializer.errors)
         return Response(serializer.errors, status=400)
 
 
@@ -806,15 +905,14 @@ class TrackProjectView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request, pk=None):
-        print("🔍 Project GET request received")
 
         if pk:
-            print(f"🔎 Fetching details for project ID {pk}")
+            
             try:
                 project = Project.objects.select_related(
                     "plan", "supervisor", "coordinator", "department"
                 ).get(pk=pk)
-                print(f"✅ Found project: {project.name}")
+                
             except Project.DoesNotExist:
                 return Response({"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -840,7 +938,9 @@ class TrackProjectView(APIView):
                     task_obj = goal_tasks.get(id=t["id"])
                     if task_obj.assign_to:
                         t["assign_to"] = task_obj.assign_to.id  # <-- This is the key fix
-                        t["assign_to_name"] = task_obj.assign_to.username
+                        full_name = f"{task_obj.assign_to.first_name} {task_obj.assign_to.last_name}".strip()
+                        t["assign_to_name"] = full_name or task_obj.assign_to.username
+
                     else:
                         t["assign_to"] = None
                         t["assign_to_name"] = None
@@ -855,11 +955,11 @@ class TrackProjectView(APIView):
 
             tasks_data = ProjectTaskSerializer(tasks, many=True).data
             completion = round(calculate_completion_by_tasks(project), 2)
-            print(f"🧮 Completion Status for project {project.id}: {completion}")
+            
 
             # ✅ Include feedbacks from all teaching roles
             feedbacks = FeedbackExchange.objects.filter(project=project).order_by("-created_at")
-            print("🔁 Total Feedbacks Found:", feedbacks.count())
+            
             for fb in feedbacks:
                 print("📝 Feedback:", {
                     "sender": f"{fb.sender.first_name} {fb.sender.last_name}".strip(),
@@ -1185,7 +1285,9 @@ def teacher_view_project(request, project_id):
     student_members = [m.student for m in project.student_memberships.all()]
     teacher_members = [{
         "name": f"{m.user.first_name} {m.user.last_name}".strip() or m.user.username,
-        "role": m.role.name
+        "role": m.role.name,
+        "email": m.user.email,
+        "phone_number": getattr(m.user, "phone_number", "N/A")
     } for m in project.memberships.exclude(user=user)]
 
     form_available = EvaluationForm.objects.filter(target_role=my_membership.role).exists() if my_membership else False
@@ -1318,7 +1420,12 @@ def get_task_detail(request, task_id):
             } if task.goal else None,
             "outputs": task.outputs,
             "assign_to": task.assign_to.id if task.assign_to else None,
-            "assign_to_name": task.assign_to.username if task.assign_to else None,
+            "assign_to_name": (
+                    f"{task.assign_to.first_name} {task.assign_to.last_name}".strip()
+                    if task.assign_to and (task.assign_to.first_name or task.assign_to.last_name)
+                    else task.assign_to.username if task.assign_to else None
+                ),
+
             "deadline_days": task.deadline_days,
             "deliverable_text": task.deliverable_text,
             "deliverable_file": task.deliverable_file.url if task.deliverable_file else None,
@@ -1349,3 +1456,101 @@ def get_task_detail(request, task_id):
 
     except ProjectTask.DoesNotExist:
         return Response({"detail": "Task not found."}, status=404)
+
+
+from django.http import JsonResponse
+
+
+def coordinator_dashboard_stats(request):
+    user = request.user
+
+    try:
+        coordinator = user.coordinator
+    except AttributeError:
+        return JsonResponse({"error": "Not a coordinator"}, status=403)
+
+    project_id = request.GET.get("project")
+
+    if coordinator.is_super:
+        projects = Project.objects.all()
+    else:
+        projects = Project.objects.filter(department=coordinator.department)
+
+    project_list = projects.values("id", "name")  # For dropdown
+
+    if project_id:
+        projects = projects.filter(id=project_id)
+
+    proposals = ProjectProposal.objects.filter(coordinator_status='pending')
+    if not coordinator.is_super:
+        proposals = proposals.filter(department=coordinator.department)
+
+    total = projects.count()
+    ongoing = projects.filter(plan__completion_status__lt=100).count()
+    completed = projects.filter(plan__completion_status=100).count()
+
+    active_fields = (projects
+        .values('field')
+        .annotate(count=Count('id'))
+        .order_by('-count'))
+
+    return JsonResponse({
+        "total_projects": total,
+        "ongoing_projects": ongoing,
+        "completed_projects": completed,
+        "pending_proposals": proposals.count(),
+        "most_active_fields": list(active_fields),
+        "projects": list(project_list),
+    })
+
+@login_required
+def coordinator_dashboard_page(request):
+    return render(request, "coordinator/dashboard.html")
+
+
+from datetime import timedelta, date
+
+def student_dashboard_stats(request):
+    user = request.user
+
+    if not hasattr(user, "student"):
+        return JsonResponse({"error": "Not a student"}, status=403)
+
+    tasks = ProjectTask.objects.filter(assign_to=user)
+    summary = {
+        "to do": tasks.filter(task_status="to do").count(),
+        "in progress": tasks.filter(task_status="in progress").count(),
+        "done": tasks.filter(task_status="done").count(),
+    }
+
+    today = date.today()
+    deadline_range = today + timedelta(days=7)
+    upcoming_tasks = tasks.filter(deadline_days__isnull=False).order_by("deadline_days")
+
+    upcoming = [
+        {
+            "name": t.name,
+            "deadline": (t.created_at.date() + timedelta(days=t.deadline_days)).isoformat(),
+            "status": t.task_status,
+        }
+        for t in upcoming_tasks
+        if t.created_at and today <= t.created_at.date() + timedelta(days=t.deadline_days) <= deadline_range
+    ]
+
+    # ✅ Add project completion
+    try:
+        membership = StudentProjectMembership.objects.select_related("project").get(student=user.student)
+        project = membership.project
+        completion = round(calculate_completion_by_tasks(project), 2)
+    except StudentProjectMembership.DoesNotExist:
+        completion = 0
+
+    return JsonResponse({
+        "task_summary": summary,
+        "upcoming_deadlines": upcoming,
+        "completion": completion
+    })
+
+@login_required
+def student_dashboard_page(request):
+    return render(request, "student/dashboard.html")

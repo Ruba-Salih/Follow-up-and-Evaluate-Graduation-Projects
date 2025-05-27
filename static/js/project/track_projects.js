@@ -53,13 +53,49 @@ document.addEventListener("DOMContentLoaded", () => {
         feedbackInput.value = "";
         feedbackMessage.textContent = "";
         modal.classList.add("show");
+        loadFeedbackThread(currentReportId);
+
     });
+
+    async function loadFeedbackThread(reportId) {
+    const threadDiv = document.getElementById("feedback-thread");
+    threadDiv.innerHTML = " ";
+
+    try {
+        const res = await fetch(`/api/project/feedback/?report_id=${reportId}`);
+        if (!res.ok) throw new Error("Failed to load feedback");
+        const data = await res.json();
+
+        if (!data.length) {
+            threadDiv.innerHTML = "<p class='text-muted'>No feedback yet.</p>";
+            return;
+        }
+
+        threadDiv.innerHTML = "";
+        data.forEach(fb => {
+            const card = document.createElement("div");
+            card.classList.add("feedback-card");
+            card.innerHTML = `
+                <strong>👤 ${fb.sender_name || "Unknown"}</strong><br>
+                <p>${fb.message}</p>
+                <small class="text-muted">${new Date(fb.created_at).toLocaleString()}</small>
+                <hr>
+            `;
+            threadDiv.appendChild(card);
+        });
+    } catch (err) {
+        threadDiv.innerHTML = "<p class='text-danger'>❌ Could not load feedback.</p>";
+        console.error("Error loading feedback:", err);
+    }
+}
+
 
     // ❌ Close modal
     closeBtn.addEventListener("click", () => {
         modal.classList.remove("show");
         feedbackInput.value = "";
         feedbackMessage.textContent = "";
+        loadFeedbackThread(currentReportId); 
     });
 
     // 📤 Submit feedback
@@ -68,21 +104,22 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!message || !currentReportId) return;
 
         try {
-            const res = await fetch("/feedbacks/submit/", {
+            const res = await fetch("/api/project/feedback/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRFToken": document.querySelector('input[name="csrfmiddlewaretoken"]').value
                 },
                 body: JSON.stringify({
-                    project_id: currentReportId,
-                    message
+                    report: currentReportId, 
+                    feedback_text: message
                 })
             });
 
             if (res.ok) {
                 feedbackMessage.textContent = "✅ Feedback submitted.";
                 feedbackInput.value = "";
+                loadFeedbackThread(currentReportId);
             } else {
                 const err = await res.json();
                 feedbackMessage.textContent = "❌ " + (err.detail || "Failed to submit.");

@@ -118,6 +118,7 @@ class TeacherListAPIView(APIView):
         ]
         return paginator.get_paginated_response(data)
 
+
 class TeacherAvailableTimeAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -241,11 +242,27 @@ class ScheduleMeetingAPIView(APIView):
         meeting_end_time = request.data.get('meeting_end_time')
         comment = request.data.get('comment')
 
-
+        print(f"times are{slot_start_time} - {slot_end_time} and {meeting_start_time} - {meeting_end_time}")
 
         if not teacher_id or not slot_start_time or not slot_end_time:
             print("missing")
             return Response({'error': 'Missing required fields.'}, status=400)
+        
+        if not is_teacher(request.user):
+            print("hello student")
+            meeting_start_obj = datetime.strptime(meeting_start_time, "%H:%M").time()
+            meeting_end_obj = datetime.strptime(meeting_end_time, "%H:%M").time()
+            slot_start_obj = datetime.strptime(slot_start_time, "%H:%M").time()
+            slot_end_obj = datetime.strptime(slot_end_time, "%H:%M").time()
+
+            print(f"Comparing meeting time {meeting_start_obj} - {meeting_end_obj} with slot {slot_start_obj} - {slot_end_obj}")
+
+            if meeting_start_obj < slot_start_obj or meeting_end_obj > slot_end_obj:
+                print("Meeting time outside allowed slot, rejecting...")
+                return Response(
+                    {'error': 'Meeting time must be within the allowed time slot.'},
+                    status=400
+                )
         
         try:
             print(f"meeting date is {meeting_date}")
@@ -363,7 +380,7 @@ class MeetingApprovalAPIView(APIView):
         except Meeting.DoesNotExist:
             return Response({"error": "Meeting not found."}, status=404)
 
-
+# views.py
 class UpcomingMeetingsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -371,28 +388,28 @@ class UpcomingMeetingsView(APIView):
         current_time = timezone.now()
         user = request.user
 
-        # Check if the user is a teacher or a student
         if is_teacher(user):
-            # User is a teacher, fetch meetings scheduled by the teacher
             upcoming_meetings = Meeting.objects.filter(
-                teacher=request.user,  # Assume the user has a 'teacher' relationship
+                teacher=user,
                 status='accepted',
-                start_datetime__gte=current_time  # Only future meetings
+                start_datetime__gte=current_time
             ).order_by('start_datetime')
         else:
-            # User is a student, fetch meetings related to the student's projects
-            student_memberships = StudentProjectMembership.objects.filter(student=request.user, project__isnull=False)
-            project_ids = student_memberships.values_list("project__id", flat=True)
+            project_ids = StudentProjectMembership.objects.filter(
+                student=user,
+                project__isnull=False
+            ).values_list("project__id", flat=True)
 
             upcoming_meetings = Meeting.objects.filter(
-                project__id__in=project_ids,  # Filter meetings for projects the student is part of
+                project__id__in=project_ids,
                 status='accepted',
-                start_datetime__gte=current_time  # Only future meetings
+                start_datetime__gte=current_time
             ).order_by('start_datetime')
 
-        # Serialize the meetings to return in the response
         serializer = MeetingSerializer(upcoming_meetings, many=True)
         return Response(serializer.data)
+
+
 
 # ------------------- PAGE VIEWS -------------------
 

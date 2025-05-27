@@ -149,29 +149,19 @@ function loadUpcomingMeetings() {
             }
 
             data.forEach(meeting => {
-                const start = new Date(meeting.start_datetime);
-                const end = new Date(meeting.end_datetime);
+            const start = meeting.start_datetime_display;
+            const end = meeting.end_datetime_display;
 
-                const dateStr = start.toLocaleDateString(undefined, {
-                    year: 'numeric', month: 'short', day: 'numeric'
-                });
-                const startTime = start.toLocaleTimeString(undefined, {
-                    hour: '2-digit', minute: '2-digit'
-                });
-                const endTime = end.toLocaleTimeString(undefined, {
-                    hour: '2-digit', minute: '2-digit'
-                });
+            const card = document.createElement('div');
+            card.className = 'meeting-card';
+            card.innerHTML = `
+                <h5><strong>📁 Project:</strong> ${meeting.project}</h5>
+                <p><strong>📅 Date:</strong> ${meeting.start_datetime_display.split(' at ')[0]}</p>
+                <p><strong>🕒 Time:</strong> ${meeting.start_datetime_display.split(' at ')[1]} → ${meeting.end_datetime_display}</p>
 
-                const card = document.createElement('div');
-                card.className = 'meeting-card';
-                card.innerHTML = `
-                    <h5><strong>📁 Project:</strong> ${meeting.project}</h5>
-                    <p><strong>👨‍🏫 Teacher:</strong> ${meeting.teacher}</p>
-                    <p><strong>📅 Date:</strong> ${dateStr}</p>
-                    <p><strong>🕒 Time:</strong> ${startTime} → ${endTime}</p>
-                `;
-                container.appendChild(card);
-            });
+            `;
+            container.appendChild(card);
+        });
         })
         .catch(() => {
             document.getElementById("upcoming-meetings").innerHTML = "<p>Error loading meetings.</p>";

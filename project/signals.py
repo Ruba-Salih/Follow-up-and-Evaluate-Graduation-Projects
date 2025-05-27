@@ -22,8 +22,10 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
     project = None
 
     if is_student_proposal:
-        if instance.teacher_status == 'accepted' and instance.coordinator_status == 'accepted':
-            supervisor_user = instance.proposed_to  # 💡 use directly even if not a Supervisor model
+        if instance.coordinator_status == 'accepted':
+            if instance.teacher_status == 'accepted':
+                supervisor_user = instance.proposed_to
+
 
             if submitted_by.student.department:
                 coordinator = Coordinator.objects.filter(
@@ -78,11 +80,13 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
             })
 
         if supervisor_user:
+            selected_role = instance.teacher_role.name if instance.teacher_role else "Supervisor"
             member_payload.append({
-                "user_id": supervisor_user.id,  # ✅ use actual user, not Supervisor model
-                "role": "Supervisor",
+                "user_id": supervisor_user.id,
+                "role": selected_role,
                 "group_id": None
             })
+
 
         assign_project_memberships(project, member_payload)
 
@@ -117,3 +121,5 @@ def setup_project_relations(sender, instance, created, **kwargs):
                         project=instance,
                         defaults={"grade": 0.0}
                     )
+    StudentProjectMembership.objects.filter(proposal=proposal).exclude(project=instance).delete()
+

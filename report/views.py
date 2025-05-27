@@ -164,7 +164,10 @@ class ProjectReportView(APIView):
 
 @login_required
 def manege_reports(request):
-    return render(request, 'reports/coord_reports.html')
+    is_super_coord = hasattr(request.user, "coordinator") and request.user.coordinator.is_super
+    return render(request, 'reports/coord_reports.html', {
+        "is_super_coord": is_super_coord
+    })
 
 @login_required
 def report_projects_view(request):
@@ -229,11 +232,18 @@ def report_view(request):
         return Response(result)
 
     elif view_type == "non_assigned_students":
-        assigned_ids = StudentProjectMembership.objects.values_list("student_id", flat=True)
+    
+        assigned_ids = StudentProjectMembership.objects.filter(
+        project__isnull=False
+    ).values_list("student_id", flat=True)
+
         students = Student.objects.select_related("department").exclude(id__in=assigned_ids)
 
         if hasattr(user, "coordinator") and not user.coordinator.is_super:
-            students = students.filter(department=user.coordinator.department)
+            if user.coordinator.department:
+                students = students.filter(department=user.coordinator.department)
+            else:
+                return Response([])
 
         data = [
             {
@@ -262,6 +272,7 @@ def report_view(request):
                     teacher_project_map[m.user.id] = []
                 teacher_project_map[m.user.id].append({
                     "project": m.project.name,
+                
                     "role": m.role.name
                 })
 
@@ -272,7 +283,8 @@ def report_view(request):
             if assignments:
                 for a in assignments:
                     result.append({
-                        "teacher": teacher.username,
+                        "teacher": f"{teacher.first_name} {teacher.last_name}".strip() or teacher.username,
+
                         "project": a["project"],
                         "role": a["role"]
                     })
@@ -310,7 +322,7 @@ def report_view(request):
             dept = coord.department
             projects = Project.objects.filter(department=dept)
             result.append({
-                "coordinator": coord.username,
+                "coordinator": f"{coord.first_name} {coord.last_name}".strip() or coord.username,
                 "department": dept.name if dept else None,
                 "projects": ProjectSerializer(projects, many=True).data
             })

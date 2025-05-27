@@ -75,6 +75,7 @@ class MeetingRequestSerializer(serializers.ModelSerializer):
             raise ValidationError("This time slot is already taken by another student.")
 
         return attrs
+    
 
 
 class MeetingParticipantSerializer(serializers.ModelSerializer):
@@ -86,12 +87,15 @@ class MeetingParticipantSerializer(serializers.ModelSerializer):
 
 
 class MeetingSerializer(serializers.ModelSerializer):
+    start_datetime_display = serializers.SerializerMethodField()
+    end_datetime_display = serializers.SerializerMethodField()
     project = serializers.CharField(source='project.name', read_only=True)
     teacher = serializers.SerializerMethodField()
 
     class Meta:
         model = Meeting
-        fields = ['meeting_id', 'requested_by', 'teacher', 'project', 'status', 'start_datetime', 'end_datetime', 'recommendation', 'comment']
+        fields = ['meeting_id', 'requested_by', 'teacher', 'project', 'status', 'start_datetime', 'end_datetime', 'start_datetime_display',
+            'end_datetime_display', 'recommendation', 'comment']
 
     def get_teacher(self, obj):
         if obj.teacher:
@@ -101,3 +105,9 @@ class MeetingSerializer(serializers.ModelSerializer):
             return obj.teacher.username  # fallback to username
         return ''
 
+    def get_start_datetime_display(self, obj):
+        return obj.start_datetime.strftime("%A, %B %d, %Y at %I:%M %p")
+        # e.g., "Monday, May 27, 2025 at 02:30 PM"
+
+    def get_end_datetime_display(self, obj):
+        return obj.end_datetime.strftime("%I:%M %p")

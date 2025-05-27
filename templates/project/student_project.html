@@ -34,20 +34,20 @@
         </div>
     </div>
 
-    <hr style="margin: 20px 0;">
-
-    <h4>👨‍🏫 {% trans "Project Members" %}</h4>
-
+    <br>
     <div class="members-list">
+        
         <div id="students-list">
-            <strong>🎓 {% trans "Students:" %}</strong>
+            <strong class="members-view">🎓 {% trans "Students Members:" %}</strong>
             <ul id="project-students">
                 <!-- JS will populate student names here -->
             </ul>
         </div>
 
+        <hr>
+
         <div id="teachers-list">
-            <strong>👩‍🏫 {% trans "Involved Teachers:" %}</strong>
+            <strong class="members-view">👩‍🏫 {% trans "Involved Teachers:" %}</strong>
             <ul id="project-teachers">
                
             </ul>
@@ -55,8 +55,11 @@
     </div>
 </div>
 
-
+    <h2>Actions</h2>
     <div class="actions" style="margin-top: 40px; text-align: center;">
+        <button class="btn btn-primary action-btn" data-target="#editProjectModal">
+            ✏️ {% trans "Edit Project Info" %}
+        </button>
         <button class="btn btn-primary action-btn" data-target="#goalsModal">🎯 {% trans "Project Goals" %}</button>
         <button class="btn btn-primary action-btn" data-target="#weeklyReportModal">📝 {% trans "Weekly Report" %}</button>
         <button class="btn btn-primary action-btn" data-target="#progressModal">📈 {% trans "Progress" %}</button>
@@ -65,6 +68,30 @@
         </button>        
         <a href="{% url 'project-tasks-page' %}" class="btn btn-primary action-btn" style="text-decoration: none;">🧩 {% trans "Manage Tasks" %}</a>
     </div>
+
+    <!-- Edit Project Modal -->
+<div class="modal" id="editProjectModal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3>✏️ {% trans "Edit Project Information" %}</h3>
+
+        <form id="edit-project-form">
+            {% csrf_token %}
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="edit-project-name"><strong>{% trans "Project Name" %}</strong></label>
+                <input type="text" id="edit-project-name" class="form-control" placeholder="{% trans 'Enter new project name' %}">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="edit-project-field"><strong>{% trans "Field" %}</strong></label>
+                <input type="text" id="edit-project-field" class="form-control" placeholder="{% trans 'Enter new field' %}">
+            </div>
+
+            <button type="submit" class="btn btn-success" style="margin-top: 10px;">✅ {% trans "Save Changes" %}</button>
+        </form>
+    </div>
+</div>
+
 
     <!-- Project Goals Modal -->
     <div class="modal" id="goalsModal">

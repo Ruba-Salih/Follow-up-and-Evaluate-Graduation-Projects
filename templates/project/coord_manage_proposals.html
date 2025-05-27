@@ -44,7 +44,13 @@
                     </div>
                 </div>
                 <p><strong>{% trans "Field" %}:</strong> {{ proposal.field }}</p>
-                <p><strong>{% trans "Submitted by" %}:</strong> {{ proposal.submitted_by.username }}</p>
+                <p><strong>{% trans "Submitted by" %}:</strong>
+                    {{ proposal.submitted_by.first_name }} {{ proposal.submitted_by.last_name }}
+                    {% if not proposal.submitted_by.first_name and not proposal.submitted_by.last_name %}
+                        {{ proposal.submitted_by.username }}
+                    {% endif %}
+                </p>
+
                 <p><strong>{% trans "Date" %}:</strong> {{ proposal.created_at|date:"M d, Y" }}</p>
                 <div class="card-buttons">
                     <button class="view-btn btn-edit" data-id="{{ proposal.id }}">🔍 {% trans "View Details" %}</button>
@@ -69,13 +75,20 @@
             <p><strong>{% trans "Description" %}:</strong> <span id="modal-description"></span></p>
             <p><strong>{% trans "Team Members Count" %}:</strong> <span id="modal-team-count"></span></p>
             <p><strong>{% trans "Team Members" %}:</strong> <span id="modal-team-members"></span></p>
+            <p><strong>Teacher Role:</strong> <span id="modal-teacher-role">None</span></p>
             <p><strong>{% trans "Attached File" %}:</strong> <span id="modal-file"></span></p>
             <p><strong>{% trans "Additional Comment" %}:</strong> <span id="modal-comment"></span></p>
         </div>
 
         <hr>
+        <h4>💬 {% trans "Feedback Thread" %}</h4>
+        <div id="feedback-thread" class="feedback-thread">
+        <!-- JS will insert feedback messages here -->
+        </div>
+
+        <hr>
         <div id="feedback-section" style="margin-top: 20px;">
-            <label for="feedback-text">✉️ {% trans "Feedback (optional)" %}:</label>
+            <label for="feedback-text">✉️ {% trans "Feedback" %}:</label>
             <textarea id="feedback-text" rows="3" style="width: 100%;"></textarea>
         </div>
 
