@@ -8,6 +8,8 @@
 {% endblock %}
 
 {% block content %}
+{% include "navbar.html" %}
+<div class="container">
 
 <h2 class="text-center">Project Evaluation Grades</h2>
 <h2>Project: {{ project.name }}</h2>
@@ -126,5 +128,5 @@
         </tbody>
     </table>
 {% endfor %}
-
+</div>
 {% endblock %}

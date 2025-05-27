@@ -434,6 +434,7 @@ def calculate_final_grade(student, project):
             # Only add to total if they contributed grades
             if individual_sum > 0 or group_sum > 0:
                 total_combined_grade += individual_sum + group_sum
+                total_combined_grade = round_half_up(total_combined_grade)
                 graded_evaluators.append(evaluator)
 
         # Normalize
@@ -452,6 +453,7 @@ def calculate_final_grade(student, project):
     for role, normalized_score in role_grades_sum.items():
         weight = role_weights.get(role, 0)
         final_grade += normalized_score * weight
+        print(f"final grades is :{final_grade}")
 
     final_grade = round_half_up(final_grade)
     final_grade = min(final_grade, 100)
@@ -886,6 +888,7 @@ def view_project(request, project_id):
                     break
         average = round_half_up(sum(committee_final_grades) / len(committee_final_grades)) if committee_final_grades else 0
         student_committee_averages[student.id] = average
+        print(f"committee average: {average}, supervisor: {student_grades[student.id]['supervisor_final_grade']} and reader: {student_grades[student.id]['reader_final_grade']}")
         student_grades[student.id]["final_grade"] = student_grades[student.id]["supervisor_final_grade"] + student_grades[student.id]["reader_final_grade"] + average
 
     context = {
