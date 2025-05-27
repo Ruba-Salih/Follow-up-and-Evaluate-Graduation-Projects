@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/teacher/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="dashboard">
+  <h2>📘 Teacher Dashboard</h2>
+
+  <div class="filter-wrapper">
+  <label for="projectFilter">Select Project:</label>
+  <select id="projectFilter"></select>
+</div>
+
+  
+    <div class="dashboard-section">
+      <h3>✅ Project Completion</h3>
+      <canvas id="completionChart" ></canvas>
+      <p id="completionLabel"></p>
+    </div>
+
+    <br>
+
+    <div class="dashboard-section">
+      <h3>🧑‍🎓 Tasks Per Student</h3>
+      <canvas id="taskSummaryChart"></canvas>
+    </div>
+ 
+
+  <h3>⏳ Upcoming Milestones</h3>
+  <div class="milestone-scroll-container">
+  <ul id="milestoneList" class="milestone-list"></ul>
+</div>
+
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let allProjects = [];
+
+async function loadTeacherDashboard(projectId = "") {
+  const res = await fetch(`/api/project/dashboard/teacher/?project=${projectId}`);
+  const data = await res.json();
+
+  const projectSelect = document.getElementById("projectFilter");
+  const completionLabel = document.getElementById("completionLabel");
+
+  // Fill project dropdown
+  if (projectSelect.options.length <= 1) {
+    allProjects = data.projects || [];
+    projectSelect.innerHTML = "";
+    allProjects.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name;
+      projectSelect.appendChild(opt);
+    });
+    if (projectId) projectSelect.value = projectId;
+  }
+
+  // Completion chart
+  const percent = data.completion || 0;
+  completionLabel.textContent = `${percent}% Complete`;
+
+  const ctx = document.getElementById("completionChart").getContext("2d");
+  if (window.teacherPie) window.teacherPie.destroy();
+  window.teacherPie = new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: ["Completed", "Remaining"],
+      datasets: [{
+        data: [percent, 100 - percent],
+        backgroundColor: ["#4CAF50", "#e0e0e0"]
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { position: "bottom" },
+        title: { display: true, text: "Project Completion" }
+      }
+    }
+  });
+
+  // Group tasks by student name
+  const taskCounts = {};
+  data.tasks.forEach(t => {
+    const assignee = t.student || "Unassigned";
+    taskCounts[assignee] = (taskCounts[assignee] || 0) + 1;
+  });
+
+  const labels = Object.keys(taskCounts);
+  const counts = Object.values(taskCounts);
+
+  const barCtx = document.getElementById("taskSummaryChart").getContext("2d");
+  if (window.taskBar) window.taskBar.destroy();
+  window.taskBar = new Chart(barCtx, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Number of Tasks",
+        data: counts,
+      }]
+    },
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: "Tasks Assigned Per Student"
+        },
+        legend: { display: false }
+      },
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1 }
+        }
+      }
+    }
+  });
+
+ // Render Milestones
+const milestoneList = document.getElementById("milestoneList");
+milestoneList.innerHTML = "";
+
+(data.milestones || []).forEach(m => {
+  // Format due date to YYYY-MM-DD
+  const formattedDate = new Date(m.due_date).toISOString().split("T")[0];
+
+  const li = document.createElement("li");
+  li.innerHTML = `
+    <strong>${m.type}:</strong> ${m.name} 
+    <br><span style="color:gray">Due: ${formattedDate}</span>
+    ${m.type === "Task" && m.goal ? `<br><em>In Goal:</em> ${m.goal}` : ""}
+  `;
+  milestoneList.appendChild(li);
+});
+
+
+}
+
+document.getElementById("projectFilter").addEventListener("change", (e) => {
+  loadTeacherDashboard(e.target.value);
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadTeacherDashboard();
+});
+</script>
+{% endblock %}

@@ -1144,8 +1144,10 @@ class TrackProjectView(APIView):
 
         user = request.user
 
-        # ✅ Check if task update is intended
         task_id = request.data.get('task_id')
+        goal_id = request.data.get('goal_id')
+
+        # ✅ Check if task update is intended
         if task_id:
             try:
                 task = ProjectTask.objects.get(id=task_id, project=project)
@@ -1186,6 +1188,24 @@ class TrackProjectView(APIView):
             except ProjectTask.DoesNotExist:
                 return Response({"detail": "Task not found."}, status=404)
 
+        if goal_id:
+            try:
+                goal = ProjectGoal.objects.get(id=goal_id, project=project)
+
+                if 'goal_text' in request.data:
+                    goal.goal = request.data['goal_text']
+
+                if 'duration' in request.data:
+                    try:
+                        goal.duration = int(request.data['duration'])
+                    except ValueError:
+                        return Response({"detail": "Duration must be an integer."}, status=400)
+
+                goal.save()
+                return Response({"detail": "Goal updated successfully."})
+            except ProjectGoal.DoesNotExist:
+                return Response({"detail": "Goal not found."}, status=404)
+            
         return Response({"detail": "Invalid PUT request. Missing fields."}, status=400)
 
     def delete(self, request, pk):
@@ -1460,7 +1480,6 @@ def get_task_detail(request, task_id):
 
 from django.http import JsonResponse
 
-
 def coordinator_dashboard_stats(request):
     user = request.user
 
@@ -1554,3 +1573,94 @@ def student_dashboard_stats(request):
 @login_required
 def student_dashboard_page(request):
     return render(request, "student/dashboard.html")
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def teacher_dashboard_data(request):
+    user = request.user
+    if not is_teacher(user):
+        return Response({"error": "Not a teacher"}, status=403)
+
+    project_id = request.GET.get("project")
+
+    # Only projects where user is Supervisor
+    supervisor_projects = Project.objects.filter(
+        memberships__user=user,
+        memberships__role__name="Supervisor"
+    ).distinct()
+
+    project_list = supervisor_projects.values("id", "name")
+
+    if project_id:
+        try:
+            selected_project = supervisor_projects.get(id=project_id)
+        except Project.DoesNotExist:
+            return Response({"error": "Invalid project"}, status=400)
+    else:
+        selected_project = supervisor_projects.first()
+
+    if not selected_project:
+        return Response({
+            "projects": list(project_list),
+            "completion": 0,
+            "tasks": []
+        })
+    
+
+    from datetime import timedelta
+
+    goal_queryset = ProjectGoal.objects.filter(project=selected_project)
+    task_queryset = ProjectTask.objects.filter(project=selected_project)
+
+    upcoming_milestones = []
+
+    for goal in goal_queryset:
+        goal_due = goal.created_at + timedelta(days=goal.duration or 0)
+        upcoming_milestones.append({
+            "type": "Goal",
+            "name": goal.goal,
+            "due_date": goal_due.isoformat(),
+            "goal": goal.goal,
+        })
+
+    for task in task_queryset:
+        if task.deadline_days is not None and task.created_at:
+            task_due = task.created_at + timedelta(days=task.deadline_days)
+            goal_name = task.goal.goal if task.goal else "Unknown Goal"
+            upcoming_milestones.append({
+                "type": "Task",
+                "name": task.name,
+                "due_date": task_due.isoformat(),
+                "goal": goal_name
+            })
+
+    # Sort by due date
+    upcoming_milestones.sort(key=lambda x: x["due_date"])
+
+    # Calculate completion
+    total_tasks = ProjectTask.objects.filter(project=selected_project).count()
+    completed_tasks = ProjectTask.objects.filter(project=selected_project, task_status="done").count()
+    completion = round((completed_tasks / total_tasks) * 100, 2) if total_tasks > 0 else 0
+
+    task_summary = ProjectTask.objects.filter(project=selected_project).select_related("assign_to")
+    task_data = [
+        {
+            "name": t.name,
+            "status": t.task_status,
+            "student": f"{t.assign_to.first_name} {t.assign_to.last_name}".strip() if t.assign_to else "Unassigned"
+        }
+        for t in task_summary
+    ]
+
+    return Response({
+        "projects": list(project_list),
+        "completion": completion,
+        "tasks": task_data,
+        "milestones": upcoming_milestones 
+    })
+
+
+@login_required
+def teacher_dashboard_page(request):
+    return render(request, "teacher/dashboard.html")

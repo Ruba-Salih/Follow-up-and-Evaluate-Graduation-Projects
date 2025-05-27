@@ -46,4 +46,8 @@ urlpatterns = [
     path("dashboard_student/", views.student_dashboard_page, name="student_dashboard"),
     path("dashboard/student/", views.student_dashboard_stats, name="student-dashboard-stats"),
 
+    path("dashboard_teacher/", views.teacher_dashboard_page, name="teacher_dashboard"),
+    path("dashboard/teacher/", views.teacher_dashboard_data, name="teacher-dashboard-data")
+
+
 ]

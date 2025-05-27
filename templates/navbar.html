@@ -64,7 +64,7 @@
                         {% endif %}
                     </a>
                 </li>
-                <li><a href="#">{% trans "Dashboard" %}</a></li>
+                <li><a href="{% url 'teacher_dashboard' %}">{% trans "Dashboard" %}</a></li>
                 <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
             {% endif %}
         {% else %}
