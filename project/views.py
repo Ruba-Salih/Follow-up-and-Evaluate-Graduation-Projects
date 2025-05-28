@@ -824,10 +824,10 @@ class ProjectView(APIView):
                 # Remove students not in the new list
                 StudentProjectMembership.objects.filter(project=updated_project, student_id__in=(current_ids - new_ids)).delete()
 
-            ProjectMembership.objects.filter(project=updated_project).delete()
-            print("📦 memberships payload:", memberships)
-    
-            assign_project_memberships(updated_project, memberships)
+            if memberships:
+                ProjectMembership.objects.filter(project=updated_project).delete()
+                assign_project_memberships(updated_project, memberships)
+
             return Response(ProjectSerializer(updated_project).data)
     
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
