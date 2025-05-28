@@ -5,12 +5,8 @@ from users.models import Coordinator, Supervisor, Student, Role
 from .services import assign_project_memberships
 from .serializers import get_academic_year
 
-
 @receiver(post_save, sender=ProjectProposal)
 def create_project_from_proposal(sender, instance, created, **kwargs):
-    if Project.objects.filter(proposal=instance).exists():
-        return
-
     submitted_by = instance.submitted_by
     is_student_proposal = hasattr(submitted_by, 'student')
     is_teacher_proposal = not is_student_proposal
@@ -19,17 +15,37 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
     coordinator = None
     duration = instance.duration or 0
     team_count = instance.team_member_count or instance.team_members.count()
-    project = None
 
+    # 🔍 Try to get the project if it already exists
+    project = Project.objects.filter(proposal=instance).first()
+
+    # 🔁 UPDATE if project already exists and teacher accepted (late acceptance)
+    if project:
+        if instance.teacher_status == 'accepted' and not project.supervisor:
+            supervisor_user = instance.proposed_to or submitted_by
+            if supervisor_user and not hasattr(supervisor_user, 'supervisor'):
+                Supervisor.objects.create(user=supervisor_user)
+
+            project.supervisor = supervisor_user.supervisor
+            project.save()
+
+            # ✅ Also assign membership if not already assigned
+            role_name = instance.teacher_role.name if instance.teacher_role else "Supervisor"
+            if not ProjectMembership.objects.filter(project=project, user=supervisor_user).exists():
+                assign_project_memberships(project, [{
+                    "user_id": supervisor_user.id,
+                    "role": role_name,
+                    "group_id": None
+                }])
+        return  # Exit signal
+
+    # ✅ New project creation
     if is_student_proposal:
         if instance.coordinator_status == 'accepted':
             if instance.teacher_status == 'accepted':
                 supervisor_user = instance.proposed_to
-
-   
                 if supervisor_user and not hasattr(supervisor_user, 'supervisor'):
                     Supervisor.objects.create(user=supervisor_user)
-
 
             if submitted_by.student.department:
                 coordinator = Coordinator.objects.filter(
@@ -52,7 +68,9 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
 
     elif is_teacher_proposal:
         if instance.coordinator_status == 'accepted':
-            supervisor_user = submitted_by  # 💡 teacher becomes supervisor
+            supervisor_user = submitted_by
+            if supervisor_user and not hasattr(supervisor_user, 'supervisor'):
+                Supervisor.objects.create(user=supervisor_user)
 
             if instance.department:
                 coordinator = Coordinator.objects.filter(
@@ -66,13 +84,14 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
                 proposal=instance,
                 field=instance.field,
                 department=instance.department,
-                supervisor=getattr(supervisor_user, 'supervisor', None),
+                supervisor=supervisor_user.supervisor,
                 coordinator=coordinator,
                 academic_year=get_academic_year(),
                 team_member_count=team_count,
                 duration=duration
             )
 
+    # 🔁 Assign project members
     if project:
         member_payload = []
 
@@ -90,7 +109,6 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
                 "role": selected_role,
                 "group_id": None
             })
-
 
         assign_project_memberships(project, member_payload)
 
