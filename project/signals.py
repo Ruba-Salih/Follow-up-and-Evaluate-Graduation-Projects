@@ -26,6 +26,10 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
             if instance.teacher_status == 'accepted':
                 supervisor_user = instance.proposed_to
 
+   
+                if supervisor_user and not hasattr(supervisor_user, 'supervisor'):
+                    Supervisor.objects.create(user=supervisor_user)
+
 
             if submitted_by.student.department:
                 coordinator = Coordinator.objects.filter(
@@ -39,7 +43,7 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
                 proposal=instance,
                 field=instance.field,
                 department=instance.department,
-                supervisor=getattr(supervisor_user, 'supervisor', None),  # Optional link to Supervisor model
+                supervisor=supervisor_user.supervisor if supervisor_user else None,
                 coordinator=coordinator,
                 academic_year=get_academic_year(),
                 team_member_count=team_count,
