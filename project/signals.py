@@ -6,10 +6,10 @@ from .services import assign_project_memberships
 from .serializers import get_academic_year
 from django.utils.crypto import get_random_string
 
+
 @receiver(post_save, sender=ProjectProposal)
 def create_project_from_proposal(sender, instance, created, **kwargs):
-    if Project.objects.filter(proposal=instance).exists():
-        return
+    project = Project.objects.filter(proposal=instance).first()
 
     submitted_by = instance.submitted_by
     is_student_proposal = hasattr(submitted_by, 'student')
@@ -19,28 +19,57 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
     coordinator = None
     duration = instance.duration or 0
     team_count = instance.team_member_count or instance.team_members.count()
-    project = None
+
+    # 🚨 If project already exists but has no supervisor and teacher accepted, assign them
+    if project:
+        if is_student_proposal and instance.coordinator_status == 'accepted' and instance.teacher_status == 'accepted' and not project.supervisor:
+            supervisor_user = instance.proposed_to
+
+            if supervisor_user and not hasattr(supervisor_user, 'supervisor'):
+                Supervisor.objects.create(
+                    id=supervisor_user.id,
+                    username=supervisor_user.username,
+                    email=supervisor_user.email,
+                    first_name=supervisor_user.first_name,
+                    last_name=supervisor_user.last_name,
+                    password=supervisor_user.password,
+                    department=supervisor_user.department,
+                    qualification="N/A",
+                    work_place="N/A",
+                    supervisor_id=f"S{get_random_string(6)}",
+                )
+                supervisor_user.refresh_from_db()
+
+            project.supervisor = supervisor_user.supervisor
+            project.save()
+
+            selected_role = instance.teacher_role.name if instance.teacher_role else "Supervisor"
+            assign_project_memberships(project, [{
+                "user_id": supervisor_user.id,
+                "role": selected_role,
+                "group_id": None
+            }])
+
+        return  # Don't create a new project if it already exists
 
     if is_student_proposal:
         if instance.coordinator_status == 'accepted':
             if instance.teacher_status == 'accepted':
                 supervisor_user = instance.proposed_to
 
-   
                 if supervisor_user and not hasattr(supervisor_user, 'supervisor'):
                     Supervisor.objects.create(
-                        id=supervisor_user.id,  # Important: ensure same primary key
+                        id=supervisor_user.id,
                         username=supervisor_user.username,
                         email=supervisor_user.email,
                         first_name=supervisor_user.first_name,
                         last_name=supervisor_user.last_name,
                         password=supervisor_user.password,
                         department=supervisor_user.department,
-                        qualification="N/A",  # or collect real data if available
+                        qualification="N/A",
                         work_place="N/A",
-                        supervisor_id=f"S{get_random_string(6)}",  # or any unique logic
+                        supervisor_id=f"S{get_random_string(6)}",
                     )
-
 
             if submitted_by.student.department:
                 coordinator = Coordinator.objects.filter(
@@ -63,7 +92,7 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
 
     elif is_teacher_proposal:
         if instance.coordinator_status == 'accepted':
-            supervisor_user = submitted_by  # 💡 teacher becomes supervisor
+            supervisor_user = submitted_by
 
             if instance.department:
                 coordinator = Coordinator.objects.filter(
@@ -102,7 +131,6 @@ def create_project_from_proposal(sender, instance, created, **kwargs):
                 "group_id": None
             })
 
-
         assign_project_memberships(project, member_payload)
 
 
@@ -136,5 +164,5 @@ def setup_project_relations(sender, instance, created, **kwargs):
                         project=instance,
                         defaults={"grade": 0.0}
                     )
-    StudentProjectMembership.objects.filter(proposal=proposal).exclude(project=instance).delete()
 
+    StudentProjectMembership.objects.filter(proposal=proposal).exclude(project=instance).delete()
