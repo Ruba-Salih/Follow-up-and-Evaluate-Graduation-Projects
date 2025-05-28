@@ -65,6 +65,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         function displayList(filtered) {
             checkboxContainer.innerHTML = "";
             filtered.forEach(student => {
+                if (isTeacher && String(student.id) === String(currentUserId)) return;
+
                 const wrapper = document.createElement("div");
                 const checkbox = document.createElement("input");
                 checkbox.type = "checkbox";
