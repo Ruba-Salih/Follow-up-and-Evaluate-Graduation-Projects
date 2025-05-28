@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import College, Department, University
 from .serializers import CollegeSerializer, DepartmentSerializer
-
+from django.db.models import Q
 
 class ManageCollegesView(APIView):
     permission_classes = [IsAuthenticated]
@@ -49,12 +49,14 @@ class ManageCollegesView(APIView):
                 Department.objects.create(name=dept.strip(), college=college)
         return Response({"message": f"College '{college.name}' created successfully!"}, status=201)
 
+    
+
     def put(self, request, college_id):
         if not (request.user.is_superuser and request.user.is_staff):
             return Response({"error": "Only Admins can update colleges."}, status=403)
 
         name = request.data.get("name")
-        departments = request.data.get("departments", [])
+        new_departments = request.data.get("departments", [])
 
         if not name:
             return Response({"error": "College name is required."}, status=400)
@@ -63,10 +65,22 @@ class ManageCollegesView(APIView):
         college.name = name
         college.save()
 
-        college.departments.all().delete()
-        for dept in departments:
-            if dept.strip():
-                Department.objects.create(name=dept.strip(), college=college)
+        # Get existing department names
+        existing_departments = {dept.name: dept for dept in college.departments.all()}
+
+        # Update or create departments
+        incoming_names = set()
+        for dept_name in new_departments:
+            dept_name = dept_name.strip()
+            if dept_name:
+                incoming_names.add(dept_name)
+                if dept_name not in existing_departments:
+                    Department.objects.create(name=dept_name, college=college)
+
+        # Delete departments that were removed by admin (and only them)
+        to_delete = [dept for name, dept in existing_departments.items() if name not in incoming_names]
+        for dept in to_delete:
+            dept.delete()  # will cascade to delete users in that department
 
         return Response({"message": f"College '{college.name}' updated successfully!"})
 
