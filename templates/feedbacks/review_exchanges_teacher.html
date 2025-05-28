@@ -128,7 +128,7 @@
                     <p><strong>Title:</strong> {{ item.feedback.title }}</p>
                     <p><strong>Project:</strong> {{ item.feedback.project.name }}</p>
                     <p><strong>Message:</strong> {{ item.feedback.message }}</p>
-                    <p><strong>Sender:</strong> {{ item.feedback.sender }}</p>
+                    <p><strong>Sender:</strong> {{ item.feedback.sender.get_full_name }}</p>
 
                     {% with item.student_files as files %}
                         {% if files %}

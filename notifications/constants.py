@@ -7,6 +7,7 @@ MEETING_RECOMMENDATION  = 'meeting_recomendation'
 GRADE_RELEASED = 'grade_released'
 PROJECT_COMMENT = 'project_comment'
 ANNOUNCEMENT = 'announcement'
+FEEDBACK_NOTIFICATION = 'feedback_notification'
 
 NOTIFICATION_TYPES = [
     (MEETING_REQUEST, 'Meeting Request'),
@@ -16,4 +17,5 @@ NOTIFICATION_TYPES = [
     (GRADE_RELEASED, 'Grade Released'),
     (PROJECT_COMMENT, 'Project Comment'),
     (ANNOUNCEMENT, 'Announcement'),
+    (FEEDBACK_NOTIFICATION, 'Feedback Notification'),
 ]
